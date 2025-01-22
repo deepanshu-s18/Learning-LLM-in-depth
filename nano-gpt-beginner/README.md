@@ -18,3 +18,24 @@ python train.py
 ```
 
 ## Inference
+
+```python
+from inference import generate_text
+from architecture.gptoss import Transformer, ModelConfig
+import torch
+
+model = Transformer(ModelConfig())
+text  = generate_text(model, "Once upon a time")
+print(text)
+```
+
+## Files
+
+| File | Description |
+|------|-------------|
+| `train.py` | Main training entry point |
+| `inference.py` | Text generation |
+| `architecture/gpt2.py` | GPT-2 model |
+| `architecture/gptoss.py` | GPT-OSS with GQA + MoE |
+| `training/trainer.py` | Training loop |
+| `training/data_loader.py` | TinyStories data loading |
