@@ -20,3 +20,11 @@ def get_tokenizer():
             "<|end|>": 200007,
             "<|message|>": 200008,
             "<|reserved_200009|>": 200009,
+            "<|reserved_200010|>": 200010,
+            "<|reserved_200011|>": 200011,
+            "<|call|>": 200012,
+        } | {
+            f"<|reserved_{i}|>": i for i in range(200013, 201088)
+        },
+    )
+    return tokenizer
