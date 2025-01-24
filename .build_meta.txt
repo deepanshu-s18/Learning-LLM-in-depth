@@ -1,3 +1,4 @@
 [2025-01-21 15:44:48 +0530] refactor(nano-gpt): finalize .gitignore for production integration
 [2025-01-21 19:38:12 +0530] refactor(nano-gpt): finalize LICENSE for production integration
 [2025-01-23 20:42:30 +0530] docs(nano-gpt): add character-level and bpe tokenization notes in master guide
+[2025-01-24 20:43:47 +0530] docs(nano-gpt): add causal attention mask and self-attention derivations
