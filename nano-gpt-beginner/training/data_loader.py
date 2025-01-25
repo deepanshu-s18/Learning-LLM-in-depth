@@ -18,3 +18,13 @@ val_tokens   = tokenizer.encode(val_text)
 
 class TextDataset(Dataset):
     def __init__(self, tokens, max_len=4000, stride=4000):
+        self.inputs  = []
+        self.targets = []
+        for i in range(0, len(tokens) - max_len, stride):
+            self.inputs.append(torch.tensor(tokens[i: i + max_len]))
+            self.targets.append(torch.tensor(tokens[i + 1: i + max_len + 1]))
+
+    def __len__(self):
+        return len(self.inputs)
+
+    def __getitem__(self, idx):
