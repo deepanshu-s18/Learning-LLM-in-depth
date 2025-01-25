@@ -19,3 +19,25 @@ class LayerNorm(nn.Module):
         self.eps    = eps
 
     def forward(self, x):
+        mean = x.mean(dim=-1, keepdim=True)
+        var  = x.var(dim=-1, keepdim=True)
+        norm = (x - mean) / torch.sqrt(var + self.eps)
+        return norm * self.weight + self.bias
+
+
+class GELU(nn.Module):
+    def forward(self, x):
+        return 0.5 * x * (1 + torch.tanh(
+            torch.sqrt(torch.tensor(2.0 / torch.pi)) * (x + 0.044715 * x**3)
+        ))
+
+
+class FeedForward(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(cfg["emb_dim"], cfg["emb_dim"] * 4),
+            GELU(),
+            nn.Linear(cfg["emb_dim"] * 4, cfg["emb_dim"])
+        )
+
