@@ -62,3 +62,25 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, x):
         b, n, d_in = x.shape
+        q = self.W_query(x).view(b, n, self.num_heads, self.head_dim).transpose(1, 2)
+        k = self.W_key(x).view(b, n, self.num_heads, self.head_dim).transpose(1, 2)
+        v = self.W_value(x).view(b, n, self.num_heads, self.head_dim).transpose(1, 2)
+
+        scores = q @ k.transpose(2, 3)
+        scores.masked_fill_(self.mask.bool()[:n, :n], -torch.inf)
+        weights = self.dropout(torch.softmax(scores / k.shape[-1]**0.5, dim=-1))
+        out = (weights @ v).transpose(1, 2).contiguous().view(b, n, self.d_out)
+        return self.out_proj(out)
+
+
+class TransformerBlock(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.attn    = MultiHeadAttention(cfg["emb_dim"], cfg["emb_dim"],
+                                          cfg["context_length"], cfg["drop_rate"],
+                                          cfg["n_heads"], cfg["qkv_bias"])
+        self.ln1     = LayerNorm(cfg["emb_dim"])
+        self.ln2     = LayerNorm(cfg["emb_dim"])
+        self.ff      = FeedForward(cfg)
+        self.dropout = nn.Dropout(cfg["drop_rate"])
+
