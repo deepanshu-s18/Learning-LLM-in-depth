@@ -84,3 +84,25 @@ class TransformerBlock(nn.Module):
         self.ff      = FeedForward(cfg)
         self.dropout = nn.Dropout(cfg["drop_rate"])
 
+    def forward(self, x):
+        x = x + self.dropout(self.attn(self.ln1(x)))
+        x = x + self.dropout(self.ff(self.ln2(x)))
+        return x
+
+
+class GPTModel(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.tok_emb   = nn.Embedding(cfg["vocab_size"], cfg["emb_dim"])
+        self.pos_emb   = nn.Embedding(cfg["context_length"], cfg["emb_dim"])
+        self.drop_emb  = nn.Dropout(cfg["drop_rate"])
+        self.blocks    = nn.Sequential(*[TransformerBlock(cfg) for _ in range(cfg["n_layers"])])
+        self.final_norm= LayerNorm(cfg["emb_dim"])
+        self.out_head  = nn.Linear(cfg["emb_dim"], cfg["vocab_size"], bias=False)
+
+    def forward(self, idx):
+        b, s = idx.shape
+        x = self.tok_emb(idx) + self.pos_emb(torch.arange(s, device=idx.device))
+        x = self.drop_emb(x)
+        x = self.blocks(x)
+        return self.out_head(self.final_norm(x))
