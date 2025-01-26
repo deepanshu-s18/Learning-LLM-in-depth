@@ -40,3 +40,24 @@ class GQA(nn.Module):
         self.k_proj  = nn.Linear(cfg.hidden_size, self.n_kv * self.head_dim, bias=False)
         self.v_proj  = nn.Linear(cfg.hidden_size, self.n_kv * self.head_dim, bias=False)
         self.o_proj  = nn.Linear(cfg.hidden_size, cfg.hidden_size, bias=False)
+        self.dropout = nn.Dropout(cfg.dropout)
+
+    def forward(self, x):
+        b, s, _ = x.shape
+        q = self.q_proj(x).view(b, s, self.n_heads, self.head_dim).transpose(1, 2)
+        k = self.k_proj(x).view(b, s, self.n_kv,    self.head_dim).transpose(1, 2)
+        v = self.v_proj(x).view(b, s, self.n_kv,    self.head_dim).transpose(1, 2)
+
+        # repeat kv heads to match q heads
+        rep = self.n_heads // self.n_kv
+        k = k.repeat_interleave(rep, dim=1)
+        v = v.repeat_interleave(rep, dim=1)
+
+        attn = (q @ k.transpose(-2, -1)) * self.scale
+        mask = torch.triu(torch.ones(s, s, device=x.device, dtype=torch.bool), diagonal=1)
+        attn.masked_fill_(mask, float("-inf"))
+        attn = self.dropout(torch.softmax(attn, dim=-1))
+        out  = (attn @ v).transpose(1, 2).contiguous().view(b, s, -1)
+        return self.o_proj(out)
+
+
