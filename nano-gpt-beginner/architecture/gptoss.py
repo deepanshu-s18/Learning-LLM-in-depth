@@ -61,3 +61,24 @@ class GQA(nn.Module):
         return self.o_proj(out)
 
 
+class Expert(nn.Module):
+    def __init__(self, cfg: ModelConfig):
+        super().__init__()
+        self.fc1 = nn.Linear(cfg.hidden_size, cfg.intermediate_size, bias=False)
+        self.fc2 = nn.Linear(cfg.intermediate_size, cfg.hidden_size, bias=False)
+
+    def forward(self, x):
+        return self.fc2(F.silu(self.fc1(x)))
+
+
+class MoE(nn.Module):
+    def __init__(self, cfg: ModelConfig):
+        super().__init__()
+        self.k       = cfg.experts_per_token
+        self.experts = nn.ModuleList([Expert(cfg) for _ in range(cfg.num_experts)])
+        self.gate    = nn.Linear(cfg.hidden_size, cfg.num_experts, bias=False)
+
+    def forward(self, x):
+        b, s, d = x.shape
+        xf  = x.view(-1, d)
+        g   = self.gate(xf)
