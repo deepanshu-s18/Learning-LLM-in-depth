@@ -103,3 +103,25 @@ class Block(nn.Module):
         self.moe     = MoE(cfg)
         self.dropout = nn.Dropout(cfg.dropout)
 
+    def forward(self, x):
+        x = x + self.dropout(self.attn(self.norm1(x)))
+        x = x + self.dropout(self.moe(self.norm2(x)))
+        return x
+
+
+class Transformer(nn.Module):
+    def __init__(self, cfg: ModelConfig, device="cpu"):
+        super().__init__()
+        self.tok_emb  = nn.Embedding(cfg.vocab_size, cfg.hidden_size)
+        self.pos_emb  = nn.Embedding(cfg.max_position_embeddings, cfg.hidden_size)
+        self.blocks   = nn.ModuleList([Block(cfg) for _ in range(cfg.num_hidden_layers)])
+        self.norm     = RMSNorm(cfg.hidden_size)
+        self.lm_head  = nn.Linear(cfg.hidden_size, cfg.vocab_size, bias=False)
+        self.to(device)
+
+    def forward(self, idx):
+        b, s = idx.shape
+        x = self.tok_emb(idx) + self.pos_emb(torch.arange(s, device=idx.device))
+        for blk in self.blocks:
+            x = blk(x)
+        return self.lm_head(self.norm(x))
