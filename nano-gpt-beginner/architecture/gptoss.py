@@ -82,3 +82,24 @@ class MoE(nn.Module):
         b, s, d = x.shape
         xf  = x.view(-1, d)
         g   = self.gate(xf)
+        w, idx = torch.topk(g, self.k, dim=-1)
+        w   = torch.softmax(w, dim=-1)
+        out = torch.zeros_like(xf)
+        for i, exp in enumerate(self.experts):
+            mask = (idx == i).any(dim=-1)
+            if mask.any():
+                which_k = (idx[mask] == i).float()
+                gate_w  = (w[mask] * which_k).sum(-1, keepdim=True)
+                out[mask] += gate_w * exp(xf[mask])
+        return out.view(b, s, d)
+
+
+class Block(nn.Module):
+    def __init__(self, cfg: ModelConfig):
+        super().__init__()
+        self.norm1   = RMSNorm(cfg.hidden_size)
+        self.attn    = GQA(cfg)
+        self.norm2   = RMSNorm(cfg.hidden_size)
+        self.moe     = MoE(cfg)
+        self.dropout = nn.Dropout(cfg.dropout)
+
