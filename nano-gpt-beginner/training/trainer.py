@@ -15,3 +15,21 @@ def calc_loss_loader(loader, model, device, num_batches=None):
     for i, (x, y) in enumerate(loader):
         if i >= n:
             break
+        total += calc_loss_batch(x, y, model, device).item()
+    return total / n
+
+def evaluate(model, train_loader, val_loader, device, eval_iter):
+    model.eval()
+    with torch.no_grad():
+        tl = calc_loss_loader(train_loader, model, device, eval_iter)
+        vl = calc_loss_loader(val_loader,   model, device, eval_iter)
+    model.train()
+    return tl, vl
+
+def trainer(model, train_loader, val_loader, device):
+    lr          = 5e-4
+    min_lr      = 1e-5
+    max_iters   = 5
+    warmup      = 200
+    eval_freq   = 100
+    eval_iters  = 10
