@@ -50,3 +50,21 @@ def trainer(model, train_loader, val_loader, device):
         model.train()
         for x, y in train_loader:
             loss = calc_loss_batch(x, y, model, device)
+            loss.backward()
+            opt.step()
+            opt.zero_grad()
+            scheduler.step()
+            step += 1
+
+            if step % eval_freq == 0:
+                tl, vl = evaluate(model, train_loader, val_loader, device, eval_iters)
+                print(f"Epoch {epoch+1} Step {step}: train={tl:.3f} val={vl:.3f}")
+                if vl < best_val:
+                    best_val = vl
+                    os.makedirs("model", exist_ok=True)
+                    torch.save(model.state_dict(), "model/best.pt")
+
+        torch.save(model.state_dict(), "model/gptoss.pt")
+        print(generate_text(model, "Once upon a time"))
+
+    print(f"Done in {(time.time()-t0)/60:.1f} min")
