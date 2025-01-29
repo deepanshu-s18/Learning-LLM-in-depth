@@ -33,3 +33,20 @@ def trainer(model, train_loader, val_loader, device):
     warmup      = 200
     eval_freq   = 100
     eval_iters  = 10
+
+    if os.path.exists("model/gptoss.pt"):
+        model.load_state_dict(torch.load("model/gptoss.pt"))
+
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.1)
+    s1  = LinearLR(opt, start_factor=0.1, end_factor=1.0, total_iters=warmup)
+    s2  = CosineAnnealingLR(opt, T_max=max_iters - warmup, eta_min=min_lr)
+    scheduler = SequentialLR(opt, [s1, s2], milestones=[warmup])
+
+    best_val = float("inf")
+    step     = 0
+    t0       = time.time()
+
+    for epoch in range(max_iters):
+        model.train()
+        for x, y in train_loader:
+            loss = calc_loss_batch(x, y, model, device)
