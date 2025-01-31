@@ -40,7 +40,7 @@
 ```
 
 ### Completed Modules Status
-- Foundational curriculum initialized.
+- **`nano-gpt-beginner`**: GPT-2 from scratch with raw tensor operations, BPE tokenization, and mini-Shakespeare training loop.
 ---
 
 ## 📊 Core Benchmarks & Key Findings
