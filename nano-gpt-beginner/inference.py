@@ -13,3 +13,9 @@ def generate_text(model, prompt, max_tokens=100, temperature=0.9, top_k=40):
         cond   = idx[-context_len:]
         with torch.inference_mode():
             logits = model(cond.unsqueeze(0))[0, -1] / temperature
+        if top_k:
+            v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+            logits[logits < v[-1]] = float("-inf")
+        idx_next = torch.multinomial(F.softmax(logits, dim=-1), 1)
+        idx      = torch.cat([idx, idx_next])
+    return tokenizer.decode(idx.tolist())
