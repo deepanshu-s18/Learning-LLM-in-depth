@@ -3,3 +3,4 @@
 [2025-01-23 20:42:30 +0530] docs(nano-gpt): add character-level and bpe tokenization notes in master guide
 [2025-01-24 20:43:47 +0530] docs(nano-gpt): add causal attention mask and self-attention derivations
 [2025-02-01 11:08:36 +0530] refactor(nano-gpt-oss): finalize .gitignore for production integration
+[2025-02-01 16:42:08 +0530] refactor(nano-gpt-oss): finalize LICENSE for production integration
