@@ -26,3 +26,32 @@
 | GPT2 | 2.445 | 2.036 | 8 | 12 | 1024 |
 | GPT-OSS | **2.212** | **1.901**| 8 | 8 | 1024 |
 | GPT2 | 2.416 | 2.011 | 8 | 8 | 1024 |
+| GPT-OSS | **2.075** | **1.760** | 8 | 6 | 1024 |
+| GPT2 | 2.734 | 2.323 | 8 | 6 | 1024 |
+| GPT-OSS | **1.943** | **1.684** | 6 | 12 | 1020 |
+| GPT2 | 2.748 | 2.366 | 6 | 12 | 1020 |
+| GPT-OSS | **2.014** | **1.767** | 6 | 8 | 1020 |
+| GPT2 | 2.594 | 2.213 | 6 | 8 | 1020 |
+| GPT-OSS | **2.125** | **1.820** | 6 | 6 | 1020 |
+| GPT2 | 2.784 | 2.366 | 6 | 6 | 1020 |
+
+---
+## Key Improvements of GPT-OSS over GPT-2
+
+### 🏗️ Architecture Enhancements
+- **Mixture of Experts (MoE) in MLP** with a Router → Sparse experts active per token (big model capacity, low active FLOPs)
+- **Gated Router** → Token-dependent routing to experts (shown inside MoE block)
+- **SwiGLU Feed-Forward (FFN) modules** → Modern activation in FFN instead of GELU
+- **Grouped Query Attention + RoPE** → Alternate attention that supports longer context and stable queries
+- **Sliding Window Attention** → Efficient attention pattern that reduces computation while maintaining context
+- **Sink Slots in Attention** → Learned aggregation slots for global context stability
+- **RMSNorm** → More stable normalization layer
+
+### 📊 Performance Improvements
+- **Lower Training Loss** → Better convergence during training
+- **Lower Validation Loss** → Better generalization to unseen data
+- **Lower Memory Usage** → More efficient memory usage during training and inference
+- **Lower Disk Space** → More efficient disk space usage during training and inference
+- **Lower Inference Time** → Faster inference time during inference
+
+## Dependencies
