@@ -197,3 +197,32 @@ The MoE routing gate activates only 4 of 32 experts per token. At 6 layers this 
 
 
 
+| Model | Grammar score | Creativity score | Consistency score | Num Heads | Trf BLock | Hidden Dim |
+|--------|---------|---------|----------|----------|----------|----------|
+| GPT-OSS | **6** | **4** | **6** | 12 | 12 | 1020 |
+| GPT2 | 3 | 4 | 2 | 12 | 12 | 1020 |
+| GPT-OSS | **5** | **4** | **3** | 12 | 8 | 1020 |
+| GPT2 | 5 | 4 | 4 | 12 | 8 | 1020 |
+| GPT-OSS | **5** | **5** | **4** | 12 | 6 | 1020 |
+| GPT2 | 4 | 5 | 3 | 12 | 6 | 1020 |
+| GPT-OSS | **6** | **5** | **5** | 8 | 12 | 1024 |
+| GPT2 | 4 | 4 | 4 | 8 | 12 | 1024 |
+| GPT-OSS | **6** | **5** | **5**| 8 | 8 | 1024 |
+| GPT2 | 6 | 5 | 4 | 8 | 8 | 1024 |
+| GPT-OSS | **4** | **3** | **4** | 8 | 6 | 1024 |
+| GPT2 | 3 | 4 | 2 | 8 | 6 | 1024 |
+| GPT-OSS | **5** | **6** | **6** | 6 | 12 | 1020 |
+| GPT2 | 2 | 3 | 1 | 6 | 12 | 1020 |
+| GPT-OSS | **5** | **6** | **6** | 6 | 8 | 1020 |
+| GPT2 | 3 | 3 | 2 | 6 | 8 | 1024 |
+| GPT-OSS | **4** | **5** | **3** | 6 | 6 | 1020 |
+| GPT2 | 1 | 2 | 1 | 6 | 6 | 1020 |
+
+#### Key Insights
+- **Performance Trends**: GPT-OSS consistently shows higher scores across most configurations, especially with fewer layers and attention heads.
+- **Resource Efficiency**: GPT-OSS maintains strong performance (scores 4-6) even with 6 layers, while GPT2's performance drops significantly (scores 1-3) with reduced architecture size.
+- **Optimal Configuration**: Both models perform best with 12 layers, but GPT-OSS shows more stable performance across different configurations.
+- **Quality vs. Resources**: GPT-OSS demonstrates better parameter efficiency, achieving high-quality outputs with fewer computational resources compared to GPT2.
+- **Consistency**: GPT-OSS shows less variance in scores (4-6 range) compared to GPT2 (1-6 range), indicating more reliable performance across different model sizes.
+
+---
