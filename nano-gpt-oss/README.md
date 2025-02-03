@@ -55,3 +55,31 @@
 - **Lower Inference Time** → Faster inference time during inference
 
 ## Dependencies
+- [pytorch](https://pytorch.org) <3
+-  `datasets` for huggingface datasets <3 (for loading datasets)
+-  `tiktoken` for OpenAI's fast BPE code <3
+-  `wandb` for optional logging <3
+-  `tqdm` for progress bars <3
+-  `ipywidgets` for optional jupyter notebook support 
+
+## 📊 Dataset and Format
+
+TinyStories can be found at [HuggingFace Datasets](https://huggingface.co/datasets/roneneldan/TinyStories).
+
+### Data Fields:
+
+Each story entry contains:
+
+- `story`: The main story text
+<details>
+<summary>📝 Click to see example story</summary>
+
+**Story:**
+
+```
+Once upon a time, there was a big, red ball that could bounce very high...
+```
+
+\[Rest of the example story\]
+
+</details>
