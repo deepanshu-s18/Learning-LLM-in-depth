@@ -112,3 +112,31 @@ import torch
 
 # Load a trained checkpoint
 model = GPTModel.from_checkpoint("checkpoints/best.pt")
+model.eval()
+
+# Generate text
+output = model.generate("Once upon a time", max_new_tokens=100)
+print(output)
+```
+
+---
+
+## How to Train
+
+The system auto-detects available GPU resources.
+
+### Option 1: Command Line
+
+```bash
+cd nano-gpt-oss
+python train.py
+```
+
+### Option 2: Jupyter Notebook
+
+```bash
+jupyter notebook
+# Open trains.ipynb → Cell > Run All
+```
+
+### Monitoring
