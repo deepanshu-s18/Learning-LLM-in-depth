@@ -83,3 +83,32 @@ Once upon a time, there was a big, red ball that could bounce very high...
 \[Rest of the example story\]
 
 </details>
+
+## 🚀 Installation
+
+
+### 📦 Pip Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/shobhitagnihotri69/nano-gpt-oss
+cd nano-gpt-oss
+
+# (Optional) create conda environment
+conda create -n myenv python=3.10
+conda activate myenv
+
+# Install PyTorch: https://pytorch.org/get-started/
+# Then install remaining requirements
+pip install -r requirements.txt
+```
+
+
+## ⚡ Quick Demo
+
+```python
+from architecture.gptoss import GPTModel
+import torch
+
+# Load a trained checkpoint
+model = GPTModel.from_checkpoint("checkpoints/best.pt")
