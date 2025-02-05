@@ -19,3 +19,13 @@ print("tokenized")
 class TextDataset(Dataset):
     def __init__(self, tokens, max_length=8192, stride=8192):
         self.input_ids = []
+        self.target_ids = []
+        for i in tqdm(range(0, len(tokens) - max_length, stride)):
+            input_chunk = tokens[i:i + max_length]
+            target_chunk = tokens[i + 1:i + max_length + 1]
+            self.input_ids.append(torch.tensor(input_chunk))
+            self.target_ids.append(torch.tensor(target_chunk))
+
+    def __len__(self):
+        return len(self.input_ids)
+
