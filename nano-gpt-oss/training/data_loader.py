@@ -29,3 +29,14 @@ class TextDataset(Dataset):
     def __len__(self):
         return len(self.input_ids)
 
+    def __getitem__(self, idx):
+        return self.input_ids[idx], self.target_ids[idx]
+
+train_dataset = TextDataset(train_tokens, max_length=context_len, stride=context_len)
+val_dataset = TextDataset(val_tokens, max_length=context_len, stride=context_len)
+
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
+val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)
+
+del dataset, train_text, val_text
+gc.collect()
