@@ -116,3 +116,27 @@ class TransformerBlock(nn.Module):
             context_length=cfg["context_length"],
             num_heads=cfg["n_heads"], 
             dropout=cfg["drop_rate"],
+            qkv_bias=cfg["qkv_bias"])
+        self.ln1= LayerNorm(embd=cfg["emb_dim"])
+        self.ln2= LayerNorm(embd=cfg["emb_dim"])
+        self.ff= FeedForward(cfg)
+        self.dropout= nn.Dropout(cfg["drop_rate"])
+        
+    def forward(self, x):
+        sortcut=x
+        x= self.ln1(x)
+        x=self.attn(x)
+        x=self.dropout(x)
+        x= x+sortcut
+        sortcut =x
+        x=self.ln2(x)
+        x=self.ff(x)
+        x=self.dropout(x)
+        x=x+sortcut
+        return x
+    
+
+class GPTModel(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.cfg= cfg
