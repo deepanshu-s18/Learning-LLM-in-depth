@@ -60,3 +60,24 @@ def _apply_rotary_emb(
     return torch.cat((o1, o2), dim=-1)
 
 
+class RotaryEmbedding(torch.nn.Module):
+    def __init__(
+        self,
+        head_dim: int,
+        base: int,
+        dtype: torch.dtype,
+        initial_context_length: int = 4096,
+        scaling_factor: float = 1.0,
+        ntk_alpha: float = 1.0,
+        ntk_beta: float = 32.0,
+        device: torch.device | None = None,
+    ) -> None:
+        super().__init__()
+        self.head_dim = head_dim
+        self.base = base
+        self.dtype = dtype
+        self.initial_context_length = initial_context_length
+        self.scaling_factor = scaling_factor
+        self.ntk_alpha = ntk_alpha
+        self.ntk_beta = ntk_beta
+        self.device = device
