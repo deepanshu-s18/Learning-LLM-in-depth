@@ -81,3 +81,23 @@ class RotaryEmbedding(torch.nn.Module):
         self.ntk_alpha = ntk_alpha
         self.ntk_beta = ntk_beta
         self.device = device
+
+    def _compute_concentration_and_inv_freq(self) -> torch.Tensor:
+        """See YaRN paper: https://arxiv.org/abs/2309.00071"""
+        freq = self.base ** (
+            torch.arange(0, self.head_dim, 2, dtype=torch.float, device=self.device)
+            / self.head_dim
+        )
+        if self.scaling_factor > 1.0:
+            concentration = (
+                0.1 * math.log(self.scaling_factor) + 1.0
+            )  # YaRN concentration
+
+            d_half = self.head_dim / 2
+            # NTK by parts
+            low = (
+                d_half
+                * math.log(self.initial_context_length / (self.ntk_beta * 2 * math.pi))
+                / math.log(self.base)
+            )
+            high = (
