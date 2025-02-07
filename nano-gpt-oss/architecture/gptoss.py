@@ -39,3 +39,24 @@ class RMSNorm(torch.nn.Module):
         self.scale = torch.nn.Parameter(
             torch.ones(num_features, device=device, dtype=torch.float32)
         )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        assert x.shape[-1] == self.num_features
+        t, dtype = x.float(), x.dtype
+        t = t * torch.rsqrt(torch.mean(t**2, dim=-1, keepdim=True) + self.eps)
+        return (t * self.scale).to(dtype)
+
+
+def _apply_rotary_emb(
+    x: torch.Tensor,
+    cos: torch.Tensor,
+    sin: torch.Tensor,
+) -> torch.Tensor:
+    cos = cos.unsqueeze(-2).to(x.dtype)
+    sin = sin.unsqueeze(-2).to(x.dtype)
+    x1, x2 = torch.chunk(x, 2, dim=-1)
+    o1 = x1 * cos - x2 * sin
+    o2 = x2 * cos + x1 * sin
+    return torch.cat((o1, o2), dim=-1)
+
+
