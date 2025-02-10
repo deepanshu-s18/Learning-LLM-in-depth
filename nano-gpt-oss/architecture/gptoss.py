@@ -164,3 +164,24 @@ def sdpa(Q, K, V, S, sm_scale, sliding_window=0):
             mask.new_full((n_tokens, n_tokens), -float("inf")), diagonal=-sliding_window
         )
     QK = torch.einsum("qhmd,khmd->hmqk", Q, K)
+    QK *= sm_scale
+    QK += mask[None, None, :, :]
+    QK = torch.cat([QK, S], dim=-1)
+    W = torch.softmax(QK, dim=-1)
+    W = W[..., :-1]
+    attn = torch.einsum("hmqk,khmd->qhmd", W, V)
+    return attn.reshape(n_tokens, -1)
+
+
+class AttentionBlock(torch.nn.Module):
+    def __init__(
+        self,
+        config: ModelConfig,
+        layer_idx: int = 0,
+        device: torch.device | None = None,
+    ):
+        super().__init__()
+        self.head_dim = config.head_dim
+        self.num_attention_heads = config.num_attention_heads
+        self.num_key_value_heads = config.num_key_value_heads
+        # Only apply sliding window to every other layer
