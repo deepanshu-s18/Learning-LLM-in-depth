@@ -205,3 +205,24 @@ class AttentionBlock(torch.nn.Module):
         self.sm_scale = 1 / math.sqrt(config.head_dim)
         self.rope = RotaryEmbedding(
             config.head_dim,
+            config.rope_theta,
+            torch.float32,
+            initial_context_length=config.initial_context_length,
+            scaling_factor=config.rope_scaling_factor,
+            ntk_alpha=config.rope_ntk_alpha,
+            ntk_beta=config.rope_ntk_beta,
+            device=device,
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        t = self.norm(x)
+        qkv = self.qkv(t)
+        q = qkv[:, : self.num_attention_heads * self.head_dim].contiguous()
+        k = qkv[
+            :,
+            self.num_attention_heads
+            * self.head_dim : (self.num_attention_heads + self.num_key_value_heads)
+            * self.head_dim,
+        ].contiguous()
+        v = qkv[
+            :,
