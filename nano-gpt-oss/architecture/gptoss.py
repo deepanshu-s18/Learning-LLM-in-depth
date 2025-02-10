@@ -101,3 +101,24 @@ class RotaryEmbedding(torch.nn.Module):
                 / math.log(self.base)
             )
             high = (
+                d_half
+                * math.log(self.initial_context_length / (self.ntk_alpha * 2 * math.pi))
+                / math.log(self.base)
+            )
+            assert 0 < low < high < d_half - 1
+
+            interpolation = 1.0 / (self.scaling_factor * freq)
+            extrapolation = 1.0 / freq
+
+            ramp = (
+                torch.arange(d_half, dtype=torch.float32, device=freq.device) - low
+            ) / (high - low)
+            mask = 1 - ramp.clamp(0, 1)
+
+            inv_freq = interpolation * (1 - mask) + extrapolation * mask
+        else:
+            concentration = 1.0
+            inv_freq = 1.0 / freq
+
+        return concentration, inv_freq
+
