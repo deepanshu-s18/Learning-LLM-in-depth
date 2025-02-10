@@ -143,3 +143,24 @@ class RotaryEmbedding(torch.nn.Module):
         query = _apply_rotary_emb(query, cos, sin)
         query = query.reshape(query_shape)
 
+        key_shape = key.shape
+        key = key.view(num_tokens, -1, self.head_dim)
+        key = _apply_rotary_emb(key, cos, sin)
+        key = key.reshape(key_shape)
+        return query, key
+
+
+def sdpa(Q, K, V, S, sm_scale, sliding_window=0):
+    # sliding_window == 0 means no sliding window
+    n_tokens, n_heads, q_mult, d_head = Q.shape
+    assert K.shape == (n_tokens, n_heads, d_head)
+    assert V.shape == (n_tokens, n_heads, d_head)
+    K = K[:, :, None, :].expand(-1, -1, q_mult, -1)
+    V = V[:, :, None, :].expand(-1, -1, q_mult, -1)
+    S = S.reshape(n_heads, q_mult, 1, 1).expand(-1, -1, n_tokens, -1)
+    mask = torch.triu(Q.new_full((n_tokens, n_tokens), -float("inf")), diagonal=1)
+    if sliding_window > 0:
+        mask += torch.tril(
+            mask.new_full((n_tokens, n_tokens), -float("inf")), diagonal=-sliding_window
+        )
+    QK = torch.einsum("qhmd,khmd->hmqk", Q, K)
