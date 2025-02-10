@@ -122,3 +122,24 @@ class RotaryEmbedding(torch.nn.Module):
 
         return concentration, inv_freq
 
+    def _compute_cos_sin(self, num_tokens: int):
+        concentration, inv_freq = self._compute_concentration_and_inv_freq()
+        t = torch.arange(num_tokens, dtype=torch.float32, device=self.device)
+        freqs = torch.einsum("i,j->ij", t, inv_freq)
+        cos = freqs.cos() * concentration
+        sin = freqs.sin() * concentration
+        return cos, sin
+
+    def forward(
+        self,
+        query: torch.Tensor,
+        key: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        num_tokens = query.shape[0]
+        cos, sin = self._compute_cos_sin(num_tokens)
+
+        query_shape = query.shape
+        query = query.view(num_tokens, -1, self.head_dim)
+        query = _apply_rotary_emb(query, cos, sin)
+        query = query.reshape(query_shape)
+
