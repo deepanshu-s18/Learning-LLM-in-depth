@@ -226,3 +226,24 @@ class AttentionBlock(torch.nn.Module):
         ].contiguous()
         v = qkv[
             :,
+            (self.num_attention_heads + self.num_key_value_heads)
+            * self.head_dim : (self.num_attention_heads + 2 * self.num_key_value_heads)
+            * self.head_dim,
+        ].contiguous()
+
+        q = q.view(
+            -1,
+            self.num_key_value_heads,
+            self.num_attention_heads // self.num_key_value_heads,
+            self.head_dim,
+        )
+        k = k.view(-1, self.num_key_value_heads, self.head_dim)
+        v = v.view(-1, self.num_key_value_heads, self.head_dim)
+        q, k = self.rope(q, k)
+        t = sdpa(q, k, v, self.sinks, self.sm_scale, self.sliding_window)
+        t = self.out(t)
+        t = x + t
+        return t
+
+
+def swiglu(x, alpha: float = 1.702, limit: float = 7.0):
