@@ -309,3 +309,24 @@ class MLPBlock(torch.nn.Module):
         output = torch.zeros_like(t_flat)
         
         # Process each expert
+        for expert_idx in range(self.num_experts):
+            mask = (expert_indices_flat == expert_idx).any(dim=-1)
+            if not mask.any():
+                continue
+                
+            token_indices = torch.where(mask)[0]
+            expert_pos = (expert_indices_flat[token_indices] == expert_idx).nonzero(as_tuple=True)[1]
+            
+            expert_input = t_flat[token_indices]
+            weights = expert_weights_flat[token_indices, expert_pos]
+            
+            # Forward through this expert
+            expert_out = expert_input
+            expert_out = self.experts[expert_idx][0](expert_out)  # First linear + activation
+            expert_out = swiglu(expert_out, limit=self.swiglu_limit)
+            expert_out = self.experts[expert_idx][1](expert_out)  # Second linear
+            
+            output[token_indices] += expert_out * weights.unsqueeze(-1)
+        
+        if self.world_size > 1:
+            dist.all_reduce(output, op=dist.ReduceOp.SUM)
