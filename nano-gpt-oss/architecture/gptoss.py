@@ -247,3 +247,24 @@ class AttentionBlock(torch.nn.Module):
 
 
 def swiglu(x, alpha: float = 1.702, limit: float = 7.0):
+    x_glu, x_linear = x[..., ::2], x[..., 1::2]
+    # Clamp the input values
+    x_glu = x_glu.clamp(min=None, max=limit)
+    x_linear = x_linear.clamp(min=-limit, max=limit)
+    out_glu = x_glu * torch.sigmoid(alpha * x_glu)
+    # Note we add an extra bias of 1 to the linear layer
+    return out_glu * (x_linear + 1)
+
+class MLPBlock(torch.nn.Module):
+
+    def __init__(
+        self,
+        config: ModelConfig,
+        device: torch.device | None = None,
+    ):
+        super().__init__()
+        self.num_experts = config.num_experts
+        self.experts_per_token = config.experts_per_token
+        self.swiglu_limit = config.swiglu_limit
+        self.world_size = dist.get_world_size() if dist.is_initialized() else 1
+        self.norm = RMSNorm(config.hidden_size, device=device)
