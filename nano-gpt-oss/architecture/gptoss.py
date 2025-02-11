@@ -288,3 +288,24 @@ class MLPBlock(torch.nn.Module):
                     device=device, 
                     dtype=torch.bfloat16
                 )
+            ) for _ in range(config.num_experts)
+        ])
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        seq_len, hidden_size = x.shape
+        t = self.norm(x)
+        g = self.gate(t)
+        
+        # Get top-k experts
+        experts = torch.topk(g, k=self.experts_per_token, dim=-1, sorted=True)
+        expert_weights = torch.nn.functional.softmax(experts.values, dim=-1)
+        expert_indices = experts.indices
+        
+        # Flatten for processing
+        t_flat = t.view(-1, hidden_size)
+        expert_indices_flat = expert_indices.view(-1, self.experts_per_token)
+        expert_weights_flat = expert_weights.view(-1, self.experts_per_token)
+        
+        output = torch.zeros_like(t_flat)
+        
+        # Process each expert
