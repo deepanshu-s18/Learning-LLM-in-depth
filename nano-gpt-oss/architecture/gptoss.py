@@ -372,3 +372,23 @@ class Transformer(torch.nn.Module):
             ]
         )
         self.norm = RMSNorm(config.hidden_size, device=device)
+        self.unembedding = torch.nn.Linear(
+            config.hidden_size,
+            config.vocab_size,
+            bias=False,
+            device=device,
+            dtype=torch.bfloat16,
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.embedding(x)
+        for block in self.block:
+            x = block(x)
+        x = self.norm(x)
+        x = self.unembedding(x)
+        return x
+
+    @staticmethod
+    def from_checkpoint(
+        path: str, device: str | torch.device = "cuda"
+    ) -> "Transformer":
