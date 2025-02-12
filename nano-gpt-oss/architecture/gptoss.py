@@ -392,3 +392,24 @@ class Transformer(torch.nn.Module):
     def from_checkpoint(
         path: str, device: str | torch.device = "cuda"
     ) -> "Transformer":
+        if not isinstance(device, torch.device):
+            device = torch.device(device)
+
+        config_path = os.path.join(path, "config.json")
+        with open(config_path, "r") as f:
+            json_config = json.load(f)
+            config = ModelConfig(**json_config)
+
+        model = Transformer(
+            config=config,
+            device=device,
+        )
+        model.eval()
+
+        # # Load weights
+        # my_rank = dist.get_rank() if dist.is_initialized() else 0
+        # world_size = dist.get_world_size() if dist.is_initialized() else 1
+        # per_rank_intermediate_size = config.intermediate_size // world_size
+
+        # checkpoint = Checkpoint(path, device)
+
