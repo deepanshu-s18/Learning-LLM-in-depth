@@ -330,3 +330,24 @@ class MLPBlock(torch.nn.Module):
         
         if self.world_size > 1:
             dist.all_reduce(output, op=dist.ReduceOp.SUM)
+        
+        output = output.view(seq_len, hidden_size)
+        return x + output
+
+
+
+
+class TransformerBlock(torch.nn.Module):
+    def __init__(
+        self,
+        config: ModelConfig,
+        layer_idx: int,
+        device: torch.device | None = None,
+    ):
+        super().__init__()
+        self.layer_idx = layer_idx
+        self.attn = AttentionBlock(config, layer_idx, device)
+        self.mlp = MLPBlock(config, device)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.attn(x)
