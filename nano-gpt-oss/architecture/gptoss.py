@@ -351,3 +351,24 @@ class TransformerBlock(torch.nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.attn(x)
+        x = self.mlp(x)
+        return x
+
+
+class Transformer(torch.nn.Module):
+    def __init__(
+        self,
+        config: ModelConfig,
+        device: torch.device | None = None,
+    ):
+        super().__init__()
+        self.embedding = torch.nn.Embedding(
+            config.vocab_size, config.hidden_size, device=device, dtype=torch.bfloat16
+        )
+        self.block = torch.nn.ModuleList(
+            [
+                TransformerBlock(config, layer_idx, device)
+                for layer_idx in range(config.num_hidden_layers)
+            ]
+        )
+        self.norm = RMSNorm(config.hidden_size, device=device)
