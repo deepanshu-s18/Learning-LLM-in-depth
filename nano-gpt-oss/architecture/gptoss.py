@@ -434,3 +434,24 @@ class Transformer(torch.nn.Module):
         #             * per_rank_intermediate_size,
         #         ]
         #     try:
+        #         param.data.copy_(loaded_tensor)
+        #     except:
+        #         print(f"{name=} {param.data.shape=} {loaded_tensor.shape=}")
+        #         raise
+
+        return model
+
+
+class TokenGenerator:
+    @torch.inference_mode()
+    def __init__(self, checkpoint: str, device: torch.device):
+        self.device = device
+        self.model = Transformer.from_checkpoint("./", device=self.device)
+
+    @torch.inference_mode()
+    def generate(self,
+                 prompt_tokens: list[int],
+                 stop_tokens: list[int],
+                 temperature: float = 1.0,
+                 max_tokens: int = 0,
+                 return_logprobs: bool = False):
