@@ -13,3 +13,8 @@ model= Transformer(ModelConfig(
     hidden_size =1024,
     intermediate_size = 1024
     
+    ),device)
+print(sum([p.numel() for p in model.parameters()])/1000000,"M parameaters")
+torch.save(model.state_dict(),"model/gptoss.pt")
+
+generate_text(model,context)
