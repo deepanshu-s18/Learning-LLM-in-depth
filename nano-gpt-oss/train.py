@@ -8,3 +8,8 @@ model= Transformer(ModelConfig(
     num_attention_heads=8
     ,num_key_value_heads=4,
     num_experts=4,
+    experts_per_token=1,
+    num_hidden_layers=12,
+    hidden_size =1024,
+    intermediate_size = 1024
+    
