@@ -3,3 +3,8 @@ from architecture.gptoss import Transformer,ModelConfig
 import torch
 from inference import generate_text
 device= "cuda:0"
+context="Once upon a day"
+model= Transformer(ModelConfig(
+    num_attention_heads=8
+    ,num_key_value_heads=4,
+    num_experts=4,
