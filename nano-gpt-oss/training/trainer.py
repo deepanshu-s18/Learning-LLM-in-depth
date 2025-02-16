@@ -20,3 +20,26 @@ def calcc(input_batch, target_batch, model,device):
         logits = model(inp)
         del inp
         tgt = target_batch[i].to(device, non_blocking=True)
+        loss= torch.nn.functional.cross_entropy(logits,tgt)
+        total_loss += loss
+        del tgt, logits, loss
+        
+    clear_gpu_memory()  
+    return total_loss/len(input_batch)
+
+
+def calc_loss_batch(input_batch, target_batch, model, device):
+    loss=calcc(input_batch,target_batch,model,device)
+    return loss
+
+def calc_loss_loader(data_loader, model, device, num_batches=None):
+    total_loss = 0.
+    if len(data_loader) == 0:
+        return float("nan")
+    elif num_batches is None:
+        num_batches = len(data_loader)
+    else:
+        num_batches = min(num_batches, len(data_loader))
+    for i, (input_batch, target_batch) in enumerate(data_loader):
+        if i < num_batches:
+            loss = calc_loss_batch(input_batch, target_batch, model, device)
