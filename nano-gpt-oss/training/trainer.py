@@ -43,3 +43,26 @@ def calc_loss_loader(data_loader, model, device, num_batches=None):
     for i, (input_batch, target_batch) in enumerate(data_loader):
         if i < num_batches:
             loss = calc_loss_batch(input_batch, target_batch, model, device)
+            total_loss += loss.item()
+            del loss
+            
+        else:
+            break
+    clear_gpu_memory()
+    return total_loss / num_batches
+
+def evaluate_model(model, train_loader, val_loader, device, eval_iter):
+    model.eval()
+    with torch.no_grad():
+        train_loss = calc_loss_loader(train_loader, model, device, num_batches=eval_iter)
+        val_loss = calc_loss_loader(val_loader, model, device, num_batches=eval_iter)
+    model.train()
+    return train_loss, val_loss
+
+
+
+
+
+
+
+def train_model(model, train_loader, val_loader, optimizer,scheduler, device, num_epochs,
