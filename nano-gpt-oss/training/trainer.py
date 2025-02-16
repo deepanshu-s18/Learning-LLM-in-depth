@@ -66,3 +66,26 @@ def evaluate_model(model, train_loader, val_loader, device, eval_iter):
 
 
 def train_model(model, train_loader, val_loader, optimizer,scheduler, device, num_epochs,
+                       eval_freq, eval_iter, start_context):
+    
+    train_losses, val_losses, track_tokens_seen = [], [], []
+    tokens_seen, global_step = 0, -1
+    best_val_loss = float("inf")
+    for epoch in range(num_epochs):
+        model.train()
+        artifact = wandb.Artifact("gptoss-model", type="model")
+        for input_batch,target_batch in tqdm(train_loader):
+
+            loss= calc_loss_batch(input_batch,target_batch,model,device)
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+            scheduler.step()
+            tokens_seen += input_batch.numel()
+            global_step += 1
+
+            wandb.log({"train/step_loss": loss.item(), 
+                       "tokens_seen": tokens_seen, 
+                       "epoch": epoch,
+                       "lr": optimizer.param_groups[0]["lr"]
+                       }, step=global_step)
