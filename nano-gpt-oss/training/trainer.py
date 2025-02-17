@@ -89,3 +89,25 @@ def train_model(model, train_loader, val_loader, optimizer,scheduler, device, nu
                        "epoch": epoch,
                        "lr": optimizer.param_groups[0]["lr"]
                        }, step=global_step)
+            
+
+            if global_step % eval_freq == 0: 
+                train_loss, val_loss = evaluate_model(
+                    model, train_loader, val_loader, device, eval_iter)
+                train_losses.append(train_loss)
+                val_losses.append(val_loss)
+                track_tokens_seen.append(tokens_seen)
+                print(f"Ep {epoch+1} (Step {global_step:06d}): "
+                      f"Train loss {train_loss:.3f}, Val loss {val_loss:.3f}")
+                
+                wandb.log({"train/loss": train_loss,
+                           "val/loss": val_loss}, step=global_step)
+
+                # Save best model
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    torch.save(model.state_dict(), "model/gotoss_best.pt")
+                    artifact = wandb.Artifact("gptoss-model", type="model")
+                    
+                    artifact.add_file("model/gotoss_best.pt")
+                    wandb.log_artifact(artifact)
