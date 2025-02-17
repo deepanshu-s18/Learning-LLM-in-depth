@@ -134,3 +134,26 @@ def trainer(model,train_loader,val_loader,device):
     min_lr = 3e-5           
     eval_iters = 5
     eval_freq=150          
+    
+    
+    torch.manual_seed(123)
+    
+    print(f"Using {device}")
+   
+    if os.path.exists('model/gptoss.pt'):
+        model.load_state_dict(torch.load('model/gptoss.pt'))
+    
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.1)
+    scheduler_warmup = LinearLR(optimizer, start_factor=0.1, end_factor=1.0, total_iters=warmup_steps)
+    scheduler_decay = CosineAnnealingLR(optimizer, T_max=max_iters - warmup_steps, eta_min=min_lr)
+    scheduler = SequentialLR(optimizer, schedulers=[scheduler_warmup, scheduler_decay], milestones=[warmup_steps])
+    num_epochs=max_iters
+
+
+    wandb.init(
+    project="gptoss-VS-gpt2",
+    name="gptoss-model",     
+    group="model-comparison",  
+    config={
+        "learning_rate": learning_rate,
+        "max_iters": max_iters,
