@@ -157,3 +157,26 @@ def trainer(model,train_loader,val_loader,device):
     config={
         "learning_rate": learning_rate,
         "max_iters": max_iters,
+        "warmup_steps": warmup_steps,
+        "min_lr": min_lr,
+        "eval_iters": eval_iters,
+        "eval_freq": eval_freq,
+        "device": device,
+        "model_type": "gpt-oss"   
+    }
+)
+
+    start_time = time.time()
+    train_losses, val_losses, tokens_seen = train_model(
+        model, train_loader, val_loader, optimizer,scheduler, device,
+        num_epochs=num_epochs, eval_freq=eval_freq, eval_iter=eval_iters,
+        start_context="a fast driver named Tim went for",
+    )
+
+    torch.save(model.state_dict(),"model/gotoss.pt")
+    end_time = time.time()
+    execution_time_minutes = (end_time - start_time) / 60
+    wandb.log({"training_time_min": execution_time_minutes})
+    wandb.finish()
+    print(f"Training completed in {execution_time_minutes:.2f} minutes.") 
+    return train_losses,val_losses,tokens_seen
