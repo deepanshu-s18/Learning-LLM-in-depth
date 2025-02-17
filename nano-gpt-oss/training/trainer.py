@@ -111,3 +111,26 @@ def train_model(model, train_loader, val_loader, optimizer,scheduler, device, nu
                     
                     artifact.add_file("model/gotoss_best.pt")
                     wandb.log_artifact(artifact)
+                    print(f"✅ Saved new best model with val_loss={val_loss:.3f}")
+        torch.save(model.state_dict(),"model/gotoss.pt")
+        artifact = wandb.Artifact("gptoss-model", type="model")
+        artifact.add_file("model/gotoss.pt")
+        wandb.log_artifact(artifact, aliases=["latest"])
+
+        torch.save([train_losses,val_losses,tokens_seen],"model/losses.pt")
+
+        txt=generate_text(model,start_context)
+        print(txt)
+        wandb.log({"generated_text": wandb.Html(txt)}, step=global_step)
+        clear_gpu_memory()
+        
+        
+    return train_losses, val_losses, track_tokens_seen
+
+def trainer(model,train_loader,val_loader,device):
+    learning_rate = 3e-4        
+    max_iters = 5         
+    warmup_steps = 100    
+    min_lr = 3e-5           
+    eval_iters = 5
+    eval_freq=150          
