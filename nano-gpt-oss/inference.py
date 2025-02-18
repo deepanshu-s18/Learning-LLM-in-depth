@@ -24,3 +24,16 @@ def generate_text(model, prompt, max_tokens=100, temperature=0.8, top_k=50):
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model = model.to(device)
     model.eval()
+    
+    # Tokenize input
+    
+    idx = text_to_token_ids(prompt,tokenizer).to(device)
+    # Generate
+    for _ in range(max_tokens):
+        idx_cond = idx[-context_len:]
+        with torch.inference_mode():
+            logits= model(idx_cond)
+        logits = logits[-1, :] / temperature
+
+        if top_k is not None:
+            v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
