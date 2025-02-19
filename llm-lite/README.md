@@ -52,3 +52,30 @@ python interactive_chat.py
 ## Key Implementations
 
 ### RoPE (Rotary Positional Encoding)
+Relative-distance invariant positional encoding — the same technique used in Llama, Mistral, and most modern LLMs.
+
+### LoRA (Low-Rank Adaptation)
+Fine-tunes models with 10–100x fewer parameters. Formula: `W₀ + (α/r)·BA`
+
+### DPO (Direct Preference Optimization)
+Trains the model to prefer good responses over bad ones directly on log-probabilities — no reward model needed.
+
+### PPO Alignment
+Full actor-critic alignment loop with KL divergence penalty against a frozen reference policy.
+
+### INT4 Quantization
+Affine scale/zero-point calibration + nibble packing. Measures reconstruction MSE and compression ratio.
+
+### KV-Cache
+Side-by-side latency and throughput benchmark: cached vs uncached generation at increasing context lengths.
+
+---
+
+## Project Structure
+
+```
+llm-lite/
+├── main.py                    # Master orchestrator — runs all 8 stages
+├── interactive_chat.py        # Live chat with any checkpoint
+├── data/
+│   └── dataset.py             # Tokenizer, pretraining corpus, SFT pairs, preference triples
