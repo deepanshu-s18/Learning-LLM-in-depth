@@ -79,3 +79,30 @@ llm-lite/
 ├── interactive_chat.py        # Live chat with any checkpoint
 ├── data/
 │   └── dataset.py             # Tokenizer, pretraining corpus, SFT pairs, preference triples
+├── src/
+│   ├── foundations/
+│   │   ├── numpy_autograd.py  # Pure NumPy backprop, verified against PyTorch
+│   │   └── pytorch_engine.py  # Device selector, seeding, gradient clipping, checkpointing
+│   ├── optimization/
+│   │   └── custom_adamw.py    # AdamW from scratch, verified against torch.optim.AdamW
+│   ├── model/
+│   │   ├── rope.py            # Rotary Position Embedding
+│   │   ├── attention.py       # Multi-Head Attention with RoPE + KV-Cache
+│   │   ├── transformer.py     # Full decoder Transformer (RMSNorm, GELU, causal LM head)
+│   │   └── kv_cache.py        # KV-Cache benchmark harness
+│   ├── tuning/
+│   │   ├── pretrain.py        # Causal LM pre-training with perplexity tracking
+│   │   ├── sft.py             # Instruction fine-tuning with prompt loss masking
+│   │   └── lora.py            # LoRALinear layer + weight merging
+│   ├── alignment/
+│   │   ├── reward_model.py    # Bradley-Terry pairwise preference loss
+│   │   ├── ppo_aligner.py     # PPO with KL penalty
+│   │   └── dpo_aligner.py     # Direct Preference Optimization
+│   └── compression/
+│       └── quantizer.py       # INT8 + INT4 nibble packing + compression metrics
+└── tests/
+    └── test_all_modules.py    # Unit tests across all 8 stages
+```
+
+---
+
