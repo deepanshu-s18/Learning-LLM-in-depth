@@ -41,6 +41,7 @@
 
 ### Completed Modules Status
 - **`nano-gpt-beginner`**: GPT-2 from scratch with raw tensor operations, BPE tokenization, and mini-Shakespeare training loop.
+- **`nano-gpt-oss`**: Production-grade PyTorch GPT-2 replication with DistributedDataParallel (DDP), FlashAttention-2, and HellaSwag evaluation.
 ---
 
 ## 📊 Core Benchmarks & Key Findings
