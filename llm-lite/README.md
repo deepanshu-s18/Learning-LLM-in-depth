@@ -25,3 +25,30 @@ So I started from scratch and implemented every major component you'd find insid
 ## What's Inside
 
 The project runs as 8 sequential stages:
+
+```
+Stage 1 → Tokenizer + Dataset
+Stage 2 → NumPy autograd (understand backprop without PyTorch)
+Stage 3 → PyTorch training engine (device selection, seeds, checkpointing)
+Stage 4 → Custom AdamW optimizer (1st/2nd moments, bias correction, weight decay)
+Stage 5 → Transformer model (RoPE + Multi-Head Attention + KV-Cache + RMSNorm)
+Stage 6 → Pre-training + SFT instruction tuning
+Stage 7 → LoRA fine-tuning + alignment (PPO + DPO)
+Stage 8 → INT4 quantization + compression benchmarks
+```
+
+Run all 8 stages at once:
+```bash
+python main.py
+```
+
+Or chat interactively with any checkpoint:
+```bash
+python interactive_chat.py
+```
+
+---
+
+## Key Implementations
+
+### RoPE (Rotary Positional Encoding)
