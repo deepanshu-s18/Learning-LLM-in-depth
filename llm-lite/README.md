@@ -106,3 +106,31 @@ llm-lite/
 
 ---
 
+## Run It
+
+```bash
+pip install torch numpy
+
+# Run everything end-to-end
+python main.py
+
+# Interactive chat
+python interactive_chat.py
+
+# Run unit tests
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+---
+
+## What I Learned
+
+Before this, I understood LLMs conceptually. After this, I understand them mechanically.
+
+The part that surprised me most: DPO is simpler and more stable than PPO in practice. PPO needs a value network, a reward model, and careful KL tuning. DPO bypasses all of that and works directly on the policy log-probabilities. The math is cleaner and the training is more predictable.
+
+INT4 quantization was the other revelation — you can cut model size by 75% and reconstruction MSE stays surprisingly low if your calibration dataset is representative.
+
+---
+
+*Built by [Shobhit Agnihotri](https://github.com/shobhitagnihotri69)*
