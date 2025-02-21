@@ -139,3 +139,27 @@ def get_preference_dataset() -> List[Dict[str, str]]:
         },
         {
             "prompt": "How do you define a function in Python?",
+            "chosen": "You define a function in Python using the def keyword followed by the function name and parentheses.",
+            "rejected": "function myFunc() { return true; }"
+        },
+        {
+            "prompt": "Explain what a transformer is in AI.",
+            "chosen": "A transformer is a deep learning architecture that relies on self-attention to process entire sequences in parallel.",
+            "rejected": "Transformers are giant robots from outer space that turn into cars and trucks."
+        },
+        {
+            "prompt": "What is the benefit of LoRA fine-tuning?",
+            "chosen": "LoRA reduces trainable parameters by over 90%, lowering GPU memory requirements while preserving model quality.",
+            "rejected": "LoRA makes the model 100 times larger and requires thousands of expensive GPUs."
+        },
+        {
+            "prompt": "Why is KV cache important during LLM generation?",
+            "chosen": "It avoids quadratic redundant computations, speeding up token generation by 5x to 10x.",
+            "rejected": "KV cache slows down the model by deleting previous words from memory."
+        },
+        {
+            "prompt": "What is Direct Preference Optimization (DPO)?",
+            "chosen": "DPO directly optimizes policy weights using human preference pairs without needing an explicit reward model or RL loop.",
+            "rejected": "DPO is a database optimization algorithm for indexing SQL tables."
+        }
+    ]
