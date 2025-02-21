@@ -22,3 +22,27 @@ class MultiHeadAttention(nn.Module):
         assert n_embd % n_head == 0, f"n_embd ({n_embd}) must be divisible by n_head ({n_head})."
         
         self.n_embd = n_embd
+        self.n_head = n_head
+        self.head_dim = n_embd // n_head
+        self.use_rope = use_rope
+
+        # Fused Q, K, V projection
+        self.c_attn = nn.Linear(n_embd, 3 * n_embd, bias=False)
+        # Output projection
+        self.c_proj = nn.Linear(n_embd, n_embd, bias=False)
+        
+        self.attn_dropout = nn.Dropout(dropout)
+        self.resid_dropout = nn.Dropout(dropout)
+
+        # Causal mask buffer: lower triangular matrix
+        self.register_buffer(
+            "bias",
+            torch.tril(torch.ones(block_size, block_size)).view(1, 1, block_size, block_size)
+        )
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        cos: Optional[torch.Tensor] = None,
+        sin: Optional[torch.Tensor] = None,
+        start_pos: int = 0,
