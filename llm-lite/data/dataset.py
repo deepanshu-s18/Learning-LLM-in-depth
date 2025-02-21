@@ -92,3 +92,26 @@ def get_sft_dataset() -> List[Dict[str, str]]:
     Supervised Fine-Tuning dataset with (prompt, response) pairs.
     """
     return [
+        {
+            "prompt": "What is backpropagation?",
+            "response": "Backpropagation computes gradients of the loss with respect to parameters using the chain rule."
+        },
+        {
+            "prompt": "Why use the Adam optimizer?",
+            "response": "Adam adapts per-parameter learning rates using exponentially decaying averages of past gradients and squared gradients."
+        },
+        {
+            "prompt": "How does multi-head attention work?",
+            "response": "It projects queries, keys, and values into multiple subspaces, calculates scaled dot-product attention in parallel, and concatenates the outputs."
+        },
+        {
+            "prompt": "What is KV caching in LLMs?",
+            "response": "KV caching stores past key and value projections so autoregressive generation does not recompute previous tokens at each step."
+        },
+        {
+            "prompt": "Explain RoPE positional encoding.",
+            "response": "RoPE applies 2D rotation matrices to query and key vectors so that attention scores depend on the relative distance between positions."
+        },
+        {
+            "prompt": "What is LoRA parameter-efficient fine-tuning?",
+            "response": "LoRA freezes the pretrained weights and adds trainable low-rank decomposition matrices to linear layers."
