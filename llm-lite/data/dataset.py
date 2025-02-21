@@ -115,3 +115,27 @@ def get_sft_dataset() -> List[Dict[str, str]]:
         {
             "prompt": "What is LoRA parameter-efficient fine-tuning?",
             "response": "LoRA freezes the pretrained weights and adds trainable low-rank decomposition matrices to linear layers."
+        },
+        {
+            "prompt": "What is the difference between DPO and PPO?",
+            "response": "PPO trains a policy using a separate reward model and reinforcement learning, while DPO optimizes the policy directly from preference pairs."
+        },
+        {
+            "prompt": "How does model quantization reduce memory?",
+            "response": "Quantization maps 32-bit floating-point weights into 8-bit or 4-bit integers using scale and zero-point calibration."
+        }
+    ]
+
+
+def get_preference_dataset() -> List[Dict[str, str]]:
+    """
+    Preference dataset with (prompt, chosen, rejected) triples for DPO and Reward Model training.
+    """
+    return [
+        {
+            "prompt": "What is the capital of France?",
+            "chosen": "The capital of France is Paris.",
+            "rejected": "France is a country in Europe with cities and mountains."
+        },
+        {
+            "prompt": "How do you define a function in Python?",
