@@ -45,3 +45,26 @@ class SimpleTokenizer:
                 if text[i:].startswith(st):
                     tokens.append(self.token_to_id[st])
                     i += len(st)
+                    matched_special = True
+                    break
+            if not matched_special:
+                ch = text[i]
+                tokens.append(self.token_to_id.get(ch, self.token_to_id.get("?", 0)))
+                i += 1
+        return tokens
+
+    def decode(self, token_ids: List[int]) -> str:
+        """Decodes list of token IDs back into string text."""
+        result = []
+        for tid in token_ids:
+            if 0 <= tid < self.vocab_size:
+                result.append(self.id_to_token[tid])
+        return "".join(result)
+
+
+def get_pretrain_corpus() -> List[str]:
+    """
+    Curated text corpus for causal pretraining.
+    Contains diverse sentences covering concepts, instructions, code, and dialogue.
+    """
+    return [
