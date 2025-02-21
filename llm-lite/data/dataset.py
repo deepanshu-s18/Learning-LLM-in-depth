@@ -68,3 +68,27 @@ def get_pretrain_corpus() -> List[str]:
     Contains diverse sentences covering concepts, instructions, code, and dialogue.
     """
     return [
+        "The quick brown fox jumps over the lazy dog.",
+        "Artificial intelligence is transforming science, engineering, and society.",
+        "Deep neural networks learn representations through gradient descent and backpropagation.",
+        "The transformer architecture uses self-attention mechanisms to model relationships.",
+        "Rotary positional embeddings encode relative distances between tokens in high-dimensional space.",
+        "Key-value caching accelerates autoregressive decoding by saving previous token computations.",
+        "Low-rank adaptation freezes base model weights and trains low-rank matrix pairs.",
+        "Reinforcement learning from human feedback aligns language models with human intentions.",
+        "Direct preference optimization mathematically optimizes policy probabilities without a separate reward model.",
+        "Quantization compresses 32-bit floating point weights into 8-bit and 4-bit integers.",
+        "Python is a versatile programming language widely used in machine learning and data science.",
+        "To write clean code, write modular functions with descriptive names and comprehensive tests.",
+        "Language models predict the next token given the context of previous tokens.",
+        "Knowledge retrieval augmented generation grounds language model responses in verified facts.",
+        "Optimizers like Adam combine momentum and root mean square propagation with bias corrections.",
+        "The loss function measures the discrepancy between predicted logits and true target distributions."
+    ]
+
+
+def get_sft_dataset() -> List[Dict[str, str]]:
+    """
+    Supervised Fine-Tuning dataset with (prompt, response) pairs.
+    """
+    return [
