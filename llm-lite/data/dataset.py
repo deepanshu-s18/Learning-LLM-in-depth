@@ -21,3 +21,27 @@ class SimpleTokenizer:
         
         self.special_tokens = SPECIAL_TOKENS
         self.pad_token_id = 0
+        self.user_token_id = 1
+        self.assistant_token_id = 2
+        self.end_token_id = 3
+
+        # Vocab mapping: special tokens first, then characters
+        self.id_to_token = list(self.special_tokens)
+        for ch in chars:
+            if ch not in self.id_to_token:
+                self.id_to_token.append(ch)
+                
+        self.token_to_id = {tok: idx for idx, tok in enumerate(self.id_to_token)}
+        self.vocab_size = len(self.id_to_token)
+
+    def encode(self, text: str) -> List[int]:
+        """Encodes string text into integer token IDs, parsing special tokens."""
+        tokens: List[int] = []
+        i = 0
+        n = len(text)
+        while i < n:
+            matched_special = False
+            for st in self.special_tokens:
+                if text[i:].startswith(st):
+                    tokens.append(self.token_to_id[st])
+                    i += len(st)
