@@ -70,3 +70,28 @@ class MultiHeadAttention(nn.Module):
 
         # Apply RoPE to queries and keys
         if self.use_rope and cos is not None and sin is not None:
+            q = apply_rope(q, cos, sin, start_pos=start_pos)
+            k = apply_rope(k, cos, sin, start_pos=start_pos)
+
+        # KV-Cache integration (Notebook 06)
+        if kv_cache is not None:
+            past_k, past_v = kv_cache
+            k = torch.cat([past_k, k], dim=2)
+            v = torch.cat([past_v, v], dim=2)
+        new_kv_cache = (k, v)
+
+        # Scaled Dot-Product Attention: Softmax((Q @ K.T) / sqrt(head_dim) + mask) @ V
+        total_T = k.size(2)
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
+
+        # Apply causal mask if processing full sequences (training or prompt prefill)
+        if kv_cache is None or T > 1:
+            att = att.masked_fill(self.bias[:, :, :T, :total_T] == 0, float("-inf"))
+
+        att = F.softmax(att, dim=-1)
+        att = self.attn_dropout(att)
+        
+        y = att @ v # [B, n_head, T, head_dim]
+        y = y.transpose(1, 2).contiguous().view(B, T, C) # Re-assemble heads: [B, T, C]
+
+        return self.resid_dropout(self.c_proj(y)), new_kv_cache
