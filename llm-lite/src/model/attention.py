@@ -46,3 +46,27 @@ class MultiHeadAttention(nn.Module):
         cos: Optional[torch.Tensor] = None,
         sin: Optional[torch.Tensor] = None,
         start_pos: int = 0,
+        kv_cache: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
+    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+        """
+        Forward pass for Multi-Head Self-Attention.
+        
+        Args:
+            x: Input tensor [B, T, C]
+            cos, sin: Precomputed RoPE frequency tables
+            start_pos: Position index for RoPE
+            kv_cache: Optional tuple of (past_k, past_v) from previous decode steps
+        """
+        B, T, C = x.size()
+
+        # Calculate Q, K, V projections
+        qkv = self.c_attn(x)
+        q, k, v = qkv.split(self.n_embd, dim=2)
+
+        # Reshape to [B, n_head, T, head_dim]
+        q = q.view(B, T, self.n_head, self.head_dim).transpose(1, 2)
+        k = k.view(B, T, self.n_head, self.head_dim).transpose(1, 2)
+        v = v.view(B, T, self.n_head, self.head_dim).transpose(1, 2)
+
+        # Apply RoPE to queries and keys
+        if self.use_rope and cos is not None and sin is not None:
