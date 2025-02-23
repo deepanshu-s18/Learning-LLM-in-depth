@@ -40,3 +40,24 @@ def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor, start_pos:
     if x.dim() == 4:
         B, n_head, T, head_dim = x.shape
         cos_slice = cos[start_pos : start_pos + T, :head_dim].unsqueeze(0).unsqueeze(0) # [1, 1, T, head_dim]
+        sin_slice = sin[start_pos : start_pos + T, :head_dim].unsqueeze(0).unsqueeze(0)
+    else:
+        raise ValueError(f"Expected 4D tensor for RoPE, got {x.dim()}D.")
+
+    # Rotate pairs: [-x1, x0, -x3, x2, ...]
+    # Reshape to [..., head_dim // 2, 2]
+    x_pairs = x.view(*x.shape[:-1], head_dim // 2, 2)
+    x_rotated = torch.stack([-x_pairs[..., 1], x_pairs[..., 0]], dim=-1).flatten(-2)
+    
+    return x * cos_slice.to(x.device) + x_rotated * sin_slice.to(x.device)
+
+
+def verify_rope_relative_invariance() -> Dict[str, Any]:
+    """
+    Mathematically verifies that <RoPE(q, m), RoPE(k, n)> depends strictly
+    on relative offset (m - n), remaining identical regardless of absolute position shift.
+    """
+    dim = 64
+    max_len = 100
+    cos, sin = precompute_rope_frequencies(dim, max_len)
+    
