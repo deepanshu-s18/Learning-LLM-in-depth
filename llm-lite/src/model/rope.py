@@ -19,3 +19,24 @@ def precompute_rope_frequencies(dim: int, max_seq_len: int, theta_base: float = 
     assert dim % 2 == 0, f"Dimension {dim} must be even for RoPE."
     half_dim = dim // 2
     indices = torch.arange(0, half_dim, dtype=torch.float32)
+    freqs = 1.0 / (theta_base ** (2.0 * indices / dim))
+    
+    positions = torch.arange(0, max_seq_len, dtype=torch.float32)
+    # Outer product: [max_seq_len, half_dim]
+    angles = torch.outer(positions, freqs)
+    
+    # Repeat along last dim so shape is [max_seq_len, dim]
+    cos = torch.cos(angles).repeat_interleave(2, dim=-1)
+    sin = torch.sin(angles).repeat_interleave(2, dim=-1)
+    return cos, sin
+
+
+def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor, start_pos: int = 0) -> torch.Tensor:
+    """
+    Applies rotary positional embeddings to input tensor x.
+    x shape: [batch_size, seq_len, num_heads, head_dim] or [batch_size, num_heads, seq_len, head_dim]
+    """
+    # If shape is [B, n_head, T, head_dim]
+    if x.dim() == 4:
+        B, n_head, T, head_dim = x.shape
+        cos_slice = cos[start_pos : start_pos + T, :head_dim].unsqueeze(0).unsqueeze(0) # [1, 1, T, head_dim]
