@@ -61,3 +61,25 @@ def verify_rope_relative_invariance() -> Dict[str, Any]:
     max_len = 100
     cos, sin = precompute_rope_frequencies(dim, max_len)
     
+    torch.manual_seed(42)
+    q = torch.randn(1, 1, 1, dim)
+    k = torch.randn(1, 1, 1, dim)
+    
+    # Offset d = 5
+    # Pair A: positions (10, 15) -> relative diff = -5
+    q_10 = apply_rope(q, cos, sin, start_pos=10)
+    k_15 = apply_rope(k, cos, sin, start_pos=15)
+    dot_a = torch.sum(q_10 * k_15).item()
+    
+    # Pair B: positions (50, 55) -> relative diff = -5
+    q_50 = apply_rope(q, cos, sin, start_pos=50)
+    k_55 = apply_rope(k, cos, sin, start_pos=55)
+    dot_b = torch.sum(q_50 * k_55).item()
+    
+    diff = abs(dot_a - dot_b)
+    return {
+        "dot_product_pair_A": dot_a,
+        "dot_product_pair_B": dot_b,
+        "absolute_difference": diff,
+        "invariance_verified": diff < 1e-4
+    }
