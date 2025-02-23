@@ -41,3 +41,24 @@ def run_chat_studio():
     print("\n" + "=" * 60)
     print("  💬 LLM-Lite Interactive Terminal Studio")
     print("=" * 60)
+    print("Available Models:")
+    for k, (name, path) in available_checkpoints.items():
+        status = "Available" if os.path.exists(path) else "Not Found (Run main.py first)"
+        print(f"  [{k}] {name} - ({status})")
+
+    choice = input("\nSelect Model [1-4] (default: 2): ").strip() or "2"
+    model_name, ckpt_path = available_checkpoints.get(choice, available_checkpoints["2"])
+
+    if not os.path.exists(ckpt_path):
+        print(f"\n[!] Checkpoint {ckpt_path} does not exist yet. Initializing fresh model...")
+        model = TransformerLM(config).to(device)
+    else:
+        print(f"\nLoading {model_name} from {ckpt_path}...")
+        model = TransformerLM(config).to(device)
+        if "sft" in ckpt_path:
+            inject_lora(model, r=4, alpha=8.0)
+        load_checkpoint(model, ckpt_path, device=device)
+
+    model.eval()
+    use_kv = True
+    print("\n" + "-" * 60)
