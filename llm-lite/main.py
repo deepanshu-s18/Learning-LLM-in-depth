@@ -60,3 +60,24 @@ def main():
     
     # 1. NumPy Autograd vs PyTorch Autograd (Notebook 01)
     np_res = verify_numpy_vs_pytorch()
+    print(f"[01. Backprop from Scratch] NumPy vs PyTorch Autograd Parity: "
+          f"max diff = {np_res['max_W_grad_difference']:.2e} -> "
+          f"{'PASSED ✓' if np_res['parity_verified'] else 'FAILED ✗'}")
+
+    # 2. Custom AdamW vs torch.optim.AdamW (Notebook 03)
+    adam_res = verify_adamw_against_pytorch()
+    print(f"[03. AdamW Optimizer] CustomAdamW vs PyTorch AdamW Parity: "
+          f"max diff = {adam_res['max_parameter_difference']:.2e} -> "
+          f"{'PASSED ✓' if adam_res['parity_verified'] else 'FAILED ✗'}")
+
+    # 3. RoPE Relative Invariance (Notebook 07)
+    rope_res = verify_rope_relative_invariance()
+    print(f"[07. RoPE Embeddings] Relative Distance Invariance: "
+          f"diff = {rope_res['absolute_difference']:.2e} -> "
+          f"{'PASSED ✓' if rope_res['invariance_verified'] else 'FAILED ✗'}")
+
+    # -------------------------------------------------------------------------
+    # STAGE 2: Model Architecture & Pretraining (Notebooks 04, 05, 08)
+    # -------------------------------------------------------------------------
+    print_banner("STAGE 2: Decoder Transformer Pretraining (Notebooks 04, 05, 08)")
+    config = TransformerConfig(
