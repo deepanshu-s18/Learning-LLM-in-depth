@@ -84,3 +84,25 @@ def run_chat_studio():
             prompt_text = f"<|user|>{user_input}<|assistant|>"
             prompt_ids = tokenizer.encode(prompt_text)
 
+            t0 = time.perf_counter()
+            output_ids = model.generate(prompt_ids, max_new_tokens=50, temperature=0.7, use_kv_cache=use_kv)
+            duration = time.perf_counter() - t0
+
+            full_output = tokenizer.decode(output_ids)
+            if "<|assistant|>" in full_output:
+                reply = full_output.split("<|assistant|>")[-1].replace("<|end|>", "").strip()
+            else:
+                reply = full_output.strip()
+
+            new_tokens_count = max(len(output_ids) - len(prompt_ids), 1)
+            tok_sec = new_tokens_count / max(duration, 1e-6)
+
+            print(f"\n{model_name}: {reply}")
+            print(f"⚡ [Stats: {new_tokens_count} tokens in {duration:.3f}s | {tok_sec:.1f} tok/sec]\n")
+
+        except KeyboardInterrupt:
+            print("\nExiting.")
+            break
+
+if __name__ == "__main__":
+    run_chat_studio()
