@@ -39,3 +39,24 @@ from src.alignment.reward_model import RewardModel, train_reward_model
 from src.alignment.ppo_aligner import train_ppo_alignment
 from src.alignment.dpo_aligner import train_dpo_alignment
 from src.compression.quantizer import benchmark_model_quantization
+
+def print_banner(title: str):
+    print("\n" + "=" * 75)
+    print(f"  🚀 {title}")
+    print("=" * 75)
+
+def main():
+    set_seed(42)
+    device = get_device()
+    print_banner(f"LLM-Lite: Master Lifecycle Pipeline (Device: {device})")
+
+    tokenizer = SimpleTokenizer()
+    print(f"✓ Tokenizer initialized with vocabulary size: {tokenizer.vocab_size}")
+
+    # -------------------------------------------------------------------------
+    # STAGE 1: Mathematical Foundations Parity Check (Notebooks 01, 02, 03, 07)
+    # -------------------------------------------------------------------------
+    print_banner("STAGE 1: Mathematical Foundations & Parity Verification")
+    
+    # 1. NumPy Autograd vs PyTorch Autograd (Notebook 01)
+    np_res = verify_numpy_vs_pytorch()
