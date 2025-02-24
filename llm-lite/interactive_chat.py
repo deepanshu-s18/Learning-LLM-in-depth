@@ -62,3 +62,25 @@ def run_chat_studio():
     model.eval()
     use_kv = True
     print("\n" + "-" * 60)
+    print(f"Active Model: {model_name} | Device: {device} | KV-Cache: ON")
+    print("Commands:")
+    print("  'toggle_kv' -> Switch KV Cache ON/OFF")
+    print("  'quit' or 'exit' -> Exit studio")
+    print("-" * 60 + "\n")
+
+    while True:
+        try:
+            user_input = input("You: ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() in ["quit", "exit"]:
+                print("Exiting studio. Goodbye!")
+                break
+            if user_input.lower() == "toggle_kv":
+                use_kv = not use_kv
+                print(f"[System] KV Cache is now: {'ON (O(1) fast)' if use_kv else 'OFF (O(T^2) naive)'}\n")
+                continue
+
+            prompt_text = f"<|user|>{user_input}<|assistant|>"
+            prompt_ids = tokenizer.encode(prompt_text)
+
