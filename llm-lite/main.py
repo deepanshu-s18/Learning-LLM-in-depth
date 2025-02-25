@@ -81,3 +81,24 @@ def main():
     # -------------------------------------------------------------------------
     print_banner("STAGE 2: Decoder Transformer Pretraining (Notebooks 04, 05, 08)")
     config = TransformerConfig(
+        vocab_size=tokenizer.vocab_size,
+        block_size=96,
+        n_layer=4,
+        n_head=4,
+        n_embd=128,
+        dropout=0.0,
+        use_rope=True
+    )
+    base_model = TransformerLM(config).to(device)
+    pretrain_texts = get_pretrain_corpus()
+
+    print(f"Pretraining Base Model on {len(pretrain_texts)} sentences...")
+    pt_res = train_pretrain(base_model, pretrain_texts, tokenizer, epochs=30, lr=3e-3, device=device)
+    print(f"✓ Base Model Pretrained! Final Loss: {pt_res['final_pretrain_loss']:.4f} | "
+          f"Perplexity: {pt_res['pretrain_perplexity']:.2f}")
+
+    # -------------------------------------------------------------------------
+    # STAGE 3: Supervised Fine-Tuning + LoRA (Notebooks 09, 10)
+    # -------------------------------------------------------------------------
+    print_banner("STAGE 3: Supervised Fine-Tuning & LoRA PEFT (Notebooks 09, 10)")
+    sft_data = get_sft_dataset()
