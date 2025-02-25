@@ -164,3 +164,24 @@ def main():
     # STAGE 7: Model Compression & Quantization (Notebook 11)
     # -------------------------------------------------------------------------
     print_banner("STAGE 7: Model Quantization INT8 & INT4 (Notebook 11)")
+    q_res = benchmark_model_quantization(sft_model)
+    print(f"• Uncompressed (FP32) Model Size : {q_res['fp32_memory_kb']:.1f} KB")
+    print(f"• Quantized INT8 Model Size      : {q_res['int8_memory_kb']:.1f} KB ({q_res['int8_compression_ratio']} compression, MSE: {q_res['int8_average_mse']:.6f})")
+    print(f"• Quantized INT4 Model Size      : {q_res['int4_memory_kb']:.1f} KB ({q_res['int4_compression_ratio']} compression, MSE: {q_res['int4_average_mse']:.6f})")
+
+    # -------------------------------------------------------------------------
+    # STAGE 8: Side-by-Side Model Comparison & Final Evaluation Report
+    # -------------------------------------------------------------------------
+    print_banner("STAGE 8: Side-by-Side Model Comparison Report")
+    eval_prompt = "<|user|>What is KV caching in LLMs?<|assistant|>"
+    prompt_tokens = tokenizer.encode(eval_prompt)
+
+    print(f"Prompt: \"What is KV caching in LLMs?\"\n")
+
+    out_base = tokenizer.decode(base_model.generate(prompt_tokens, max_new_tokens=40, use_kv_cache=True))
+    out_sft = tokenizer.decode(sft_model.generate(prompt_tokens, max_new_tokens=40, use_kv_cache=True))
+    out_ppo = tokenizer.decode(ppo_model.generate(prompt_tokens, max_new_tokens=40, use_kv_cache=True))
+    out_dpo = tokenizer.decode(dpo_model.generate(prompt_tokens, max_new_tokens=40, use_kv_cache=True))
+
+    def clean_output(full_text: str) -> str:
+        if "<|assistant|>" in full_text:
