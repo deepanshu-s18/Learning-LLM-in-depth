@@ -102,3 +102,23 @@ def main():
     # -------------------------------------------------------------------------
     print_banner("STAGE 3: Supervised Fine-Tuning & LoRA PEFT (Notebooks 09, 10)")
     sft_data = get_sft_dataset()
+    sft_model = copy.deepcopy(base_model)
+
+    # Parameter accounting before and after LoRA injection
+    initial_params = get_parameter_summary(sft_model)
+    print(f"Total Base Parameters: {initial_params['total_parameters']:,}")
+
+    # Inject LoRA adapters into attention projections
+    lora_params = inject_lora(sft_model, r=4, alpha=8.0)
+    lora_summary = get_parameter_summary(sft_model)
+    print(f"LoRA Injected! Trainable parameters: {lora_summary['trainable_parameters']:,} "
+          f"({100.0 - lora_summary['frozen_percentage']:.2f}% of model) | "
+          f"Frozen: {lora_summary['frozen_percentage']:.2f}%")
+
+    print(f"Fine-Tuning SFT Model on {len(sft_data)} instructions with prompt masking (label = -100)...")
+    sft_res = train_sft(sft_model, sft_data, tokenizer, epochs=25, lr=1e-3, device=device)
+    print(f"✓ SFT Fine-Tuning Complete! Final Loss: {sft_res['final_sft_loss']:.4f}")
+
+    # -------------------------------------------------------------------------
+    # STAGE 4: Human Preference Alignment via Reward Model + PPO (Notebook 12)
+    # -------------------------------------------------------------------------
