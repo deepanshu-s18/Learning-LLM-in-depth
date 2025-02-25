@@ -143,3 +143,24 @@ def main():
     # -------------------------------------------------------------------------
     print_banner("STAGE 5: Direct Preference Optimization (DPO) (Notebook 13)")
     dpo_model = copy.deepcopy(sft_model)
+    print("Running DPO on policy log-probabilities without a separate reward model...")
+    dpo_res = train_dpo_alignment(dpo_model, pref_data, tokenizer, epochs=20, lr=5e-4, beta=0.1, device=device)
+    print(f"✓ DPO Aligned! Final Loss: {dpo_res['final_dpo_loss']:.4f} | "
+          f"Implicit Reward Margin: {dpo_res['final_implicit_margin']:.4f}")
+
+    # -------------------------------------------------------------------------
+    # STAGE 6: KV-Cache Latency & Speedup Benchmark (Notebook 06)
+    # -------------------------------------------------------------------------
+    print_banner("STAGE 6: KV-Cache Optimization & Benchmarking (Notebook 06)")
+    test_prompt = "<|user|>What is backpropagation?<|assistant|>"
+    test_ids = tokenizer.encode(test_prompt)
+    kv_res = benchmark_kv_cache(sft_model, test_ids, gen_len=45, runs=3)
+    print(f"Tokens Generated: {kv_res['tokens_generated']}")
+    print(f"• Naive Quadratic O(T^2) Generation : {kv_res['naive_tokens_per_sec']:.1f} tok/sec ({kv_res['naive_time_sec']:.4f}s)")
+    print(f"• Dynamic KV-Cache O(1) Generation  : {kv_res['kv_cache_tokens_per_sec']:.1f} tok/sec ({kv_res['kv_cache_time_sec']:.4f}s)")
+    print(f"⚡ KV-Cache Speedup Factor: {kv_res['speedup_factor']:.2f}x faster!")
+
+    # -------------------------------------------------------------------------
+    # STAGE 7: Model Compression & Quantization (Notebook 11)
+    # -------------------------------------------------------------------------
+    print_banner("STAGE 7: Model Quantization INT8 & INT4 (Notebook 11)")
