@@ -122,3 +122,24 @@ def main():
     # -------------------------------------------------------------------------
     # STAGE 4: Human Preference Alignment via Reward Model + PPO (Notebook 12)
     # -------------------------------------------------------------------------
+    print_banner("STAGE 4: Bradley-Terry Reward Model + PPO Alignment (Notebook 12)")
+    pref_data = get_preference_dataset()
+
+    print("1. Training Bradley-Terry Reward Model on pairwise preferences...")
+    reward_model = RewardModel(sft_model).to(device)
+    rm_res = train_reward_model(reward_model, pref_data, tokenizer, epochs=20, lr=1e-3, device=device)
+    print(f"   ✓ Reward Model Trained! Loss: {rm_res['final_rm_loss']:.4f} | "
+          f"Mean Chosen Reward: {rm_res['chosen_rewards_mean']:.3f} vs Rejected: {rm_res['rejected_rewards_mean']:.3f}")
+
+    print("2. Running PPO Actor-Critic Alignment with KL divergence penalty...")
+    ppo_model = copy.deepcopy(sft_model)
+    prompts_list = [item["prompt"] for item in pref_data]
+    ppo_res = train_ppo_alignment(ppo_model, reward_model, prompts_list, tokenizer, epochs=12, lr=5e-4, device=device)
+    print(f"   ✓ PPO Aligned! Final Loss: {ppo_res['final_ppo_loss']:.4f} | "
+          f"Penalized Reward: {ppo_res['final_penalized_reward']:.3f} | KL: {ppo_res['average_kl_divergence']:.4f}")
+
+    # -------------------------------------------------------------------------
+    # STAGE 5: Direct Preference Optimization (DPO) (Notebook 13)
+    # -------------------------------------------------------------------------
+    print_banner("STAGE 5: Direct Preference Optimization (DPO) (Notebook 13)")
+    dpo_model = copy.deepcopy(sft_model)
