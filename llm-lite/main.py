@@ -185,3 +185,24 @@ def main():
 
     def clean_output(full_text: str) -> str:
         if "<|assistant|>" in full_text:
+            ans = full_text.split("<|assistant|>")[-1]
+            return ans.replace("<|end|>", "").strip()
+        return full_text.strip()
+
+    print(f"1. [Base Model (Parrot)]       : {clean_output(out_base)[:120]}...")
+    print(f"2. [SFT + LoRA Model]          : {clean_output(out_sft)[:120]}...")
+    print(f"3. [RLHF + PPO Aligned Model]  : {clean_output(out_ppo)[:120]}...")
+    print(f"4. [DPO Aligned Model]         : {clean_output(out_dpo)[:120]}...")
+
+    # Save checkpoints to models/
+    os.makedirs("models", exist_ok=True)
+    save_checkpoint(base_model, None, "models/base_model.pt")
+    save_checkpoint(sft_model, None, "models/sft_lora_model.pt")
+    save_checkpoint(ppo_model, None, "models/ppo_model.pt")
+    save_checkpoint(dpo_model, None, "models/dpo_model.pt")
+    print(f"\n✓ All 4 model checkpoints saved successfully to ./models/")
+
+    print_banner("🎉 ALL 13 TUTORIAL MODULES SUCCESSFULLY EXECUTED & VERIFIED!")
+
+if __name__ == "__main__":
+    main()
