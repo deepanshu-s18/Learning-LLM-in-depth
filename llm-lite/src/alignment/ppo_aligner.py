@@ -42,3 +42,25 @@ def train_ppo_alignment(
     lr: float = 5e-4,
     kl_coef: float = 0.1,
     clip_eps: float = 0.2,
+    device: torch.device = torch.device("cpu")
+) -> Dict[str, Any]:
+    """
+    PPO RLHF Loop:
+    1. Frozen Reference Policy pi_ref ensures stability.
+    2. Reward Model scores generated responses.
+    3. KL divergence penalty keeps actor close to pi_ref.
+    4. Clipped surrogate loss updates actor weights.
+    """
+    actor_policy.train()
+    reward_model.eval()
+    
+    # Frozen reference policy pi_ref
+    ref_policy = copy.deepcopy(actor_policy)
+    ref_policy.eval()
+    for p in ref_policy.parameters():
+        p.requires_grad = False
+
+    critic = ValueCritic(actor_policy).to(device)
+    critic.train()
+
+    optimizer = CustomAdamW(
