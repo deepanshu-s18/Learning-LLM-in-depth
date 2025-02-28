@@ -64,3 +64,25 @@ def train_ppo_alignment(
     critic.train()
 
     optimizer = CustomAdamW(
+        list(actor_policy.parameters()) + list(critic.parameters()),
+        lr=lr,
+        weight_decay=0.0
+    )
+
+    block_size = actor_policy.config.block_size
+    loss_history = []
+    rewards_history = []
+
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        
+        # Batch preparation from prompts
+        batch_ids = []
+        for p_text in prompts:
+            full_text = f"<|user|>{p_text}<|assistant|>"
+            enc = tokenizer.encode(full_text)[:block_size]
+            enc += [tokenizer.pad_token_id] * (block_size - len(enc))
+            batch_ids.append(enc)
+        
+        input_tensor = torch.tensor(batch_ids, dtype=torch.long, device=device)
+
