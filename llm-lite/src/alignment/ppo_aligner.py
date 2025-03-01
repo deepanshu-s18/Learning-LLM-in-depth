@@ -86,3 +86,25 @@ def train_ppo_alignment(
         
         input_tensor = torch.tensor(batch_ids, dtype=torch.long, device=device)
 
+        # 1. Forward pass on Actor and Frozen Reference
+        logits_actor, _, _ = actor_policy(input_tensor)
+        with torch.no_grad():
+            logits_ref, _, _ = ref_policy(input_tensor)
+            raw_rewards = reward_model(input_tensor)
+
+        # 2. Token-level Log Probabilities
+        log_probs_actor = F.log_softmax(logits_actor, dim=-1)
+        log_probs_ref = F.log_softmax(logits_ref, dim=-1)
+
+        # 3. Approximate KL Divergence: KL(pi_theta || pi_ref) = sum(pi * (log pi - log ref))
+        probs_actor = F.softmax(logits_actor, dim=-1)
+        kl_div = torch.sum(probs_actor * (log_probs_actor - log_probs_ref), dim=-1).mean(-1) # [B]
+
+        # 4. Penalized Reward: r_penalized = r - beta * KL
+        penalized_reward = raw_rewards - (kl_coef * kl_div)
+
+        # 5. Critic Value & Advantage: A = r_penalized - V(s)
+        values = critic(input_tensor)
+        advantages = (penalized_reward - values).detach()
+
+        # 6. PPO Clipped Surrogate Loss
