@@ -40,3 +40,24 @@ class RewardModel(nn.Module):
         # Take the hidden representation of the last token
         last_hidden = x[:, -1, :] # [B, hidden_dim]
         rewards = self.reward_head(last_hidden).squeeze(-1) # [B]
+        return rewards
+
+
+def compute_bradley_terry_loss(r_chosen: torch.Tensor, r_rejected: torch.Tensor) -> torch.Tensor:
+    """
+    Bradley-Terry Pairwise Preference Loss:
+    L = -E[log(sigmoid(r_chosen - r_rejected))]
+    """
+    # Numerically stable formulation of -log(sigmoid(diff)) = log(1 + exp(-diff))
+    return -F.logsigmoid(r_chosen - r_rejected).mean()
+
+
+def train_reward_model(
+    reward_model: RewardModel,
+    preference_data: List[Dict[str, str]],
+    tokenizer: SimpleTokenizer,
+    epochs: int = 15,
+    lr: float = 1e-3,
+    device: torch.device = torch.device("cpu")
+) -> Dict[str, Any]:
+    """
