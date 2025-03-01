@@ -108,3 +108,26 @@ def train_ppo_alignment(
         advantages = (penalized_reward - values).detach()
 
         # 6. PPO Clipped Surrogate Loss
+        # Importance ratio r_t(theta) approx exp(log_prob_actor - log_prob_old)
+        ratio = torch.exp((log_probs_actor - log_probs_ref).mean(dim=[1, 2]))
+        surr1 = ratio * advantages
+        surr2 = torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps) * advantages
+        policy_loss = -torch.min(surr1, surr2).mean()
+
+        # Value loss (MSE)
+        value_loss = F.mse_loss(values, penalized_reward)
+
+        total_loss = policy_loss + 0.5 * value_loss
+        total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(actor_policy.parameters(), max_norm=1.0)
+        optimizer.step()
+
+        loss_history.append(float(total_loss.item()))
+        rewards_history.append(float(raw_rewards.mean().item()))
+
+    return {
+        "final_ppo_loss": loss_history[-1],
+        "final_penalized_reward": float(penalized_reward.mean().item()),
+        "average_kl_divergence": float(kl_div.mean().item()),
+        "loss_history": loss_history
+    }
