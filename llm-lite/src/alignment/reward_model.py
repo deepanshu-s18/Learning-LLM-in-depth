@@ -82,3 +82,25 @@ def train_reward_model(
         r_enc += [tokenizer.pad_token_id] * (block_size - len(r_enc))
         
         chosen_ids.append(c_enc)
+        rejected_ids.append(r_enc)
+
+    c_tensor = torch.tensor(chosen_ids, dtype=torch.long, device=device)
+    r_tensor = torch.tensor(rejected_ids, dtype=torch.long, device=device)
+
+    loss_history = []
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        r_c = reward_model(c_tensor)
+        r_r = reward_model(r_tensor)
+        loss = compute_bradley_terry_loss(r_c, r_r)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(reward_model.parameters(), max_norm=1.0)
+        optimizer.step()
+        loss_history.append(float(loss.item()))
+
+    return {
+        "final_rm_loss": loss_history[-1],
+        "chosen_rewards_mean": float(r_c.mean().item()),
+        "rejected_rewards_mean": float(r_r.mean().item()),
+        "loss_history": loss_history
+    }
