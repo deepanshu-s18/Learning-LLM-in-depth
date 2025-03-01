@@ -19,3 +19,24 @@ class RewardModel(nn.Module):
     Reward Model wrapping the transformer backbone with a scalar reward head.
     Scores a prompt-completion sequence: r(x, y) in R.
     """
+    def __init__(self, base_lm: TransformerLM):
+        super().__init__()
+        # Clone backbone
+        self.backbone = copy.deepcopy(base_lm)
+        hidden_dim = base_lm.config.n_embd
+        # Scalar reward head replaces LM vocabulary projection
+        self.reward_head = nn.Linear(hidden_dim, 1, bias=False)
+
+    def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
+        """
+        Returns scalar reward for the entire sequence (extracted from the final token position).
+        input_ids: [B, T]
+        """
+        B, T = input_ids.size()
+        x = self.backbone.drop(self.backbone.wte(input_ids))
+        for block in self.backbone.blocks:
+            x, _ = block(x, cos=self.backbone.rope_cos, sin=self.backbone.rope_sin)
+        x = self.backbone.ln_f(x)
+        # Take the hidden representation of the last token
+        last_hidden = x[:, -1, :] # [B, hidden_dim]
+        rewards = self.reward_head(last_hidden).squeeze(-1) # [B]
