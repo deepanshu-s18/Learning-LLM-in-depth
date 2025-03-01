@@ -61,3 +61,24 @@ def train_reward_model(
     device: torch.device = torch.device("cpu")
 ) -> Dict[str, Any]:
     """
+    Trains the reward model to rank chosen completions higher than rejected completions.
+    """
+    reward_model.train()
+    optimizer = CustomAdamW(reward_model.parameters(), lr=lr, weight_decay=0.01)
+    block_size = reward_model.backbone.config.block_size
+
+    # Prepare batches
+    chosen_ids = []
+    rejected_ids = []
+    for item in preference_data:
+        c_text = f"<|user|>{item['prompt']}<|assistant|>{item['chosen']}<|end|>"
+        r_text = f"<|user|>{item['prompt']}<|assistant|>{item['rejected']}<|end|>"
+        
+        c_enc = tokenizer.encode(c_text)[:block_size]
+        r_enc = tokenizer.encode(r_text)[:block_size]
+        
+        # Pad
+        c_enc += [tokenizer.pad_token_id] * (block_size - len(c_enc))
+        r_enc += [tokenizer.pad_token_id] * (block_size - len(r_enc))
+        
+        chosen_ids.append(c_enc)
