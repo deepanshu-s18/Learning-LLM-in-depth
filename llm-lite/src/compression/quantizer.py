@@ -20,3 +20,26 @@ def calculate_scale_zero_point(
     Computes scale (S) and zero-point (Z) affine parameters.
     S = (max - min) / (qmax - qmin)
     Z = round(-min / S) + qmin
+    """
+    if max_val == min_val:
+        return 1.0, 0
+    scale = (max_val - min_val) / (qmax - qmin)
+    zero_point = int(round(-min_val / scale)) + qmin
+    zero_point = max(qmin, min(qmax, zero_point))
+    return scale, zero_point
+
+
+def quantize_int8(tensor: torch.Tensor) -> Tuple[torch.Tensor, float, int]:
+    """
+    Quantizes FP32 tensor to INT8 format (range [-128, 127]).
+    """
+    qmin, qmax = -128, 127
+    min_val = float(tensor.min().item())
+    max_val = float(tensor.max().item())
+    scale, zero_point = calculate_scale_zero_point(min_val, max_val, qmin, qmax)
+
+    # q = clamp(round(x / S + Z), qmin, qmax)
+    q_tensor = torch.clamp(torch.round(tensor / scale) + zero_point, qmin, qmax).to(torch.int8)
+    return q_tensor, scale, zero_point
+
+
