@@ -88,3 +88,26 @@ def dequantize_int4(packed: torch.Tensor, original_shape: torch.Size, scale: flo
     
     # Restore signed range
     q = unpacked[: original_shape.numel()].view(original_shape).to(torch.int32) + qmin
+    return scale * (q.to(torch.float32) - zero_point)
+
+
+def benchmark_model_quantization(model: nn.Module) -> Dict[str, Any]:
+    """
+    Quantizes all linear weights of the model to INT8 and INT4,
+    evaluating memory reduction and reconstruction Signal-to-Noise Ratio (SNR).
+    """
+    total_fp32_bytes = 0
+    total_int8_bytes = 0
+    total_int4_bytes = 0
+    mse_int8_list = []
+    mse_int4_list = []
+
+    for name, p in model.named_parameters():
+        if "weight" in name and p.dim() >= 2:
+            data = p.data
+            numel = data.numel()
+            total_fp32_bytes += numel * 4 # 4 bytes for float32
+            total_int8_bytes += numel * 1 # 1 byte for int8
+            total_int4_bytes += math.ceil(numel / 2) # 0.5 byte for int4
+
+            # INT8 evaluation
