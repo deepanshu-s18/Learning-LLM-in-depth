@@ -66,3 +66,25 @@ def quantize_int4(tensor: torch.Tensor) -> Tuple[torch.Tensor, float, int]:
 
     # Pack pairs of 4-bit numbers: (high_nibble << 4) | low_nibble
     flat = q_unsigned.flatten()
+    if flat.numel() % 2 != 0:
+        flat = torch.cat([flat, torch.zeros(1, dtype=torch.uint8, device=flat.device)])
+    
+    high = flat[0::2] << 4
+    low = flat[1::2] & 0x0F
+    packed = high | low
+
+    return packed, scale, zero_point
+
+
+def dequantize_int4(packed: torch.Tensor, original_shape: torch.Size, scale: float, zero_point: int) -> torch.Tensor:
+    """
+    Unpacks 4-bit nibbles from uint8 bytes and dequantizes back to FP32.
+    """
+    qmin = -8
+    # Unpack
+    high = (packed >> 4) & 0x0F
+    low = packed & 0x0F
+    unpacked = torch.stack([high, low], dim=-1).flatten()
+    
+    # Restore signed range
+    q = unpacked[: original_shape.numel()].view(original_shape).to(torch.int32) + qmin
