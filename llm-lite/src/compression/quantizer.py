@@ -111,3 +111,26 @@ def benchmark_model_quantization(model: nn.Module) -> Dict[str, Any]:
             total_int4_bytes += math.ceil(numel / 2) # 0.5 byte for int4
 
             # INT8 evaluation
+            q8, s8, z8 = quantize_int8(data)
+            deq8 = dequantize_int8(q8, s8, z8)
+            mse8 = torch.mean((data - deq8) ** 2).item()
+            mse_int8_list.append(mse8)
+
+            # INT4 evaluation
+            q4, s4, z4 = quantize_int4(data)
+            deq4 = dequantize_int4(q4, data.shape, s4, z4)
+            mse4 = torch.mean((data - deq4) ** 2).item()
+            mse_int4_list.append(mse4)
+
+    avg_mse_int8 = sum(mse_int8_list) / max(len(mse_int8_list), 1)
+    avg_mse_int4 = sum(mse_int4_list) / max(len(mse_int4_list), 1)
+
+    return {
+        "fp32_memory_kb": total_fp32_bytes / 1024.0,
+        "int8_memory_kb": total_int8_bytes / 1024.0,
+        "int4_memory_kb": total_int4_bytes / 1024.0,
+        "int8_compression_ratio": f"{(total_fp32_bytes / max(total_int8_bytes, 1)):.1f}x",
+        "int4_compression_ratio": f"{(total_fp32_bytes / max(total_int4_bytes, 1)):.1f}x",
+        "int8_average_mse": avg_mse_int8,
+        "int4_average_mse": avg_mse_int4
+    }
