@@ -41,3 +41,25 @@ class NumpyLinear:
         self.dW = np.dot(self.x.T, grad_output)
         self.db = np.sum(grad_output, axis=0, keepdims=True)
         grad_input = np.dot(grad_output, self.W.T)
+        return grad_input
+
+
+class NumpySigmoid:
+    """
+    Sigmoid activation: sigma(x) = 1 / (1 + exp(-x)).
+    Derivative: d/dx sigma(x) = sigma(x) * (1 - sigma(x)).
+    """
+    def __init__(self):
+        self.output = None
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        x_clipped = np.clip(x, -50.0, 50.0)
+        self.output = 1.0 / (1.0 + np.exp(-x_clipped))
+        return self.output
+
+    def backward(self, grad_output: np.ndarray) -> np.ndarray:
+        return grad_output * self.output * (1.0 - self.output)
+
+
+class NumpyMSELoss:
+    """
