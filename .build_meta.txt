@@ -11,3 +11,4 @@
 [2025-03-04 14:45:40 +0530] docs(llm-lite): specify lightweight LLM architecture, tokenizer, and dataset pipelines
 [2025-03-04 15:01:23 +0530] docs(llm-lite): add instruction fine-tuning (SFT) and DPO alignment methodologies
 [2025-03-05 10:43:09 +0530] feat(llm-lite): enhance error handling and configuration flexibility in __init__
+[2025-03-05 11:34:52 +0530] perf(llm-lite): vectorize matrix operations and reduce kernel overhead in __init__
