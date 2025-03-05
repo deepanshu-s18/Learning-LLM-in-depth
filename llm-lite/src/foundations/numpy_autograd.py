@@ -63,3 +63,24 @@ class NumpySigmoid:
 
 class NumpyMSELoss:
     """
+    Mean Squared Error loss: L = (1 / N) * sum((y_pred - y_true)^2).
+    Derivative: dL / dy_pred = (2 / N) * (y_pred - y_true).
+    """
+    def forward(self, y_pred: np.ndarray, y_true: np.ndarray) -> float:
+        return float(np.mean((y_pred - y_true) ** 2))
+
+    def backward(self, y_pred: np.ndarray, y_true: np.ndarray) -> np.ndarray:
+        n = y_pred.shape[0] * y_pred.shape[1]
+        return (2.0 / n) * (y_pred - y_true)
+
+
+def verify_numpy_vs_pytorch() -> Dict[str, float]:
+    """
+    Mathematically verifies that our pure NumPy backprop engine produces
+    exact gradient parity with PyTorch Autograd.
+    """
+    np.random.seed(42)
+    torch.manual_seed(42)
+    
+    in_dim, out_dim = 4, 2
+    batch_size = 3
