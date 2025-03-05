@@ -84,3 +84,25 @@ def verify_numpy_vs_pytorch() -> Dict[str, float]:
     
     in_dim, out_dim = 4, 2
     batch_size = 3
+    
+    x_np = np.random.randn(batch_size, in_dim).astype(np.float64)
+    y_target_np = np.random.randn(batch_size, out_dim).astype(np.float64)
+    
+    # 1. Pure NumPy Forward & Backward
+    np_layer = NumpyLinear(in_dim, out_dim, seed=42)
+    np_act = NumpySigmoid()
+    np_loss = NumpyMSELoss()
+    
+    z_np = np_layer.forward(x_np)
+    a_np = np_act.forward(z_np)
+    loss_val_np = np_loss.forward(a_np, y_target_np)
+    
+    d_loss = np_loss.backward(a_np, y_target_np)
+    d_z = np_act.backward(d_loss)
+    d_x = np_layer.backward(d_z)
+    
+    # 2. PyTorch Autograd with exact same weights
+    x_pt = torch.tensor(x_np, requires_grad=True, dtype=torch.float64)
+    y_target_pt = torch.tensor(y_target_np, dtype=torch.float64)
+    
+    pt_linear = nn.Linear(in_dim, out_dim, bias=True).to(torch.float64)
