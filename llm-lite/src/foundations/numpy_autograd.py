@@ -19,3 +19,25 @@ class NumpyLinear:
         # Xavier/Glorot initialization
         limit = np.sqrt(6.0 / (in_features + out_features))
         self.W = np.random.uniform(-limit, limit, (in_features, out_features))
+        self.b = np.zeros((1, out_features))
+        
+        # Cache for backpropagation
+        self.x = None
+        self.dW = None
+        self.db = None
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Forward pass: z = x @ W + b"""
+        self.x = x
+        return np.dot(x, self.W) + self.b
+
+    def backward(self, grad_output: np.ndarray) -> np.ndarray:
+        """
+        Backward pass using the chain rule:
+        dW = x.T @ grad_output
+        db = sum(grad_output, axis=0, keepdims=True)
+        dx = grad_output @ W.T
+        """
+        self.dW = np.dot(self.x.T, grad_output)
+        self.db = np.sum(grad_output, axis=0, keepdims=True)
+        grad_input = np.dot(grad_output, self.W.T)
