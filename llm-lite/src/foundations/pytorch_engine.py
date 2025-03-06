@@ -23,3 +23,16 @@ def get_device() -> torch.device:
 def set_seed(seed: int = 42) -> None:
     """Enforces deterministic execution across random, numpy, and torch."""
     random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+def clip_gradients(parameters, max_norm: float = 1.0) -> float:
+    """Clips parameter gradients by L2 norm to prevent exploding gradients."""
+    return float(torch.nn.utils.clip_grad_norm_(parameters, max_norm=max_norm))
+
+def save_checkpoint(model: nn.Module, optimizer: Optional[torch.optim.Optimizer], filepath: str, extra_meta: Dict[str, Any] = None) -> None:
+    """Serializes model weights, optimizer state, and training metadata to disk."""
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    state = {
