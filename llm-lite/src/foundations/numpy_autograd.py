@@ -106,3 +106,25 @@ def verify_numpy_vs_pytorch() -> Dict[str, float]:
     y_target_pt = torch.tensor(y_target_np, dtype=torch.float64)
     
     pt_linear = nn.Linear(in_dim, out_dim, bias=True).to(torch.float64)
+    with torch.no_grad():
+        pt_linear.weight.copy_(torch.tensor(np_layer.W.T))
+        pt_linear.bias.copy_(torch.tensor(np_layer.b.squeeze(0)))
+        
+    z_pt = pt_linear(x_pt)
+    a_pt = torch.sigmoid(z_pt)
+    loss_pt = torch.mean((a_pt - y_target_pt) ** 2)
+    loss_pt.backward()
+    
+    # Measure discrepancies
+    w_grad_diff = float(np.max(np.abs(np_layer.dW - pt_linear.weight.grad.numpy().T)))
+    b_grad_diff = float(np.max(np.abs(np_layer.db - pt_linear.bias.grad.numpy())))
+    x_grad_diff = float(np.max(np.abs(d_x - x_pt.grad.numpy())))
+    
+    return {
+        "numpy_loss": loss_val_np,
+        "pytorch_loss": float(loss_pt.item()),
+        "max_W_grad_difference": w_grad_diff,
+        "max_b_grad_difference": b_grad_diff,
+        "max_x_grad_difference": x_grad_diff,
+        "parity_verified": (w_grad_diff < 1e-7 and b_grad_diff < 1e-7 and x_grad_diff < 1e-7)
+    }
