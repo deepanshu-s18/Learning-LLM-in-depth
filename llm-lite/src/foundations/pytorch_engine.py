@@ -36,3 +36,16 @@ def save_checkpoint(model: nn.Module, optimizer: Optional[torch.optim.Optimizer]
     """Serializes model weights, optimizer state, and training metadata to disk."""
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     state = {
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict() if optimizer else None,
+        "metadata": extra_meta or {}
+    }
+    torch.save(state, filepath)
+
+def load_checkpoint(model: nn.Module, filepath: str, optimizer: Optional[torch.optim.Optimizer] = None, device: torch.device = torch.device("cpu")) -> Dict[str, Any]:
+    """Deserializes model checkpoint from disk."""
+    state = torch.load(filepath, map_location=device)
+    model.load_state_dict(state["model_state_dict"])
+    if optimizer and state.get("optimizer_state_dict"):
+        optimizer.load_state_dict(state["optimizer_state_dict"])
+    return state.get("metadata", {})
