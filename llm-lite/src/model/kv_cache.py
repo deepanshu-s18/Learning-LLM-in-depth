@@ -23,3 +23,16 @@ def benchmark_kv_cache(
 
     # 1. Benchmark Naive Generation (O(T^2))
     naive_times = []
+    for _ in range(runs):
+        start = time.perf_counter()
+        _ = model.generate(prompt_ids, max_new_tokens=gen_len, use_kv_cache=False)
+        naive_times.append(time.perf_counter() - start)
+    avg_naive_time = sum(naive_times) / runs
+    naive_tok_sec = gen_len / max(avg_naive_time, 1e-6)
+
+    # 2. Benchmark KV-Cache Generation (O(1) per step)
+    cache_times = []
+    for _ in range(runs):
+        start = time.perf_counter()
+        _ = model.generate(prompt_ids, max_new_tokens=gen_len, use_kv_cache=True)
+        cache_times.append(time.perf_counter() - start)
