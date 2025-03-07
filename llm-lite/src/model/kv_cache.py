@@ -10,3 +10,16 @@ import torch
 from typing import Dict, Any, List
 from src.model.transformer import TransformerLM
 
+def benchmark_kv_cache(
+    model: TransformerLM,
+    prompt_ids: List[int],
+    gen_len: int = 40,
+    runs: int = 3
+) -> Dict[str, Any]:
+    """
+    Benchmarks generation latency and throughput comparing Naive vs KV-Cache decoding.
+    """
+    model.eval()
+
+    # 1. Benchmark Naive Generation (O(T^2))
+    naive_times = []
