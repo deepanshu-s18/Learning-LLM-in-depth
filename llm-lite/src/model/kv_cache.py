@@ -36,3 +36,16 @@ def benchmark_kv_cache(
         start = time.perf_counter()
         _ = model.generate(prompt_ids, max_new_tokens=gen_len, use_kv_cache=True)
         cache_times.append(time.perf_counter() - start)
+    avg_cache_time = sum(cache_times) / runs
+    cache_tok_sec = gen_len / max(avg_cache_time, 1e-6)
+
+    speedup = avg_naive_time / max(avg_cache_time, 1e-6)
+
+    return {
+        "tokens_generated": gen_len,
+        "naive_time_sec": avg_naive_time,
+        "naive_tokens_per_sec": naive_tok_sec,
+        "kv_cache_time_sec": avg_cache_time,
+        "kv_cache_tokens_per_sec": cache_tok_sec,
+        "speedup_factor": speedup
+    }
