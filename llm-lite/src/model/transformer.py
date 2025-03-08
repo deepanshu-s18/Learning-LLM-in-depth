@@ -59,3 +59,24 @@ class TransformerBlock(nn.Module):
     def __init__(self, config: TransformerConfig):
         super().__init__()
         self.ln_1 = RMSNorm(config.n_embd)
+        self.attn = MultiHeadAttention(
+            n_embd=config.n_embd,
+            n_head=config.n_head,
+            block_size=config.block_size,
+            dropout=config.dropout,
+            use_rope=config.use_rope
+        )
+        self.ln_2 = RMSNorm(config.n_embd)
+        self.mlp = MLP(config)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        cos: Optional[torch.Tensor] = None,
+        sin: Optional[torch.Tensor] = None,
+        start_pos: int = 0,
+        kv_cache: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
+    ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+        # Pre-LN Self-Attention
+        norm_x = self.ln_1(x)
+        attn_out, new_kv_cache = self.attn(norm_x, cos=cos, sin=sin, start_pos=start_pos, kv_cache=kv_cache)
