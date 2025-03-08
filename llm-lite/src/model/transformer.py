@@ -80,3 +80,23 @@ class TransformerBlock(nn.Module):
         # Pre-LN Self-Attention
         norm_x = self.ln_1(x)
         attn_out, new_kv_cache = self.attn(norm_x, cos=cos, sin=sin, start_pos=start_pos, kv_cache=kv_cache)
+        x = x + attn_out
+        
+        # Pre-LN MLP
+        x = x + self.mlp(self.ln_2(x))
+        return x, new_kv_cache
+
+
+class TransformerLM(nn.Module):
+    """
+    Complete Decoder-Only Generative Language Model.
+    """
+    def __init__(self, config: TransformerConfig):
+        super().__init__()
+        self.config = config
+        
+        # Token embedding
+        self.wte = nn.Embedding(config.vocab_size, config.n_embd)
+        self.drop = nn.Dropout(config.dropout)
+        
+        # Transformer blocks
