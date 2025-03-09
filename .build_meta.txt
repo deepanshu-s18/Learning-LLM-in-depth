@@ -12,3 +12,4 @@
 [2025-03-04 15:01:23 +0530] docs(llm-lite): add instruction fine-tuning (SFT) and DPO alignment methodologies
 [2025-03-05 10:43:09 +0530] feat(llm-lite): enhance error handling and configuration flexibility in __init__
 [2025-03-05 11:34:52 +0530] perf(llm-lite): vectorize matrix operations and reduce kernel overhead in __init__
+[2025-03-09 22:05:29 +0530] feat(llm-lite): integrate backward propagation hooks and gradient scaling in __init__
