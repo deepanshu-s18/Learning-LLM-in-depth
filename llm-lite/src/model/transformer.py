@@ -100,3 +100,24 @@ class TransformerLM(nn.Module):
         self.drop = nn.Dropout(config.dropout)
         
         # Transformer blocks
+        self.blocks = nn.ModuleList([TransformerBlock(config) for _ in range(config.n_layer)])
+        self.ln_f = RMSNorm(config.n_embd)
+        
+        # LM Head (projects hidden state back to vocabulary logits)
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        # Weight tying: share weights between token embeddings and output projection
+        self.lm_head.weight = self.wte.weight
+
+        # Precompute RoPE frequency tables
+        head_dim = config.n_embd // config.n_head
+        cos, sin = precompute_rope_frequencies(head_dim, config.block_size)
+        self.register_buffer("rope_cos", cos, persistent=False)
+        self.register_buffer("rope_sin", sin, persistent=False)
+
+    def forward(
+        self,
+        idx: torch.Tensor,
+        targets: Optional[torch.Tensor] = None,
+        kv_caches: Optional[List[Optional[Tuple[torch.Tensor, torch.Tensor]]]] = None,
+        start_pos: int = 0
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], List[Tuple[torch.Tensor, torch.Tensor]]]:
