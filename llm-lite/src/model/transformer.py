@@ -162,3 +162,23 @@ class TransformerLM(nn.Module):
     ) -> List[int]:
         """
         Autoregressive text generation.
+        Supports both fast KV-Cache decoding and naive non-cached decoding.
+        """
+        self.eval()
+        device = next(self.parameters()).device
+        generated = list(prompt_ids)
+        
+        if use_kv_cache:
+            # Prefill phase with prompt
+            idx = torch.tensor([prompt_ids], dtype=torch.long, device=device)
+            logits, _, kv_caches = self.forward(idx, start_pos=0)
+            next_token_logits = logits[0, -1, :] / max(temperature, 1e-5)
+            probs = F.softmax(next_token_logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1).item()
+            generated.append(next_token)
+
+            # Incremental single-token decode phase
+            curr_pos = len(prompt_ids)
+            for _ in range(max_new_tokens - 1):
+                if eos_token_id is not None and next_token == eos_token_id:
+                    break
