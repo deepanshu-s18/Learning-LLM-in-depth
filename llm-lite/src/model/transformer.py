@@ -182,3 +182,24 @@ class TransformerLM(nn.Module):
             for _ in range(max_new_tokens - 1):
                 if eos_token_id is not None and next_token == eos_token_id:
                     break
+                idx = torch.tensor([[next_token]], dtype=torch.long, device=device)
+                logits, _, kv_caches = self.forward(idx, kv_caches=kv_caches, start_pos=curr_pos)
+                next_token_logits = logits[0, -1, :] / max(temperature, 1e-5)
+                probs = F.softmax(next_token_logits, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1).item()
+                generated.append(next_token)
+                curr_pos += 1
+        else:
+            # Naive generation: recompute entire context at every step (O(T^2))
+            for _ in range(max_new_tokens):
+                context = generated[-self.config.block_size:]
+                idx = torch.tensor([context], dtype=torch.long, device=device)
+                logits, _, _ = self.forward(idx, start_pos=0)
+                next_token_logits = logits[0, -1, :] / max(temperature, 1e-5)
+                probs = F.softmax(next_token_logits, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1).item()
+                generated.append(next_token)
+                if eos_token_id is not None and next_token == eos_token_id:
+                    break
+
+        return generated
