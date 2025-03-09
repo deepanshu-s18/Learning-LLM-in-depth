@@ -141,3 +141,24 @@ class TransformerLM(nn.Module):
             )
             new_kv_caches.append(new_cache)
 
+        x = self.ln_f(x)
+        logits = self.lm_head(x) # [B, T, vocab_size]
+
+        loss = None
+        if targets is not None:
+            # Shift targets for causal language modeling
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-100)
+
+        return logits, loss, new_kv_caches
+
+    @torch.no_grad()
+    def generate(
+        self,
+        prompt_ids: List[int],
+        max_new_tokens: int = 50,
+        temperature: float = 0.8,
+        use_kv_cache: bool = True,
+        eos_token_id: Optional[int] = 3
+    ) -> List[int]:
+        """
+        Autoregressive text generation.
