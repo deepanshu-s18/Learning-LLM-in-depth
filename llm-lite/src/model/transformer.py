@@ -121,3 +121,23 @@ class TransformerLM(nn.Module):
         kv_caches: Optional[List[Optional[Tuple[torch.Tensor, torch.Tensor]]]] = None,
         start_pos: int = 0
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], List[Tuple[torch.Tensor, torch.Tensor]]]:
+        """
+        Forward pass.
+        idx: [B, T]
+        targets: [B, T] (optional, computes cross-entropy loss)
+        """
+        B, T = idx.size()
+        x = self.drop(self.wte(idx))
+        
+        new_kv_caches = []
+        for i, block in enumerate(self.blocks):
+            layer_cache = kv_caches[i] if kv_caches is not None else None
+            x, new_cache = block(
+                x,
+                cos=self.rope_cos,
+                sin=self.rope_sin,
+                start_pos=start_pos,
+                kv_cache=layer_cache
+            )
+            new_kv_caches.append(new_cache)
+
