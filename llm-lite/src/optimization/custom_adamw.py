@@ -71,3 +71,28 @@ class CustomAdamW(torch.optim.Optimizer):
 
                 # 1. Decoupled Weight Decay: theta = theta * (1 - lr * weight_decay)
                 if weight_decay != 0:
+                    p.mul_(1.0 - lr * weight_decay)
+
+                # 2. Update 1st and 2nd moments
+                # exp_avg = beta1 * exp_avg + (1 - beta1) * grad
+                exp_avg.mul_(beta1).add_(grad, alpha=1.0 - beta1)
+                # exp_avg_sq = beta2 * exp_avg_sq + (1 - beta2) * (grad ** 2)
+                exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1.0 - beta2)
+
+                # 3. Bias corrections
+                bias_correction1 = 1.0 - beta1 ** step
+                bias_correction2 = 1.0 - beta2 ** step
+
+                step_size = lr / bias_correction1
+                denom = (exp_avg_sq.sqrt() / math.sqrt(bias_correction2)).add_(eps)
+
+                # 4. Parameter update
+                p.addcdiv_(exp_avg, denom, value=-step_size)
+
+        return loss
+
+
+def verify_adamw_against_pytorch() -> Dict[str, Any]:
+    """
+    Verifies that CustomAdamW matches PyTorch's official torch.optim.AdamW
+    to high floating-point precision across multiple steps.
