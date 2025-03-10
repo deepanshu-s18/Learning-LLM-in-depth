@@ -47,3 +47,27 @@ class CustomAdamW(torch.optim.Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
+            lr = group["lr"]
+            beta1, beta2 = group["betas"]
+            eps = group["eps"]
+            weight_decay = group["weight_decay"]
+
+            for p in group["params"]:
+                if p.grad is None:
+                    continue
+                grad = p.grad
+
+                state = self.state[p]
+                # State initialization
+                if len(state) == 0:
+                    state["step"] = 0
+                    state["exp_avg"] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                    state["exp_avg_sq"] = torch.zeros_like(p, memory_format=torch.preserve_format)
+
+                exp_avg = state["exp_avg"]
+                exp_avg_sq = state["exp_avg_sq"]
+                state["step"] += 1
+                step = state["step"]
+
+                # 1. Decoupled Weight Decay: theta = theta * (1 - lr * weight_decay)
+                if weight_decay != 0:
