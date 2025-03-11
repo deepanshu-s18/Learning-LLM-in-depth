@@ -19,3 +19,25 @@ class LoRALinear(nn.Module):
     """
     def __init__(self, base_layer: nn.Linear, r: int = 4, alpha: float = 8.0):
         super().__init__()
+        self.base_layer = base_layer
+        self.r = r
+        self.alpha = alpha
+        self.scaling = alpha / r
+        self.merged = False
+
+        # Freeze the base weight & bias
+        self.base_layer.weight.requires_grad_(False)
+        if self.base_layer.bias is not None:
+            self.base_layer.bias.requires_grad_(False)
+
+        in_features = base_layer.in_features
+        out_features = base_layer.out_features
+
+        # Low-rank matrices
+        self.lora_A = nn.Parameter(torch.empty(r, in_features))
+        self.lora_B = nn.Parameter(torch.empty(out_features, r))
+
+        # Initialization: Kaiming uniform for A, zero for B
+        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
+        nn.init.zeros_(self.lora_B)
+
