@@ -62,3 +62,25 @@ def inject_lora(model: nn.Module, r: int = 4, alpha: float = 8.0) -> int:
     """
     Recursively replaces attention projection layers with LoRALinear wrappers.
     Returns the total number of trainable LoRA parameters.
+    """
+    trainable_params = 0
+    for name, module in model.named_modules():
+        if hasattr(module, "c_attn") and isinstance(module.c_attn, nn.Linear):
+            module.c_attn = LoRALinear(module.c_attn, r=r, alpha=alpha)
+            trainable_params += (module.c_attn.lora_A.numel() + module.c_attn.lora_B.numel())
+        if hasattr(module, "c_proj") and isinstance(module.c_proj, nn.Linear):
+            module.c_proj = LoRALinear(module.c_proj, r=r, alpha=alpha)
+            trainable_params += (module.c_proj.lora_A.numel() + module.c_proj.lora_B.numel())
+    return trainable_params
+
+
+def get_parameter_summary(model: nn.Module) -> Dict[str, Any]:
+    """Computes total vs trainable parameter counts and parameter reduction ratio."""
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    reduction_pct = 100.0 * (1.0 - (trainable_params / max(total_params, 1)))
+    return {
+        "total_parameters": total_params,
+        "trainable_parameters": trainable_params,
+        "frozen_percentage": reduction_pct
+    }
