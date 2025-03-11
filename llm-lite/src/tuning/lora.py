@@ -41,3 +41,24 @@ class LoRALinear(nn.Module):
         nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
         nn.init.zeros_(self.lora_B)
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.merged:
+            return self.base_layer(x)
+        # Base forward + low-rank delta
+        base_out = self.base_layer(x)
+        lora_out = F.linear(F.linear(x, self.lora_A), self.lora_B) * self.scaling
+        return base_out + lora_out
+
+    def merge_weights(self) -> None:
+        """Fuses LoRA delta directly into base weights for zero-overhead deployment."""
+        if not self.merged:
+            with torch.no_grad():
+                delta_W = (self.lora_B @ self.lora_A) * self.scaling
+                self.base_layer.weight.data.add_(delta_W)
+            self.merged = True
+
+
+def inject_lora(model: nn.Module, r: int = 4, alpha: float = 8.0) -> int:
+    """
+    Recursively replaces attention projection layers with LoRALinear wrappers.
+    Returns the total number of trainable LoRA parameters.
