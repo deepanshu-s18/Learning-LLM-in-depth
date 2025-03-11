@@ -96,3 +96,28 @@ def verify_adamw_against_pytorch() -> Dict[str, Any]:
     """
     Verifies that CustomAdamW matches PyTorch's official torch.optim.AdamW
     to high floating-point precision across multiple steps.
+    """
+    torch.manual_seed(42)
+    p_custom = torch.nn.Parameter(torch.randn(10, 10, dtype=torch.float64))
+    p_torch = torch.nn.Parameter(p_custom.clone().detach())
+
+    opt_custom = CustomAdamW([p_custom], lr=1e-2, weight_decay=0.01)
+    opt_torch = torch.optim.AdamW([p_torch], lr=1e-2, weight_decay=0.01)
+
+    max_diff = 0.0
+    for _ in range(5):
+        # Generate dummy gradients
+        grad = torch.randn_like(p_custom)
+        p_custom.grad = grad.clone()
+        p_torch.grad = grad.clone()
+
+        opt_custom.step()
+        opt_torch.step()
+
+        diff = torch.max(torch.abs(p_custom - p_torch)).item()
+        max_diff = max(max_diff, diff)
+
+    return {
+        "max_parameter_difference": max_diff,
+        "parity_verified": max_diff < 1e-10
+    }
