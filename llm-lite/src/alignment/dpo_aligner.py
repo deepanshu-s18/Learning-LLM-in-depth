@@ -47,3 +47,28 @@ def compute_dpo_loss(
     ref_logratios = ref_logps_chosen - ref_logps_rejected
 
     logits = beta * (pi_logratios - ref_logratios)
+    loss = -F.logsigmoid(logits).mean()
+    
+    # Implicit reward margin
+    implicit_margin = logits.detach().mean()
+    return loss, implicit_margin
+
+
+def train_dpo_alignment(
+    policy_model: TransformerLM,
+    preference_data: List[Dict[str, str]],
+    tokenizer: SimpleTokenizer,
+    epochs: int = 15,
+    lr: float = 5e-4,
+    beta: float = 0.1,
+    device: torch.device = torch.device("cpu")
+) -> Dict[str, Any]:
+    """
+    Executes Direct Preference Optimization.
+    """
+    policy_model.train()
+    
+    # Frozen Reference Policy pi_ref
+    ref_model = copy.deepcopy(policy_model)
+    ref_model.eval()
+    for p in ref_model.parameters():
