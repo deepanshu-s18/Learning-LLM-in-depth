@@ -97,3 +97,28 @@ def train_dpo_alignment(
         mask_c = [0] * (len(p_enc) - 1) + [1] * len(c_enc)
         mask_c = mask_c[: block_size - 1]
         
+        # Pad
+        pad_c_len = block_size - len(full_c)
+        full_c += [tokenizer.pad_token_id] * pad_c_len
+        mask_c += [0] * ((block_size - 1) - len(mask_c))
+
+        # Rejected full seq
+        full_r = (p_enc + r_enc)[:block_size]
+        mask_r = [0] * (len(p_enc) - 1) + [1] * len(r_enc)
+        mask_r = mask_r[: block_size - 1]
+
+        pad_r_len = block_size - len(full_r)
+        full_r += [tokenizer.pad_token_id] * pad_r_len
+        mask_r += [0] * ((block_size - 1) - len(mask_r))
+
+        chosen_ids.append(full_c)
+        chosen_masks.append(mask_c)
+        rejected_ids.append(full_r)
+        rejected_masks.append(mask_r)
+
+    c_ids_t = torch.tensor(chosen_ids, dtype=torch.long, device=device)
+    c_mask_t = torch.tensor(chosen_masks, dtype=torch.float32, device=device)
+    r_ids_t = torch.tensor(rejected_ids, dtype=torch.long, device=device)
+    r_mask_t = torch.tensor(rejected_masks, dtype=torch.float32, device=device)
+
+    # Precompute reference policy log probabilities once (frozen)
