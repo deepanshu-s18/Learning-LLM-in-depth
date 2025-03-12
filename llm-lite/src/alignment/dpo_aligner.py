@@ -22,3 +22,28 @@ def get_batch_log_probs(model: TransformerLM, input_ids: torch.Tensor, label_mas
     """
     logits, _, _ = model(input_ids) # [B, T, V]
     shift_logits = logits[:, :-1, :] # [B, T-1, V]
+    shift_labels = input_ids[:, 1:] # [B, T-1]
+
+    log_probs = F.log_softmax(shift_logits, dim=-1)
+    # Gather log prob of true tokens
+    per_token_log_probs = torch.gather(log_probs, dim=2, index=shift_labels.unsqueeze(-1)).squeeze(-1)
+    # Mask out prompt tokens so we only sum log-probs over the completion
+    completion_log_probs = (per_token_log_probs * label_mask).sum(dim=-1)
+    return completion_log_probs
+
+
+def compute_dpo_loss(
+    pi_logps_chosen: torch.Tensor,
+    pi_logps_rejected: torch.Tensor,
+    ref_logps_chosen: torch.Tensor,
+    ref_logps_rejected: torch.Tensor,
+    beta: float = 0.1
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    DPO Loss:
+    L = -E[log(sigmoid(beta * (log(pi_w / ref_w) - log(pi_l / ref_l))))]
+    """
+    pi_logratios = pi_logps_chosen - pi_logps_rejected
+    ref_logratios = ref_logps_chosen - ref_logps_rejected
+
+    logits = beta * (pi_logratios - ref_logratios)
