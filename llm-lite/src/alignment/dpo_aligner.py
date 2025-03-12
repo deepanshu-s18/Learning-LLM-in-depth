@@ -72,3 +72,28 @@ def train_dpo_alignment(
     ref_model = copy.deepcopy(policy_model)
     ref_model.eval()
     for p in ref_model.parameters():
+        p.requires_grad = False
+
+    optimizer = CustomAdamW(policy_model.parameters(), lr=lr, weight_decay=0.0)
+    block_size = policy_model.config.block_size
+
+    # Prepare batches
+    chosen_ids = []
+    chosen_masks = []
+    rejected_ids = []
+    rejected_masks = []
+
+    for item in preference_data:
+        prompt_text = f"<|user|>{item['prompt']}<|assistant|>"
+        c_text = f"{item['chosen']}<|end|>"
+        r_text = f"{item['rejected']}<|end|>"
+
+        p_enc = tokenizer.encode(prompt_text)
+        c_enc = tokenizer.encode(c_text)
+        r_enc = tokenizer.encode(r_text)
+
+        # Chosen full seq
+        full_c = (p_enc + c_enc)[:block_size]
+        mask_c = [0] * (len(p_enc) - 1) + [1] * len(c_enc)
+        mask_c = mask_c[: block_size - 1]
+        
