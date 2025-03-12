@@ -122,3 +122,28 @@ def train_dpo_alignment(
     r_mask_t = torch.tensor(rejected_masks, dtype=torch.float32, device=device)
 
     # Precompute reference policy log probabilities once (frozen)
+    with torch.no_grad():
+        ref_logp_c = get_batch_log_probs(ref_model, c_ids_t, c_mask_t)
+        ref_logp_r = get_batch_log_probs(ref_model, r_ids_t, r_mask_t)
+
+    loss_history = []
+    margin_history = []
+
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        pi_logp_c = get_batch_log_probs(policy_model, c_ids_t, c_mask_t)
+        pi_logp_r = get_batch_log_probs(policy_model, r_ids_t, r_mask_t)
+
+        loss, margin = compute_dpo_loss(pi_logp_c, pi_logp_r, ref_logp_c, ref_logp_r, beta=beta)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(policy_model.parameters(), max_norm=1.0)
+        optimizer.step()
+
+        loss_history.append(float(loss.item()))
+        margin_history.append(float(margin.item()))
+
+    return {
+        "final_dpo_loss": loss_history[-1],
+        "final_implicit_margin": margin_history[-1],
+        "loss_history": loss_history
+    }
