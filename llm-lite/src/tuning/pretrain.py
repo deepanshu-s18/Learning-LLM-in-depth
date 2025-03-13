@@ -17,3 +17,22 @@ def prepare_pretrain_batch(texts: List[str], tokenizer: SimpleTokenizer, block_s
     """
     Encodes text into causal next-token prediction input-target pairs:
     x = tokens[t], y = tokens[t+1]
+    """
+    token_stream: List[int] = []
+    for text in texts:
+        token_stream.extend(tokenizer.encode(text))
+        token_stream.append(tokenizer.end_token_id)
+        
+    # Chunk into sequences of length block_size + 1
+    inputs = []
+    targets = []
+    for i in range(0, len(token_stream) - block_size, block_size // 2):
+        chunk = token_stream[i : i + block_size + 1]
+        if len(chunk) == block_size + 1:
+            inputs.append(chunk[:-1])
+            targets.append(chunk[1:])
+            
+    if not inputs:
+        # Fallback padding
+        inputs = [[tokenizer.pad_token_id] * block_size]
+        targets = [[tokenizer.pad_token_id] * block_size]
