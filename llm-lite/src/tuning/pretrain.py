@@ -55,3 +55,23 @@ def train_pretrain(
     """
     model.train()
     optimizer = CustomAdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    x_batch, y_batch = prepare_pretrain_batch(texts, tokenizer, model.config.block_size, device)
+
+    loss_history = []
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        _, loss, _ = model(x_batch, targets=y_batch)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+        loss_val = float(loss.item())
+        loss_history.append(loss_val)
+
+    final_loss = loss_history[-1]
+    perplexity = math.exp(min(final_loss, 20.0))
+    
+    return {
+        "final_pretrain_loss": final_loss,
+        "pretrain_perplexity": perplexity,
+        "loss_history": loss_history
+    }
