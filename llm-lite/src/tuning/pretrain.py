@@ -36,3 +36,22 @@ def prepare_pretrain_batch(texts: List[str], tokenizer: SimpleTokenizer, block_s
         # Fallback padding
         inputs = [[tokenizer.pad_token_id] * block_size]
         targets = [[tokenizer.pad_token_id] * block_size]
+
+    x = torch.tensor(inputs, dtype=torch.long, device=device)
+    y = torch.tensor(targets, dtype=torch.long, device=device)
+    return x, y
+
+
+def train_pretrain(
+    model: TransformerLM,
+    texts: List[str],
+    tokenizer: SimpleTokenizer,
+    epochs: int = 25,
+    lr: float = 3e-3,
+    device: torch.device = torch.device("cpu")
+) -> Dict[str, Any]:
+    """
+    Executes pretraining on causal text sequences using CustomAdamW.
+    """
+    model.train()
+    optimizer = CustomAdamW(model.parameters(), lr=lr, weight_decay=0.01)
