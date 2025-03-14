@@ -19,3 +19,24 @@ from src.compression.quantizer import quantize_int8, dequantize_int8, quantize_i
 
 class TestLLMLite(unittest.TestCase):
     def test_tokenizer(self):
+        tok = SimpleTokenizer()
+        text = "Hello world! <|user|> Test <|assistant|>"
+        encoded = tok.encode(text)
+        decoded = tok.decode(encoded)
+        self.assertEqual(text, decoded)
+
+    def test_numpy_autograd_parity(self):
+        res = verify_numpy_vs_pytorch()
+        self.assertTrue(res["parity_verified"])
+        self.assertLess(res["max_W_grad_difference"], 1e-7)
+
+    def test_adamw_parity(self):
+        res = verify_adamw_against_pytorch()
+        self.assertTrue(res["parity_verified"])
+        self.assertLess(res["max_parameter_difference"], 1e-10)
+
+    def test_rope_invariance(self):
+        res = verify_rope_relative_invariance()
+        self.assertTrue(res["invariance_verified"])
+        self.assertLess(res["absolute_difference"], 1e-6)
+
