@@ -19,3 +19,24 @@ def prepare_sft_batch(
     device: torch.device
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
+    Creates input tokens and masked target tokens.
+    Target tokens corresponding to the user prompt are masked with -100 (ignored by CrossEntropyLoss).
+    """
+    input_list = []
+    target_list = []
+
+    for item in dataset:
+        prompt_text = f"<|user|>{item['prompt']}<|assistant|>"
+        response_text = f"{item['response']}<|end|>"
+
+        prompt_tokens = tokenizer.encode(prompt_text)
+        response_tokens = tokenizer.encode(response_text)
+
+        full_sequence = prompt_tokens + response_tokens
+        # Labels: mask prompt tokens with -100
+        labels = ([-100] * len(prompt_tokens)) + response_tokens
+
+        # Truncate or pad to block_size + 1
+        if len(full_sequence) > block_size + 1:
+            full_sequence = full_sequence[: block_size + 1]
+            labels = labels[: block_size + 1]
