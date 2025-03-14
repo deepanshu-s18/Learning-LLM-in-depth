@@ -40,3 +40,24 @@ def prepare_sft_batch(
         if len(full_sequence) > block_size + 1:
             full_sequence = full_sequence[: block_size + 1]
             labels = labels[: block_size + 1]
+        else:
+            pad_len = (block_size + 1) - len(full_sequence)
+            full_sequence = full_sequence + ([tokenizer.pad_token_id] * pad_len)
+            labels = labels + ([-100] * pad_len)
+
+        # Causal shift: input is seq[:-1], target is seq[1:]
+        input_list.append(full_sequence[:-1])
+        target_list.append(labels[1:])
+
+    x = torch.tensor(input_list, dtype=torch.long, device=device)
+    y = torch.tensor(target_list, dtype=torch.long, device=device)
+    return x, y
+
+
+def train_sft(
+    model: TransformerLM,
+    dataset: List[Dict[str, str]],
+    tokenizer: SimpleTokenizer,
+    epochs: int = 20,
+    lr: float = 1e-3,
+    device: torch.device = torch.device("cpu")
