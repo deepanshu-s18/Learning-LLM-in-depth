@@ -61,3 +61,24 @@ def train_sft(
     epochs: int = 20,
     lr: float = 1e-3,
     device: torch.device = torch.device("cpu")
+) -> Dict[str, Any]:
+    """
+    Executes Supervised Fine-Tuning with prompt loss masking.
+    """
+    model.train()
+    optimizer = CustomAdamW(model.parameters(), lr=lr, weight_decay=0.0)
+    x_batch, y_batch = prepare_sft_batch(dataset, tokenizer, model.config.block_size, device)
+
+    loss_history = []
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        _, loss, _ = model(x_batch, targets=y_batch)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+        loss_history.append(float(loss.item()))
+
+    return {
+        "final_sft_loss": loss_history[-1],
+        "loss_history": loss_history
+    }
