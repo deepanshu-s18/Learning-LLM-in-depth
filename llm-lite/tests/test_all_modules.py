@@ -40,3 +40,24 @@ class TestLLMLite(unittest.TestCase):
         self.assertTrue(res["invariance_verified"])
         self.assertLess(res["absolute_difference"], 1e-6)
 
+    def test_transformer_forward_and_kv_cache(self):
+        config = TransformerConfig(vocab_size=64, block_size=32, n_layer=2, n_head=2, n_embd=32)
+        model = TransformerLM(config)
+        idx = torch.randint(0, 64, (2, 16))
+        logits, loss, _ = model(idx, targets=idx)
+        self.assertEqual(logits.shape, (2, 16, 64))
+        self.assertIsNotNone(loss)
+
+        # Test generation with KV cache
+        gen_tokens = model.generate([1, 2, 3], max_new_tokens=10, use_kv_cache=True, eos_token_id=None)
+        self.assertEqual(len(gen_tokens), 13)
+
+    def test_lora_injection_and_merging(self):
+        config = TransformerConfig(vocab_size=64, block_size=32, n_layer=2, n_head=2, n_embd=32)
+        model = TransformerLM(config)
+        
+        linear = nn.Linear(32, 32)
+        lora_layer = LoRALinear(linear, r=4, alpha=8.0)
+        x = torch.randn(2, 32)
+        out1 = lora_layer(x)
+        lora_layer.merge_weights()
