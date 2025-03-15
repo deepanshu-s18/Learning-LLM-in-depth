@@ -61,3 +61,24 @@ class TestLLMLite(unittest.TestCase):
         x = torch.randn(2, 32)
         out1 = lora_layer(x)
         lora_layer.merge_weights()
+        out2 = lora_layer(x)
+        # Verify merged forward equals pre-merged forward
+        diff = torch.max(torch.abs(out1 - out2)).item()
+        self.assertLess(diff, 1e-5)
+
+    def test_quantization_int8_and_int4(self):
+        tensor = torch.randn(10, 10)
+        # INT8 test
+        q8, s8, z8 = quantize_int8(tensor)
+        deq8 = dequantize_int8(q8, s8, z8)
+        mse8 = torch.mean((tensor - deq8) ** 2).item()
+        self.assertLess(mse8, 0.01)
+
+        # INT4 test
+        q4, s4, z4 = quantize_int4(tensor)
+        deq4 = dequantize_int4(q4, tensor.shape, s4, z4)
+        mse4 = torch.mean((tensor - deq4) ** 2).item()
+        self.assertLess(mse4, 0.15)
+
+if __name__ == "__main__":
+    unittest.main()
