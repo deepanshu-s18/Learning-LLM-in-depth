@@ -20,3 +20,4 @@
 [2025-03-17 10:44:49 +0530] refactor(deepseek-intro): finalize LICENSE for production integration
 [2025-03-20 09:57:58 +0530] docs(deepseek): overview of Multi-Head Latent Attention (MLA) and low-rank KV compression
 [2025-03-20 10:55:33 +0530] docs(deepseek): add Mixture of Experts (MoE) routing dynamics and load balancing loss
+[2025-03-20 15:21:42 +0530] refactor(deepseek-intro): finalize requirements.txt for production integration
