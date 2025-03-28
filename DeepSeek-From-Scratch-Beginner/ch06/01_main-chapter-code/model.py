@@ -47,3 +47,28 @@ class Attention(nn.Module):
         self.num_heads = args.num_heads
         self.d_head    = args.d_model // args.num_heads
         self.d_latent  = args.d_latent
+        self.d_rope    = args.d_rope
+
+        self.wq_c = nn.Linear(args.d_model, args.d_model, bias=False)
+        self.wdkv = nn.Linear(args.d_model, args.d_latent, bias=False)
+        self.wuk  = nn.Linear(args.d_latent, args.d_model, bias=False)
+        self.wuv  = nn.Linear(args.d_latent, args.d_model, bias=False)
+        self.wkr  = nn.Linear(args.d_model, args.d_rope * args.num_heads, bias=False)
+        self.wqr  = nn.Linear(args.d_model, args.d_rope * args.num_heads, bias=False)
+        self.rope  = RoPE(args.d_rope, max_seq_len=args.max_seq_len)
+        self.wo    = nn.Linear(args.d_model, args.d_model, bias=False)
+        self.drop  = nn.Dropout(args.dropout)
+
+    def forward(self, x, mask, past_kv=None, offset=0):
+        B, S, D = x.shape
+        past_len = past_kv[0].shape[1] if past_kv else 0
+
+        qc = self.wq_c(x).view(B, S, self.num_heads, self.d_head).transpose(1, 2)
+        ckv_new = self.wdkv(x)
+        ckv = torch.cat([past_kv[0], ckv_new], dim=1) if past_kv else ckv_new
+        kc = self.wuk(ckv).view(B, past_len + S, self.num_heads, self.d_head).transpose(1, 2)
+        vc = self.wuv(ckv).view(B, past_len + S, self.num_heads, self.d_head).transpose(1, 2)
+
+        kr_new = self.rope(self.wkr(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2), offset=offset)
+        qr     = self.rope(self.wqr(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2), offset=offset)
+        kr     = torch.cat([past_kv[1], kr_new], dim=2) if past_kv else kr_new
