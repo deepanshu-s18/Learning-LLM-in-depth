@@ -121,3 +121,28 @@ class MoE(nn.Module):
                 avg = xf.size(0) * self.top_k / self.n_routed
                 cnt = torch.bincount(topi.flatten(), minlength=self.n_routed).float()
                 self.bias.add_(self.bias_lr * torch.tanh((avg - cnt) / (avg + 1e-6)))
+        return shared_out + out.view(B, S, D)
+
+
+class MTPBlock(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.proj  = nn.Linear(args.d_model * 2, args.d_model, bias=False)
+        self.block = Block(args)
+
+    def forward(self, h_prev, next_embeds):
+        x = self.proj(torch.cat([h_prev, next_embeds], dim=-1))
+        S = x.shape[1]
+        mask = torch.zeros(S, S, device=x.device).masked_fill(
+            torch.triu(torch.ones(S, S, device=x.device, dtype=torch.bool), diagonal=1), float("-inf")
+        )
+        h, _ = self.block(x, mask.unsqueeze(0).unsqueeze(0))
+        return h
+
+
+class Block(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.norm1 = nn.LayerNorm(args.d_model)
+        self.attn  = Attention(args)
+        self.norm2 = nn.LayerNorm(args.d_model)
