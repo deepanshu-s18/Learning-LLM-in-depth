@@ -146,3 +146,28 @@ class Block(nn.Module):
         self.norm1 = nn.LayerNorm(args.d_model)
         self.attn  = Attention(args)
         self.norm2 = nn.LayerNorm(args.d_model)
+        self.ff    = MoE(args)
+
+    def forward(self, x, mask, past_kv=None, offset=0):
+        h, cache = self.attn(self.norm1(x), mask, past_kv, offset)
+        x = x + h
+        x = x + self.ff(self.norm2(x))
+        return x, cache
+
+
+class MiniDeepSeek(nn.Module):
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+        self.args   = args
+        self.embed  = nn.Embedding(args.vocab_size, args.d_model)
+        self.blocks = nn.ModuleList([Block(args) for _ in range(args.n_layers)])
+        self.norm   = nn.LayerNorm(args.d_model)
+        self.head   = nn.Linear(args.d_model, args.vocab_size, bias=False)
+        self.mtp    = nn.ModuleList([MTPBlock(args) for _ in range(args.n_mtp_modules)])
+
+    def _causal_mask(self, S, device):
+        m = torch.triu(torch.ones(S, S, device=device, dtype=torch.bool), diagonal=1)
+        return torch.zeros(S, S, device=device).masked_fill(m, float("-inf"))
+
+    def forward(self, ids, targets=None, mtp_w=0.1, past_kv=None):
+        B, S = ids.shape
