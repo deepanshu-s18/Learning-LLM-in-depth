@@ -97,3 +97,27 @@ class MoE(nn.Module):
         self.n_routed = args.moe_n_routed_experts
         self.top_k    = args.moe_top_k
         self.routed   = nn.ModuleList([Expert(args.d_model, args.moe_routed_hidden) for _ in range(self.n_routed)])
+        self.shared   = nn.ModuleList([Expert(args.d_model, args.moe_routed_hidden) for _ in range(args.moe_n_shared_experts)])
+        self.gate     = nn.Linear(args.d_model, self.n_routed, bias=False)
+        self.register_buffer("bias", torch.zeros(self.n_routed))
+        self.bias_lr  = 0.01
+
+    def forward(self, x):
+        B, S, D = x.shape
+        xf = x.reshape(-1, D)
+        shared_out = sum(e(x) for e in self.shared)
+        logits  = self.gate(xf) + self.bias.to(xf.dtype)
+        topv, topi = torch.topk(logits, self.top_k, dim=-1)
+        gates   = F.softmax(topv, dim=-1, dtype=torch.float).type_as(x)
+        out     = torch.zeros_like(xf)
+        for i in range(self.n_routed):
+            mask = (topi == i)
+            rows, ks = torch.where(mask)
+            if rows.numel() == 0:
+                continue
+            out.index_add_(0, rows, self.routed[i](xf[rows]) * gates[rows, ks].unsqueeze(-1))
+        if self.training:
+            with torch.no_grad():
+                avg = xf.size(0) * self.top_k / self.n_routed
+                cnt = torch.bincount(topi.flatten(), minlength=self.n_routed).float()
+                self.bias.add_(self.bias_lr * torch.tanh((avg - cnt) / (avg + 1e-6)))
