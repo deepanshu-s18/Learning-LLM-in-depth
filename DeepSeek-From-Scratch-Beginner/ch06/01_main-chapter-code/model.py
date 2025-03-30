@@ -171,3 +171,28 @@ class MiniDeepSeek(nn.Module):
 
     def forward(self, ids, targets=None, mtp_w=0.1, past_kv=None):
         B, S = ids.shape
+        x = self.embed(ids)
+        if targets is None:
+            offset = past_kv[0][0].shape[1] if past_kv else 0
+            mask   = self._causal_mask(S + offset, x.device)[offset:].unsqueeze(0).unsqueeze(0)
+            new_kv = []
+            for i, blk in enumerate(self.blocks):
+                x, c = blk(x, mask, past_kv[i] if past_kv else None, offset)
+                new_kv.append(c)
+            return self.head(self.norm(x[:, [-1], :])), new_kv
+
+        mask = self._causal_mask(S, x.device).unsqueeze(0).unsqueeze(0)
+        for blk in self.blocks:
+            x, _ = blk(x, mask)
+        h      = self.norm(x)
+        logits = self.head(h)
+        loss   = F.cross_entropy(logits[:, :-1].contiguous().view(-1, self.args.vocab_size),
+                                 targets[:, 1:].contiguous().view(-1))
+        for k, mtp in enumerate(self.mtp, 1):
+            if S <= k + 1:
+                break
+            hk   = mtp(h[:, :-(k+1)], self.embed(ids[:, k:-1]))
+            lk   = self.head(self.norm(hk))
+            loss += mtp_w * F.cross_entropy(lk.reshape(-1, self.args.vocab_size),
+                                             targets[:, k+1:].reshape(-1))
+        return {"logits": logits, "loss": loss}
