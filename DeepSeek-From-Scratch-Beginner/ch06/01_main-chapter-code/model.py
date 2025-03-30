@@ -72,3 +72,28 @@ class Attention(nn.Module):
         kr_new = self.rope(self.wkr(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2), offset=offset)
         qr     = self.rope(self.wqr(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2), offset=offset)
         kr     = torch.cat([past_kv[1], kr_new], dim=2) if past_kv else kr_new
+
+        scores = (qc @ kc.transpose(-2, -1)) / math.sqrt(self.d_head) +                  (qr @ kr.transpose(-2, -1)) / math.sqrt(self.d_rope)
+        scores = scores + mask
+        attn   = self.drop(F.softmax(scores, dim=-1))
+        out    = self.wo((attn @ vc).transpose(1, 2).contiguous().view(B, S, D))
+        return out, (ckv, kr)
+
+
+class Expert(nn.Module):
+    def __init__(self, d_model, hidden, dropout=0.0):
+        super().__init__()
+        self.fc1  = nn.Linear(d_model, hidden, bias=False)
+        self.fc2  = nn.Linear(hidden, d_model, bias=False)
+        self.drop = nn.Dropout(dropout)
+
+    def forward(self, x):
+        return self.fc2(self.drop(F.gelu(self.fc1(x))))
+
+
+class MoE(nn.Module):
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+        self.n_routed = args.moe_n_routed_experts
+        self.top_k    = args.moe_top_k
+        self.routed   = nn.ModuleList([Expert(args.d_model, args.moe_routed_hidden) for _ in range(self.n_routed)])
