@@ -35,3 +35,16 @@ if __name__ == "__main__":
     model = MiniDeepSeek(args).to(device)
     opt   = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.1, betas=(0.9, 0.95))
 
+    for step in range(max_iters):
+        for g in opt.param_groups:
+            g["lr"] = cosine_lr(step)
+        model.train()
+        x, y   = get_batch("train")
+        out    = model(x, targets=y)
+        loss   = out["loss"]
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        opt.step()
+        if step % 20 == 0:
+            print(f"step {step}: loss={loss.item():.4f} lr={cosine_lr(step):.6f}")
+    print("Done training.")
