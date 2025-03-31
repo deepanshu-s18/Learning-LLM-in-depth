@@ -10,3 +10,16 @@ max_iters  = 5000
 batch_size = 32
 block_size = 128
 lr         = 3e-4
+
+def get_batch(split):
+    data = np.memmap(os.path.join(data_dir, f"{split}.bin"), dtype=np.uint16, mode="r")
+    ix   = torch.randint(len(data) - block_size, (batch_size,))
+    x    = torch.stack([torch.from_numpy(data[i: i+block_size].astype(np.int64)) for i in ix])
+    y    = torch.stack([torch.from_numpy(data[i+1: i+1+block_size].astype(np.int64)) for i in ix])
+    return x.to(device), y.to(device)
+
+def cosine_lr(it):
+    warmup = 100
+    if it < warmup:
+        return lr * it / warmup
+    decay = (it - warmup) / (max_iters - warmup)
