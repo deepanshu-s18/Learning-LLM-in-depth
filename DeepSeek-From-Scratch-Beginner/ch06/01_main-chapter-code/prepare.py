@@ -39,3 +39,23 @@ def write_memmap(path: str, tokens: np.ndarray):
     print(f"Wrote {tokens.size:,} tokens to {path}")
 
 def main():
+    """Main function to download, tokenize, and save the dataset."""
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    # 1. Load the dataset from Hugging Face
+    print(f"Loading dataset: {DATASET_NAME}")
+    # The dataset only has a 'train' split, which we will divide
+    dataset = load_dataset(DATASET_NAME)['train']
+    
+    # 2. Create train and validation splits
+    split_index = int(len(dataset) * (1 - VAL_RATIO))
+    train_dataset = dataset.select(range(split_index))
+    val_dataset = dataset.select(range(split_index, len(dataset)))
+    
+    print(f"Dataset split into {len(train_dataset):,} training and {len(val_dataset):,} validation samples.")
+
+    # 3. Initialize the BPE tokenizer
+    print(f"Initializing tokenizer...")
+    enc = tiktoken.get_encoding(TOKENIZER_NAME)
+    vocab_size = enc.n_vocab
+    print(f"Tokenizer loaded. Vocab size: {vocab_size}")
