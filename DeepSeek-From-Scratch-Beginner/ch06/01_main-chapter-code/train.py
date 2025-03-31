@@ -23,3 +23,15 @@ def cosine_lr(it):
     if it < warmup:
         return lr * it / warmup
     decay = (it - warmup) / (max_iters - warmup)
+    return (lr / 10) + 0.5 * (lr - lr / 10) * (1 + math.cos(math.pi * decay))
+
+if __name__ == "__main__":
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(data_dir, "meta.json")) as f:
+        vocab_size = json.load(f)["vocab_size"]
+
+    args  = ModelArgs(d_model=768, n_layers=12, num_heads=12, d_latent=192,
+                      d_rope=64, vocab_size=vocab_size, max_seq_len=block_size)
+    model = MiniDeepSeek(args).to(device)
+    opt   = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.1, betas=(0.9, 0.95))
+
