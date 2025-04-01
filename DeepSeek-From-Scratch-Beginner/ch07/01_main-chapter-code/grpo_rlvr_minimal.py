@@ -20,3 +20,14 @@ def reward_fn(completion, gold):
 
 def group_advantages(rewards, eps=1e-6):
     mean = rewards.mean(dim=1, keepdim=True)
+    std  = rewards.std(dim=1, keepdim=True).clamp_min(eps)
+    return (rewards - mean) / std
+
+
+def grpo_loss(logp, old_logp, ref_logp, advantages, eps=0.1, beta=0.04):
+    ratio     = torch.exp(logp - old_logp)
+    clipped   = ratio.clamp(1 - eps, 1 + eps)
+    adv       = advantages.unsqueeze(-1)
+    surrogate = torch.minimum(ratio * adv, clipped * adv)
+    kl        = logp - ref_logp
+    return -(surrogate - beta * kl).mean()
