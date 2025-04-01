@@ -31,3 +31,15 @@ def grpo_loss(logp, old_logp, ref_logp, advantages, eps=0.1, beta=0.04):
     surrogate = torch.minimum(ratio * adv, clipped * adv)
     kl        = logp - ref_logp
     return -(surrogate - beta * kl).mean()
+
+
+def demo():
+    rewards    = torch.tensor([[1.0, 0.0, 1.0, 0.0], [1.0, 0.0, 0.0, 1.0]])
+    advantages = group_advantages(rewards)
+    logp       = torch.randn(2, 4, 6) * 0.05
+    loss       = grpo_loss(logp, torch.zeros_like(logp), torch.zeros_like(logp), advantages)
+    print(f"demo loss: {loss.item():.4f}")
+
+
+if __name__ == "__main__":
+    demo()
