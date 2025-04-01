@@ -18,3 +18,23 @@ dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported
 pt_dtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
 ctx = torch.amp.autocast(device_type=device.split(':')[0], dtype=pt_dtype) if 'cuda' in device else torch.no_grad()
 
+
+## NEW ##: Updated this function for PyTorch 2.6+
+def load_latest_checkpoint(directory: str):
+    """Loads the latest checkpoint from the specified directory."""
+    files = [f for f in os.listdir(directory) if f.startswith('ckpt_iter_') and f.endswith('.pt')]
+    if not files:
+        return None
+    
+    latest_file = max(files, key=lambda f: int(f.split('_')[-1].split('.')[0]))
+    ckpt_path = os.path.join(directory, latest_file)
+    print(f"Loading checkpoint: {ckpt_path}")
+    
+    # In PyTorch 2.6+, we must explicitly tell torch.load which classes are safe
+    # to unpickle if we are loading more than just weights. Our checkpoint
+    # contains the ModelArgs dataclass.
+    with serialization.safe_globals([ModelArgs]):
+        checkpoint = torch.load(ckpt_path, map_location=device)
+        
+    return checkpoint
+
