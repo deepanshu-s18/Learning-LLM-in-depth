@@ -59,3 +59,23 @@ def main():
     
     model.to(device)
     model.eval()
+
+    print("Model loaded successfully.")
+    print("-" * 50)
+
+    # --- Initialize Tokenizer ---
+    enc = tiktoken.get_encoding("gpt2")
+
+    # --- Interactive Generation Loop ---
+    while True:
+        try:
+            start_text = input("Enter a prompt (or press Ctrl+C to exit): ")
+            if not start_text:
+                continue
+
+            start_ids = enc.encode(start_text)
+            x = torch.tensor(start_ids, dtype=torch.long, device=device).unsqueeze(0)
+            
+            print(f"Prompt: '{start_text}'")
+            print("Generating: ", end='', flush=True)
+
