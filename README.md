@@ -43,6 +43,7 @@
 - **`nano-gpt-beginner`**: GPT-2 from scratch with raw tensor operations, BPE tokenization, and mini-Shakespeare training loop.
 - **`nano-gpt-oss`**: Production-grade PyTorch GPT-2 replication with DistributedDataParallel (DDP), FlashAttention-2, and HellaSwag evaluation.
 - **`llm-lite`**: End-to-end lightweight LLM suite featuring custom tokenizer training, SFT dataset pipelines, DPO alignment, and int8/int4 quantization.
+- **`DeepSeek-From-Scratch-Beginner`**: Foundational implementation of Multi-Head Latent Attention (MLA) with low-rank KV compression and Mixture-of-Experts (MoE) top-2 routing.
 ---
 
 ## 📊 Core Benchmarks & Key Findings
