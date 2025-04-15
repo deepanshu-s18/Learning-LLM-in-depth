@@ -17,3 +17,22 @@ ch07/01_main-chapter-code/
 ### How to Run
 
 ```bash
+cd ch07/01_main-chapter-code
+pip install -r requirements.txt
+python grpo_rlvr_minimal.py
+```
+
+### What the Code Demonstrates
+
+- `verify_math_answer` implements a deterministic RLVR reward for answer-only
+  math prompts.
+- `group_advantages` replaces the PPO value model with group-relative reward
+  normalization.
+- `grpo_loss` implements the clipped GRPO surrogate with a reference-policy KL
+  penalty.
+- `train_step` wires sampling, verification, advantage computation, log-prob
+  scoring, and policy update into one readable training step.
+
+This is a teaching implementation. Production GRPO training also needs robust
+parsing, sequence masks, distributed rollout workers, checkpointing, and careful
+monitoring of KL drift, response length, invalid outputs, and reward hacking.
