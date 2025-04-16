@@ -24,3 +24,4 @@
 [2025-04-13 11:37:00 +0530] refactor(deepseek-v3): finalize .gitignore for production integration
 [2025-04-13 15:29:22 +0530] refactor(deepseek-v3): finalize LICENSE for production integration
 [2025-04-16 11:51:55 +0530] docs(deepseek-v3): detail DeepSeek-V3 architecture, Multi-Token Prediction (MTP), and DualPipe
+[2025-04-16 16:14:21 +0530] docs(deepseek-r1): document DeepSeek-R1 reasoning dynamics, cold-start SFT, and rule-based RL
