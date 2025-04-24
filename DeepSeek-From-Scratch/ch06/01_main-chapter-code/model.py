@@ -66,3 +66,25 @@ class RotaryPositionalEncoding(nn.Module):
         x_rotated = x_complex * freqs_cis
         
         # Cast back to real and reshape
+        x_out = torch.view_as_real(x_rotated).flatten(3)
+        return x_out.type_as(x)
+
+
+# --- Multi-Head Latent Attention (MLA) Module ---
+
+class DeepSeekAttention(nn.Module):
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+        self.d_model = args.d_model
+        self.num_heads = args.num_heads
+        self.d_head = args.d_model // args.num_heads
+        self.d_latent = args.d_latent
+        self.d_rope = args.d_rope
+
+        # Content Path
+        self.W_q_content = nn.Linear(args.d_model, args.d_model, bias=False)
+        self.W_dkv_content = nn.Linear(args.d_model, args.d_latent, bias=False)
+        self.W_uk_content = nn.Linear(args.d_latent, args.d_model, bias=False)
+        self.W_uv_content = nn.Linear(args.d_latent, args.d_model, bias=False)
+
+        # Position Path
