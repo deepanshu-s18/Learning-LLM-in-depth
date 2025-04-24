@@ -157,3 +157,25 @@ class DeepSeekMoE(nn.Module):
         self.register_buffer("bias", torch.zeros(self.n_routed))
         self.bias_lr = 0.01
 
+    def forward(self, x: torch.Tensor):
+        B, S, D = x.shape
+        x_flat = x.reshape(-1, D)
+        shared_out = torch.zeros_like(x)
+        for exp in self.shared_experts: shared_out += exp(x)
+        router_logits = self.gate(x_flat)
+        router_logits_with_bias = router_logits + self.bias.to(router_logits.dtype)
+        top_k_logits, top_k_indices = torch.topk(router_logits_with_bias, self.top_k, dim=-1)
+        gates = F.softmax(top_k_logits, dim=-1, dtype=torch.float).type_as(x)
+        routed_out_flat = torch.zeros_like(x_flat)
+        for i in range(self.n_routed):
+            mask = (top_k_indices == i); row_idx, which_k = torch.where(mask)
+            if row_idx.numel() == 0: continue
+            w = gates[row_idx, which_k].unsqueeze(-1)
+            exp_in = x_flat[row_idx]
+            exp_out = self.routed_experts[i](exp_in)
+            routed_out_flat.index_add_(0, row_idx, exp_out * w)
+        if self.training:
+            with torch.no_grad():
+                avg_load = x_flat.size(0) * self.top_k / self.n_routed
+                counts = torch.bincount(top_k_indices.flatten(), minlength=self.n_routed).float()
+                violation = (avg_load - counts) / (avg_load + 1e-6)
