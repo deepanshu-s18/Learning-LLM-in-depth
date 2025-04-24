@@ -134,3 +134,26 @@ class DeepSeekAttention(nn.Module):
         return output, new_cache
 
 # --- Mixture-of-Experts (MoE) Modules ---
+
+class ExpertFFN(nn.Module):
+    # Same as before
+    def __init__(self, d_model: int, hidden: int, dropout: float = 0.0):
+        super().__init__()
+        self.fc1 = nn.Linear(d_model, hidden, bias=False)
+        self.fc2 = nn.Linear(hidden, d_model, bias=False)
+        self.dropout = nn.Dropout(dropout)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.fc2(self.dropout(F.gelu(self.fc1(x))))
+
+class DeepSeekMoE(nn.Module):
+    # Same as before
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+        self.n_routed = args.moe_n_routed_experts
+        self.top_k = args.moe_top_k
+        self.routed_experts = nn.ModuleList([ExpertFFN(args.d_model, args.moe_routed_hidden) for _ in range(self.n_routed)])
+        self.shared_experts = nn.ModuleList([ExpertFFN(args.d_model, args.moe_routed_hidden) for _ in range(args.moe_n_shared_experts)])
+        self.gate = nn.Linear(args.d_model, self.n_routed, bias=False)
+        self.register_buffer("bias", torch.zeros(self.n_routed))
+        self.bias_lr = 0.01
+
