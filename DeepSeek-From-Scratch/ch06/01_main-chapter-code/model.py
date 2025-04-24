@@ -111,3 +111,26 @@ class DeepSeekAttention(nn.Module):
         # --- Path B: Position Path ---
         k_r_unrotated = self.W_k_pos(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2)
         q_r_unrotated = self.W_q_pos(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2)
+        
+        k_r_new = self.rope(k_r_unrotated, position_offset=position_offset)
+        q_r = self.rope(q_r_unrotated, position_offset=position_offset)
+
+        k_r = torch.cat([past_kv[1], k_r_new], dim=2) if past_kv is not None else k_r_new
+
+        # --- Combining Paths ---
+        content_scores = (q_c @ k_c.transpose(-2, -1)) / math.sqrt(self.d_head)
+        position_scores = (q_r @ k_r.transpose(-2, -1)) / math.sqrt(self.d_rope)
+        
+        attn_scores = content_scores + position_scores
+        attn_scores = attn_scores + attn_mask
+        
+        attn_weights = F.softmax(attn_scores, dim=-1)
+        attn_weights = self.dropout(attn_weights)
+        
+        context_vector = (attn_weights @ v_c).transpose(1, 2).contiguous().view(B, S, D)
+        output = self.W_o(context_vector)
+        new_cache = (c_kv, k_r)
+        
+        return output, new_cache
+
+# --- Mixture-of-Experts (MoE) Modules ---
