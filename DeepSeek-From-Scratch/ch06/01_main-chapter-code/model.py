@@ -88,3 +88,26 @@ class DeepSeekAttention(nn.Module):
         self.W_uv_content = nn.Linear(args.d_latent, args.d_model, bias=False)
 
         # Position Path
+        self.W_k_pos = nn.Linear(args.d_model, args.d_rope * args.num_heads, bias=False)
+        self.W_q_pos = nn.Linear(args.d_model, args.d_rope * args.num_heads, bias=False)
+        self.rope = RotaryPositionalEncoding(args.d_rope, max_seq_len=args.max_seq_len)
+
+        # Output Projection
+        self.W_o = nn.Linear(args.d_model, args.d_model, bias=False)
+        self.dropout = nn.Dropout(args.dropout)
+
+    ## NEW ##: Added position_offset for cached inference
+    def forward(self, x: torch.Tensor, attn_mask: torch.Tensor, past_kv: Optional[Tuple[torch.Tensor, torch.Tensor]] = None, position_offset: int = 0):
+        B, S, D = x.shape
+        past_len = past_kv[0].shape[1] if past_kv is not None else 0
+
+        # --- Path A: Content Path ---
+        q_c = self.W_q_content(x).view(B, S, self.num_heads, self.d_head).transpose(1, 2)
+        c_kv_new = self.W_dkv_content(x)
+        c_kv = torch.cat([past_kv[0], c_kv_new], dim=1) if past_kv is not None else c_kv_new
+        k_c = self.W_uk_content(c_kv).view(B, past_len + S, self.num_heads, self.d_head).transpose(1, 2)
+        v_c = self.W_uv_content(c_kv).view(B, past_len + S, self.num_heads, self.d_head).transpose(1, 2)
+        
+        # --- Path B: Position Path ---
+        k_r_unrotated = self.W_k_pos(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2)
+        q_r_unrotated = self.W_q_pos(x).view(B, S, self.num_heads, self.d_rope).transpose(1, 2)
