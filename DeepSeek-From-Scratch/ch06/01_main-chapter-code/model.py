@@ -247,3 +247,26 @@ class MiniDeepSeek(nn.Module):
             position_offset = past_kv_cache[0][0].shape[1] if past_kv_cache else 0
             
             mask = self.causal_mask(S + position_offset, x.device)[position_offset:, :]
+            mask = mask.unsqueeze(0).unsqueeze(0)
+
+            new_kv_cache = []
+            for i, blk in enumerate(self.blocks):
+                layer_past_kv = past_kv_cache[i] if past_kv_cache else None
+                x, new_cache = blk(x, attn_mask=mask, past_kv=layer_past_kv, position_offset=position_offset)
+                new_kv_cache.append(new_cache)
+            
+            x = self.norm_f(x)
+            logits = self.lm_head(x[:, [-1], :]) # Only compute for the last token
+            return logits, new_kv_cache
+
+        # --- Training Path (with MTP) ---
+        mask = self.causal_mask(S, x.device).unsqueeze(0).unsqueeze(0)
+        for blk in self.blocks:
+            x, _ = blk(x, attn_mask=mask)
+        
+        h_main = self.norm_f(x)
+        logits_main = self.lm_head(h_main)
+        out = {"logits": logits_main}
+
+        main_logits_shift = logits_main[:, :-1, :].contiguous()
+        targets_shift = targets[:, 1:].contiguous()
