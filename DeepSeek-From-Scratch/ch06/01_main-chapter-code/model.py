@@ -179,3 +179,26 @@ class DeepSeekMoE(nn.Module):
                 avg_load = x_flat.size(0) * self.top_k / self.n_routed
                 counts = torch.bincount(top_k_indices.flatten(), minlength=self.n_routed).float()
                 violation = (avg_load - counts) / (avg_load + 1e-6)
+                self.bias.add_(self.bias_lr * torch.tanh(violation))
+        routed_out = routed_out_flat.view(B, S, D)
+        return shared_out + routed_out
+
+# --- Multi-Token Prediction (MTP) Module ---
+
+class MTPModule(nn.Module):
+    # This MTP implementation is simplified for clarity in the main model.py
+    # A more complex version might have different projection sizes, etc.
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+        self.projection = nn.Linear(args.d_model * 2, args.d_model, bias=False)
+        self.block = TransformerBlock(args)
+        
+    def forward(self, h_prev, next_token_embeds):
+        x = torch.cat([h_prev, next_token_embeds], dim=-1)
+        x = self.projection(x)
+        
+        B, S, D = x.shape
+        mask = torch.triu(torch.ones(S, S, device=x.device, dtype=torch.bool), diagonal=1)
+        attn_mask = torch.zeros(S,S, device=x.device).masked_fill(mask, float('-inf'))
+        # We don't use KV cache inside MTP during training.
+        h_k, _ = self.block(x, attn_mask=attn_mask.unsqueeze(0).unsqueeze(0))
