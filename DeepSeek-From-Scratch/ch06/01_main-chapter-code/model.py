@@ -202,3 +202,26 @@ class MTPModule(nn.Module):
         attn_mask = torch.zeros(S,S, device=x.device).masked_fill(mask, float('-inf'))
         # We don't use KV cache inside MTP during training.
         h_k, _ = self.block(x, attn_mask=attn_mask.unsqueeze(0).unsqueeze(0))
+        return h_k
+
+# --- The Transformer Block ---
+
+class TransformerBlock(nn.Module):
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+        self.norm1 = nn.LayerNorm(args.d_model)
+        self.attention = DeepSeekAttention(args)
+        self.norm2 = nn.LayerNorm(args.d_model)
+        self.feed_forward = DeepSeekMoE(args)
+
+    ## NEW ##: Added position_offset for cached inference
+    def forward(self, x: torch.Tensor, attn_mask: torch.Tensor, past_kv: Optional[Tuple[torch.Tensor, torch.Tensor]] = None, position_offset: int = 0):
+        h, new_cache = self.attention(self.norm1(x), attn_mask, past_kv, position_offset)
+        x = x + h
+        x = x + self.feed_forward(self.norm2(x))
+        return x, new_cache
+
+# --- The Main Model: MiniDeepSeek ---
+
+class MiniDeepSeek(nn.Module):
+    def __init__(self, args: ModelArgs):
