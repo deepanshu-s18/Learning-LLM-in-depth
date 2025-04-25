@@ -225,3 +225,25 @@ class TransformerBlock(nn.Module):
 
 class MiniDeepSeek(nn.Module):
     def __init__(self, args: ModelArgs):
+        super().__init__()
+        self.args = args
+        self.embed = nn.Embedding(args.vocab_size, args.d_model)
+        self.blocks = nn.ModuleList([TransformerBlock(args) for _ in range(args.n_layers)])
+        self.norm_f = nn.LayerNorm(args.d_model)
+        self.lm_head = nn.Linear(args.d_model, args.vocab_size, bias=False)
+        self.mtp_modules = nn.ModuleList([MTPModule(args) for _ in range(args.n_mtp_modules)])
+        
+    def causal_mask(self, S: int, device) -> torch.Tensor:
+        mask = torch.triu(torch.ones(S, S, device=device, dtype=torch.bool), diagonal=1)
+        return torch.zeros(S, S, device=device).masked_fill(mask, float('-inf'))
+
+    def forward(self, input_ids: torch.Tensor, targets: Optional[torch.Tensor] = None, mtp_weight: float = 0.1, past_kv_cache: Optional[list] = None):
+        B, S = input_ids.shape
+        x = self.embed(input_ids)
+        
+        # --- Inference Path (with KV Cache) ---
+        if targets is None:
+            ## NEW ##: Calculate position offset based on past cache
+            position_offset = past_kv_cache[0][0].shape[1] if past_kv_cache else 0
+            
+            mask = self.causal_mask(S + position_offset, x.device)[position_offset:, :]
