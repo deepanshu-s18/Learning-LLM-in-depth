@@ -293,3 +293,26 @@ if __name__ == '__main__':
     model = MiniDeepSeek(args)
     print(f"Model created with {sum(p.numel() for p in model.parameters())/1e6:.2f}M parameters")
 
+    print("\n--- Testing Training Forward Pass ---")
+    dummy_input = torch.randint(0, 1000, (2, 64))
+    output = model(dummy_input, targets=dummy_input)
+    print("Logits shape:", output['logits'].shape)
+    print("Loss value:", output['loss'].item())
+
+    print("\n--- Testing Inference Forward Pass with KV Cache ---")
+    model.eval()
+    with torch.no_grad():
+        prompt = torch.randint(0, 1000, (1, 10))
+        logits, kv_cache = model(prompt)
+        print("Initial prompt processed. Logits shape:", logits.shape)
+        print(f"  - c_kv shape:", kv_cache[0][0].shape)
+        
+        next_token = torch.argmax(logits, dim=-1)
+        
+        # ## NEW ##: Pass the old cache to the model
+        logits_next, kv_cache_next = model(next_token, past_kv_cache=kv_cache)
+        
+        print("\nNext token generated. Logits shape:", logits_next.shape)
+        print("  - Updated c_kv shape:", kv_cache_next[0][0].shape) # Should be seq_len 11
+        assert kv_cache_next[0][0].shape[1] == 11
+        print("KV Cache update is correct.")
