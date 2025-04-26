@@ -18,3 +18,24 @@ DATASET_NAME = "roneneldan/TinyStories"
 TOKENIZER_NAME = "gpt2"
 OUTPUT_DIR = "data/tinystories_tokenized" # Generic output directory name
 VAL_RATIO = 0.05
+
+def encode_corpus(texts: List[str], enc: tiktoken.Encoding) -> np.ndarray:
+    """Encodes a list of texts into a single flat stream of token IDs."""
+    all_ids = []
+    eot_token = enc.eot_token # End Of Text token
+    for text in tqdm(texts, desc="Encoding texts"):
+        # Encode each story and append the EOT token to act as a separator
+        ids = enc.encode(text)
+        all_ids.extend(ids)
+        all_ids.append(eot_token)
+    # Use uint16 since the vocab size is < 65535, saving disk space
+    return np.array(all_ids, dtype=np.uint16)
+
+def write_memmap(path: str, tokens: np.ndarray):
+    """Writes a numpy array of tokens to a memory-mapped file."""
+    arr = np.memmap(path, dtype=np.uint16, mode="w+", shape=(tokens.size,))
+    arr[:] = tokens
+    arr.flush()
+    print(f"Wrote {tokens.size:,} tokens to {path}")
+
+def main():
