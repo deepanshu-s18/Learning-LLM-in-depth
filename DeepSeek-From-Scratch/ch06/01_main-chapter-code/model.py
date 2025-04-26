@@ -270,3 +270,26 @@ class MiniDeepSeek(nn.Module):
 
         main_logits_shift = logits_main[:, :-1, :].contiguous()
         targets_shift = targets[:, 1:].contiguous()
+        loss_main = F.cross_entropy(main_logits_shift.view(-1, main_logits_shift.size(-1)), targets_shift.view(-1))
+        total_loss = loss_main
+
+        h_prev = h_main
+        for k, mtp_block in enumerate(self.mtp_modules, start=1):
+            if S <= k + 1: break
+            h_prev_shifted = h_prev[:, :-(k+1), :].contiguous()
+            next_tokens_embed = self.embed(input_ids[:, k:-1]).contiguous()
+            h_k = mtp_block(h_prev_shifted, next_tokens_embed)
+            logits_k = self.lm_head(self.norm_f(h_k))
+            mtp_targets = targets[:, k+1:].contiguous()
+            loss_k = F.cross_entropy(logits_k.reshape(-1, logits_k.size(-1)), mtp_targets.reshape(-1))
+            total_loss += mtp_weight * loss_k
+            
+        out["loss"] = total_loss
+        return out
+
+# --- Example Instantiation for testing ---
+if __name__ == '__main__':
+    args = ModelArgs(d_model=128, n_layers=4, num_heads=4, d_latent=32, d_rope=16, moe_n_routed_experts=4, vocab_size=1000)
+    model = MiniDeepSeek(args)
+    print(f"Model created with {sum(p.numel() for p in model.parameters())/1e6:.2f}M parameters")
+
