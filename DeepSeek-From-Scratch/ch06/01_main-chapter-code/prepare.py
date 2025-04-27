@@ -59,3 +59,24 @@ def main():
     enc = tiktoken.get_encoding(TOKENIZER_NAME)
     vocab_size = enc.n_vocab
     print(f"Tokenizer loaded. Vocab size: {vocab_size}")
+    
+    # 4. Tokenize the datasets
+    train_ids = encode_corpus([ex['text'] for ex in train_dataset], enc)
+    val_ids = encode_corpus([ex['text'] for ex in val_dataset], enc)
+
+    # 5. Write the tokenized data to binary files for efficient loading
+    write_memmap(os.path.join(OUTPUT_DIR, "train.bin"), train_ids)
+    write_memmap(os.path.join(OUTPUT_DIR, "val.bin"), val_ids)
+    
+    # 6. Save metadata for the training script to use
+    meta = {
+        "tokenizer_name": TOKENIZER_NAME, # Store the reference name
+        "vocab_size": vocab_size
+    }
+    with open(os.path.join(OUTPUT_DIR, "meta.json"), "w") as f:
+        json.dump(meta, f)
+    
+    print(f"\nPreparation complete. Data is saved in '{OUTPUT_DIR}'")
+
+if __name__ == "__main__":
+    main()
