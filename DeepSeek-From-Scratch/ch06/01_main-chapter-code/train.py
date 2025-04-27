@@ -46,3 +46,27 @@ def get_batch(split: str):
     Loads a batch of data from the memory-mapped .bin files.
     """
     # The data files are now uint16, as created by the new prepare.py
+    data = np.memmap(os.path.join(data_dir, f'{split}.bin'), dtype=np.uint16, mode='r')
+    # Generate random starting points for each sequence in the batch
+    ix = torch.randint(len(data) - block_size, (batch_size,))
+    # Create input sequences (x)
+    x = torch.stack([torch.from_numpy((data[i:i+block_size]).astype(np.int64)) for i in ix])
+    # Create target sequences (y), which are shifted by one
+    y = torch.stack([torch.from_numpy((data[i+1:i+1+block_size]).astype(np.int64)) for i in ix])
+    
+    if 'cuda' in device:
+        # Pin memory helps speed up CPU-to-GPU data transfer
+        return x.pin_memory().to(device, non_blocking=True), y.pin_memory().to(device, non_blocking=True)
+    else:
+        return x, y
+
+# Learning rate scheduler: cosine decay with warmup
+def get_lr(it):
+    # 1) linear warmup for warmup_iters steps
+    warmup_iters = 200 # A bit longer warmup for a longer run
+    if it < warmup_iters:
+        return learning_rate * it / warmup_iters
+    # 2) if it > lr_decay_iters, return min_lr
+    lr_decay_iters = max_iters
+    min_lr = learning_rate / 10
+    if it > lr_decay_iters:
