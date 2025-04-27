@@ -70,3 +70,27 @@ def get_lr(it):
     lr_decay_iters = max_iters
     min_lr = learning_rate / 10
     if it > lr_decay_iters:
+        return min_lr
+    # 3) in between, use cosine decay down to min learning rate
+    decay_ratio = (it - warmup_iters) / (lr_decay_iters - warmup_iters)
+    assert 0 <= decay_ratio <= 1
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio)) # coeff ranges 1..0
+    return min_lr + coeff * (learning_rate - min_lr)
+
+
+# --- Main Training Script ---
+if __name__ == '__main__':
+    os.makedirs(out_dir, exist_ok=True)
+
+    # 1. Load Metadata and Initialize Model
+    meta_path = os.path.join(data_dir, 'meta.json')
+    try:
+        with open(meta_path, 'r') as f:
+            meta = json.load(f)
+        vocab_size = meta['vocab_size']
+    except FileNotFoundError:
+        print(f"Error: meta.json not found in {data_dir}.")
+        print("Please run prepare.py first to tokenize the dataset.")
+        exit(1)
+
+    # Model configuration for a ~18.5M parameter model
