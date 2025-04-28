@@ -166,3 +166,28 @@ if __name__ == '__main__':
             
             val_loss = losses.mean()
             print(f"iter {iter_num}: validation loss {val_loss:.4f}")
+
+            # --- Checkpointing ---
+            checkpoint = {
+                'model': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'model_args': model_args,
+                'iter_num': iter_num,
+                'val_loss': val_loss.item(),
+            }
+
+            # 1. Save the best model so far
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_ckpt_path = os.path.join(out_dir, 'best_ckpt.pt')
+                print(f"New best validation loss: {val_loss:.4f}. Saving best checkpoint to {best_ckpt_path}")
+                torch.save(checkpoint, best_ckpt_path)
+
+            # 2. Save a periodic checkpoint every 500 iterations
+            save_interval = 500
+            if iter_num % save_interval == 0 and iter_num > 0:
+                periodic_ckpt_path = os.path.join(out_dir, f'ckpt_iter_{iter_num}.pt')
+                print(f"Saving periodic checkpoint to {periodic_ckpt_path}")
+                torch.save(checkpoint, periodic_ckpt_path)
+
+    print("\nTraining complete.")
