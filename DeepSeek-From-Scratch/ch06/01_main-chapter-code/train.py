@@ -94,3 +94,27 @@ if __name__ == '__main__':
         exit(1)
 
     # Model configuration for a ~18.5M parameter model
+    # "FLAGSHIP" CONFIGURATION FOR RTX 4090 (~130M parameters)
+    model_args = ModelArgs(
+        d_model=768,                # Standard "small" model dimension
+        n_layers=12,                # 12 layers deep
+        num_heads=12,               # 12 attention heads (d_head=64)
+        d_latent=192,               # Latent dim for MLA (3 * d_head)
+        d_rope=64,                  # RoPE dim, same as d_head
+        moe_n_routed_experts=16,    # A good number of experts to allow specialization
+        moe_n_shared_experts=1,     # One generalist expert for common knowledge
+        moe_top_k=4,                # Route to the best 4 experts per token
+        moe_routed_hidden=512,      # Each expert is reasonably sized
+        vocab_size=vocab_size,      # 50257 from our data
+        max_seq_len=block_size
+    )
+    
+    model = MiniDeepSeek(model_args)
+    model.to(device)
+    
+    # --- Calculate and Print Total Parameters ---
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"\nModel initialized on {device}")
+    print(f"  -> Total parameters: {total_params/1e6:.2f}M")
+    print(f"  -> Trainable parameters: {trainable_params/1e6:.2f}M\n")
