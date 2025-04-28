@@ -118,3 +118,27 @@ if __name__ == '__main__':
     print(f"\nModel initialized on {device}")
     print(f"  -> Total parameters: {total_params/1e6:.2f}M")
     print(f"  -> Trainable parameters: {trainable_params/1e6:.2f}M\n")
+
+    # 2. Setup Optimizer
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay, betas=(beta1, beta2))
+
+    # 3. Training Loop
+    t0 = time.time()
+    best_val_loss = float('inf') # Initialize with infinity
+    for iter_num in range(max_iters):
+        # --- Update Learning Rate ---
+        lr = get_lr(iter_num)
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+
+        # --- Training Step ---
+        model.train()
+        X, Y = get_batch('train')
+        
+        # Forward pass with Automatic Mixed Precision
+        with ctx:
+            outputs = model(X, targets=Y)
+            loss = outputs['loss']
+        
+        # Backward pass and optimization
+        optimizer.zero_grad(set_to_none=True)
