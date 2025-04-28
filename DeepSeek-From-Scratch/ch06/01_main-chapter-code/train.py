@@ -142,3 +142,27 @@ if __name__ == '__main__':
         
         # Backward pass and optimization
         optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
+
+        # --- Logging ---
+        if iter_num % log_interval == 0:
+            t1 = time.time()
+            dt = t1 - t0
+            t0 = t1
+            print(f"iter {iter_num}: loss {loss.item():.4f}, time {dt*1000:.2f}ms, lr {lr:.6f}")
+
+        # --- Evaluation Step ---
+        if iter_num % eval_interval == 0 and iter_num > 0:
+            model.eval()
+            losses = torch.zeros(eval_iters)
+            print("Running evaluation...")
+            with torch.no_grad():
+                for k in range(eval_iters):
+                    X, Y = get_batch('val')
+                    with ctx:
+                        outputs = model(X, targets=Y)
+                        losses[k] = outputs['loss'].item()
+            
+            val_loss = losses.mean()
+            print(f"iter {iter_num}: validation loss {val_loss:.4f}")
