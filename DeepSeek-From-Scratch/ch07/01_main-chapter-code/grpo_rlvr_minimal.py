@@ -42,3 +42,25 @@ def group_advantages(rewards: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
 
     Returns:
         Tensor of normalized advantages with the same shape as rewards.
+    """
+    mean = rewards.mean(dim=1, keepdim=True)
+    std = rewards.std(dim=1, keepdim=True).clamp_min(eps)
+    return (rewards - mean) / std
+
+
+def grpo_loss(
+    logp: torch.Tensor,
+    old_logp: torch.Tensor,
+    ref_logp: torch.Tensor,
+    advantages: torch.Tensor,
+    eps: float = 0.2,
+    beta: float = 0.04,
+) -> torch.Tensor:
+    """Compute the clipped GRPO objective as a minimization loss.
+
+    Shapes:
+        logp, old_logp, ref_logp: [batch_size, group_size, tokens]
+        advantages: [batch_size, group_size]
+    """
+    ratio = torch.exp(logp - old_logp)
+    clipped = ratio.clamp(1.0 - eps, 1.0 + eps)
