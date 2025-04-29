@@ -108,3 +108,25 @@ def train_step(batch, policy, reference, optimizer, group_size: int = 4):
 
     loss = grpo_loss(logp, old_logp, ref_logp, advantages)
     optimizer.zero_grad(set_to_none=True)
+    loss.backward()
+    optimizer.step()
+    return {"loss": float(loss.detach()), "reward": float(rewards.mean())}
+
+
+def _demo() -> None:
+    rewards = torch.tensor([[1.0, 0.0, 1.0, 0.0], [1.0, 0.0, 0.0, 1.0]])
+    advantages = group_advantages(rewards)
+    print("rewards")
+    print(rewards)
+    print("advantages")
+    print(advantages)
+
+    logp = torch.randn(2, 4, 6) * 0.05
+    old_logp = torch.zeros_like(logp)
+    ref_logp = torch.zeros_like(logp)
+    loss = grpo_loss(logp, old_logp, ref_logp, advantages)
+    print(f"demo loss: {loss.item():.4f}")
+
+
+if __name__ == "__main__":
+    _demo()
