@@ -86,3 +86,25 @@ def sequence_logprobs(model, prompts, completions) -> torch.Tensor:
     """Placeholder for scoring generated completions under a model."""
     del model, prompts
     return torch.zeros(len(completions), len(completions[0]), 4, requires_grad=True)
+
+
+def train_step(batch, policy, reference, optimizer, group_size: int = 4):
+    """One GRPO + RLVR training step skeleton."""
+    prompts, gold_answers = batch
+    completions, old_logp = sample_group(policy, prompts, group_size)
+
+    rewards = torch.tensor(
+        [
+            [verify_math_answer(y, gold) for y in group]
+            for group, gold in zip(completions, gold_answers)
+        ],
+        device=old_logp.device,
+    )
+    advantages = group_advantages(rewards)
+
+    logp = sequence_logprobs(policy, prompts, completions)
+    with torch.no_grad():
+        ref_logp = sequence_logprobs(reference, prompts, completions)
+
+    loss = grpo_loss(logp, old_logp, ref_logp, advantages)
+    optimizer.zero_grad(set_to_none=True)
