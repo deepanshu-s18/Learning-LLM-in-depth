@@ -64,3 +64,25 @@ def grpo_loss(
     """
     ratio = torch.exp(logp - old_logp)
     clipped = ratio.clamp(1.0 - eps, 1.0 + eps)
+    adv = advantages.unsqueeze(-1)
+    surrogate = torch.minimum(ratio * adv, clipped * adv)
+    kl = logp - ref_logp
+    return -(surrogate - beta * kl).mean()
+
+
+def sample_group(policy, prompts: Iterable[str], group_size: int):
+    """Placeholder for policy rollout code.
+
+    In a real implementation this calls policy.generate(..., do_sample=True)
+    and returns completions plus old-policy token log probabilities.
+    """
+    del policy
+    completions = [[f"{prompt} answer {i}" for i in range(group_size)] for prompt in prompts]
+    old_logp = torch.zeros(len(completions), group_size, 4)
+    return completions, old_logp
+
+
+def sequence_logprobs(model, prompts, completions) -> torch.Tensor:
+    """Placeholder for scoring generated completions under a model."""
+    del model, prompts
+    return torch.zeros(len(completions), len(completions[0]), 4, requires_grad=True)
