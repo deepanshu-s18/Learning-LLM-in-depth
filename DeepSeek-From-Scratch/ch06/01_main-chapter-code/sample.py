@@ -38,3 +38,24 @@ def load_latest_checkpoint(directory: str):
         
     return checkpoint
 
+def main():
+    # --- Load Model ---
+    checkpoint = load_latest_checkpoint(out_dir)
+    if checkpoint is None:
+        print(f"No checkpoints found in '{out_dir}'. Please run train.py first.")
+        return
+
+    # The ModelArgs object is safely unpickled from the checkpoint
+    model_args = checkpoint['model_args'] 
+    model = MiniDeepSeek(model_args)
+    
+    # Load the trained model weights
+    state_dict = checkpoint['model']
+    unwanted_prefix = '_orig_mod.'
+    for k, v in list(state_dict.items()):
+        if k.startswith(unwanted_prefix):
+            state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+    model.load_state_dict(state_dict)
+    
+    model.to(device)
+    model.eval()
