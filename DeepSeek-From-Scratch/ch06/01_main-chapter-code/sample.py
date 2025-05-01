@@ -79,3 +79,24 @@ def main():
             print(f"Prompt: '{start_text}'")
             print("Generating: ", end='', flush=True)
 
+            kv_cache = None
+            max_new_tokens = 100
+            
+            with torch.no_grad():
+                with ctx:
+                    for _ in range(max_new_tokens):
+                        logits, kv_cache = model(x, past_kv_cache=kv_cache)
+                        logits = logits[:, -1, :]
+                        next_token = torch.argmax(logits, dim=-1)
+                        x = next_token.unsqueeze(0)
+                        token_str = enc.decode([next_token.item()])
+                        print(token_str, end='', flush=True)
+
+            print("\n" + "-" * 50)
+
+        except KeyboardInterrupt:
+            print("\nExiting.")
+            break
+
+if __name__ == '__main__':
+    main()
