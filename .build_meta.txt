@@ -26,3 +26,4 @@
 [2025-04-16 11:51:55 +0530] docs(deepseek-v3): detail DeepSeek-V3 architecture, Multi-Token Prediction (MTP), and DualPipe
 [2025-04-16 16:14:21 +0530] docs(deepseek-r1): document DeepSeek-R1 reasoning dynamics, cold-start SFT, and rule-based RL
 [2025-04-17 12:11:37 +0530] refactor(deepseek-v3): finalize requirements.txt for production integration
+[2025-05-13 22:12:25 +0530] refactor(reasoning): finalize .gitignore for production integration
