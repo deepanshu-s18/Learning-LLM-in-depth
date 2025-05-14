@@ -83,3 +83,32 @@ python run_prm_search.py --reasoning-model google/flan-t5-base --reward-model cr
 ```
 
 For GPU/CUDA execution with Zephyr-7B & DeBERTa PRM:
+```bash
+python run_prm_search.py --reasoning-model HuggingFaceH4/zephyr-7b-beta --reward-model OpenAssistant/reward-model-deberta-v3-large --beams 4 --beam-width 2 --max-steps 3
+```
+
+---
+
+## 🔬 Methodology & Reasoning Techniques
+
+### 1. Few-Shot Chain-of-Thought (CoT) Prompting
+We provide 5 diverse multi-step mathematical problems demonstrating the reasoning trace `Q: ... -> A: [Step-by-step reasoning] The answer is [Number]`.
+
+### 2. Process Reward Model (PRM) Guided Beam Search
+- **Inference-Time Compute Scaling**: Rather than sampling a single output autoregressively, the model explores a search tree of reasoning steps.
+- **Stepwise Scoring**: At each intermediate deduction step, a reward model evaluates candidate reasoning prefixes and assigns quality scores.
+- **Beam Pruning & Tree Expansion**: The top $M$ beams are expanded into $N$ candidate reasoning branches per step, discarding low-quality paths early.
+- **Tree Visualization**: The search graph is color-coded by PRM score and mapped with NetworkX.
+
+![PRM Beam Search Tree](results/prm_beam_search_tree.png)
+
+---
+
+## 📚 References & Acknowledgments
+- **Chain-of-Thought Prompting Elicits Reasoning in Large Language Models** (Wei et al., 2022)
+- **Let's Verify Step by Step** (Lightman et al., 2023) — Process Supervision & PRMs
+- **GSM8K**: Grade School Math 8K dataset (`openai/gsm8k`)
+- **SVAMP**: Simple Variations on Arithmetic Math Word Problems (Patel et al., 2021)
+- **CoT Benchmark Colab Workspace**: [Google Colab Link](https://colab.research.google.com/drive/1g4O6OkTe0CgaIFbFtSxeKSKUrlzq40Za?usp=sharing)
+- **Llama 3.2 CoT Inference Colab Workspace**: [Google Colab Link](https://colab.research.google.com/drive/1iYd3FtD0bjtkDiv-Q6f7i3XZvQsIqOvq?usp=sharing)
+- **PRM-Guided Beam Search Colab Workspace**: [Google Colab Link](https://colab.research.google.com/drive/1fGyjluxCp99QCMXPWzT4lcyR2BrA3UEU?usp=sharing)
