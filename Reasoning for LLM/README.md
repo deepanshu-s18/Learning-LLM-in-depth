@@ -26,3 +26,32 @@ An empirical research study and evaluation framework analyzing **Chain of Though
 ![CoT Reasoning Benchmark](results/cot_reasoning_benchmark.png)
 
 ---
+
+## 📁 Repository Structure
+
+```
+Reasoning for LLM/
+├── notebooks/
+│   ├── 01_cot_benchmarks/
+│   │   └── Reasoning_for_LLMs_CoT.ipynb              # CoT reasoning benchmark evaluation (Flan-T5, TinyLlama, Phi-2, Zephyr-7B)
+│   ├── 02_llama3_from_scratch/
+│   │   └── Llama3_2_CoT_Reasoning_Inference.ipynb    # Llama-3.2 from scratch with CoT reasoning & inference
+│   └── 03_prm_beam_search/
+│       └── PRM_Guided_Beam_Search.ipynb              # PRM-guided beam search & step-by-step reasoning tree
+├── src/
+│   ├── __init__.py
+│   ├── config.py                                     # Model registries, hyperparameters, size mappings
+│   ├── dataset.py                                    # GSM8K and SVAMP dataset loaders & parsing utilities
+│   ├── prompts.py                                    # Few-shot & Zero-shot CoT prompt templates
+│   ├── evaluator.py                                  # Seq2Seq and Causal/Decoder evaluation pipelines
+│   ├── prm_search.py                                 # Stepwise PRM scoring, beam search tree expansion & plotting
+│   └── visualize.py                                  # Charting and benchmark scaling visualizers
+├── results/
+│   ├── cot_reasoning_benchmark.png                   # Benchmark scaling visualization
+│   ├── prm_beam_search_tree.png                      # PRM-guided reasoning search tree graph
+│   └── evaluation_summary.json                       # Evaluation metrics and parameters
+├── main.py                                           # CLI runner for multi-model benchmark evaluation
+├── run_prm_search.py                                 # CLI runner for PRM-guided beam search reasoning
+├── requirements.txt                                  # Python dependencies
+└── README.md                                         # Documentation and findings
+```
