@@ -55,3 +55,31 @@ Reasoning for LLM/
 ├── requirements.txt                                  # Python dependencies
 └── README.md                                         # Documentation and findings
 ```
+
+---
+
+## 🚀 Quickstart Guide
+
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Run Benchmark Evaluation
+Evaluate Flan-T5 models on GSM8K:
+```bash
+python main.py --dataset gsm8k --models "Flan-T5 Small" "Flan-T5 Base" --limit 50
+```
+
+Evaluate decoder models (requires GPU for 7B):
+```bash
+python main.py --dataset gsm8k --models "TinyLlama-1.1B" "Phi-2" "Zephyr-7B" --limit 50
+```
+
+### 3. Run PRM-Guided Beam Search Reasoning
+Run inference-time compute scaling with Process Reward Model (PRM) guided search:
+```bash
+python run_prm_search.py --reasoning-model google/flan-t5-base --reward-model cross-encoder/ms-marco-MiniLM-L-12-v2 --beams 4 --beam-width 2 --max-steps 2
+```
+
+For GPU/CUDA execution with Zephyr-7B & DeBERTa PRM:
