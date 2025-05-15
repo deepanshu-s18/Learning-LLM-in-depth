@@ -51,3 +51,30 @@ at `SVAMP/code:`
 
 ```shell
 $ pip install -r requirements.txt
+```
+
+To create the relevant directories, run the following command in the corresponding directory of that model:
+
+for eg, at `SVAMP/code/graph2tree:`
+
+```shell
+$ sh setup.sh
+```
+
+Then transfer all the data folders to the data subdirectory of that model. For example, copy the MAWPS data directory i.e. `cv_mawps` from `SVAMP/data` to `SVAMP/code/graph2tree/data/`.
+
+#### Models
+
+The current repository includes 5 implementations of Models:
+
+- RNN Seq2Seq at `SVAMP/code/rnn_seq2seq`
+  - Basic Encoder-Decoder with Attention Network. Choice of RNN unit provided among LSTM, GRU or RNN.
+- Transformer Seq2Seq at `SVAMP/code/transformer_seq2seq`
+  - Basic Transformer Network.
+- GTS at `SVAMP/code/gts`
+  - RNN Encoder with Tree-based Decoder ([Original Implementation](https://github.com/ShichaoSun/math_seq2tree)).
+- Graph2Tree at `SVAMP/code/graph2tree`
+  - Graph-based Encoder with Tree-based Decoder ([Original Implementation](https://github.com/2003pro/Graph2Tree)).
+- Constrained Model at `SVAMP/code/constrained`
+  - Constrained model as described in the paper. Feed-Forward Network maps input embeddings to hidden representations and LSTM Decoder with attention generates the equation.
+
