@@ -78,3 +78,30 @@ The current repository includes 5 implementations of Models:
 - Constrained Model at `SVAMP/code/constrained`
   - Constrained model as described in the paper. Feed-Forward Network maps input embeddings to hidden representations and LSTM Decoder with attention generates the equation.
 
+#### Datasets
+
+We work with the following datasets:
+
+- `mawps`
+  - [Paper](https://www.aclweb.org/anthology/N16-1136.pdf) and [Github](https://github.com/sroy9/mawps).
+  - `Data Size:` 1921
+  - Evaluated by Cross-Validation over 5 splits.
+  
+- `asdiv-a`
+  - [Paper](https://www.aclweb.org/anthology/2020.acl-main.92.pdf) and [Github](https://github.com/chaochun/nlu-asdiv-dataset).
+  - `Data Size:` 1217
+  - Evaluated by Cross-Validation over 5 splits.
+  
+- `svamp`
+  - `SVAMP/SVAMP.json`  
+  - `Data Size:` 1000
+  - Complete challenge set to be used for evaluation.
+
+A description of the individual data files in the `SVAMP/data` directory is given below:
+
+- `SVAMP/data/cv_asdiv-a`
+  - 5-fold Cross Validation splits of ASDiv-A dataset.
+
+- `SVAMP/data/cv_asdiv-a_without_questions`
+  - 5-fold Cross Validation splits of ASDiv-A dataset with questions removed in the test sets.
+
