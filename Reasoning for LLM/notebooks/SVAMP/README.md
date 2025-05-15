@@ -24,3 +24,30 @@ In this work, we show deficiencies in two benchmark datasets - <a href="https://
 Our experiments render the benchmark datasets unreliable to measure model performance. To enable more robust evaluation of automatic MWP solvers, we created a challenge set called "SVAMP". The examples in SVAMP test a model across different aspects of solving MWPs. Table 1 provides three examples from SVAMP that test whether a model is Question-sensitive, has robust reasoning ability or is invariant to structural alterations respectively.
 </p>
 
+
+#### Dependencies
+
+- compatible with python 3.6
+- dependencies can be installed using `SVAMP/code/requirements.txt`
+
+#### Setup
+
+Install VirtualEnv using the following (optional):
+
+```shell
+$ [sudo] pip install virtualenv
+```
+
+Create and activate your virtual environment (optional):
+
+```shell
+$ virtualenv -p python3 venv
+$ source venv/bin/activate
+```
+
+Install all the required packages:
+
+at `SVAMP/code:`
+
+```shell
+$ pip install -r requirements.txt
