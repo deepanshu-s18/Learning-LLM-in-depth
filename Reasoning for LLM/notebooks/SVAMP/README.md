@@ -105,3 +105,30 @@ A description of the individual data files in the `SVAMP/data` directory is give
 - `SVAMP/data/cv_asdiv-a_without_questions`
   - 5-fold Cross Validation splits of ASDiv-A dataset with questions removed in the test sets.
 
+- `SVAMP/data/cv_mawps`
+  - 5-fold Cross Validation splits of MAWPS dataset.
+
+- `SVAMP/data/cv_mawps_without_questions`
+  - 5-fold Cross Validation splits of MAWPS dataset with questions removed in the test sets.
+
+- `SVAMP/data/mawps-asdiv-a_svamp`
+  - Train set: Combination of full MAWPS and ASDiv-A. Size: 2373 + 1218.
+  - Test set: SVAMP. Size: 1000.
+
+- `SVAMP/data/mawps-asdiv-a_svamp_without_questions`
+  - Train set: Combination of full MAWPS and ASDiv-A. Size: 2373 + 1218
+  - Test set: SVAMP with questions removed from the MWPs. Size: 1000.
+
+- `SVAMP/data/cv_svamp_augmented`
+  - 5-fold Cross Validation splits of combined MAWPS, ASDiv-A and SVAMP. In each fold, the test set consists of problems from only SVAMP while the train set consists of problems from the rest of SVAMP and complete MAWPS and ASDiv-A.
+
+#### Usage
+
+The set of command line arguments available can be seen in the respective `args.py` file. Here, we illustrate running the experiment for cross validation of the ASDiv-A dataset using the Seq2Seq model. Follow the same methodology for running any experiment over any model.
+
+##### Running Seq2Seq Model for Cross Validation of ASDiv-A
+
+If the folders for the 5 folds are kept as subdirectories inside the directory `../data/cv_asdiv-a:` (for eg, fold0 directory will have `../data/cv_asdiv-a/fold0/train.csv` and `../data/cv_asdiv-a/fold0/dev.csv`),
+
+then, at `SVAMP/code/rnn_seq2seq:`
+
