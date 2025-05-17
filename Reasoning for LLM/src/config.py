@@ -17,3 +17,13 @@ DECODER_MODELS = {
 }
 
 # Model parameter size mappings for visualization
+MODEL_SIZES = {
+    "Flan-T5 Small": "80M",
+    "Flan-T5 Base": "250M",
+    "Flan-T5 Large": "800M",
+    "Zephyr-7B": "7B",
+    "Phi-2": "2.7B",
+    "TinyLlama-1.1B": "1.1B",
+}
+
+# Generation parameters
