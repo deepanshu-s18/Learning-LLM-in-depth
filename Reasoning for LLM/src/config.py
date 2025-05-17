@@ -27,3 +27,13 @@ MODEL_SIZES = {
 }
 
 # Generation parameters
+GEN_CONFIG = {
+    "max_new_tokens": 128,
+    "temperature": 0.3,
+    "top_p": 0.95,
+}
+
+# Default sample limits
+DEFAULT_SAMPLE_LIMIT = 50
+PREDICTION_PREVIEW_LIMIT = 5
+
