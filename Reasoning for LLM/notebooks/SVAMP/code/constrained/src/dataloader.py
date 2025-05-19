@@ -71,3 +71,27 @@ class TextDataset(Dataset):
 		self.max_length= max_length
 
 		if grade_info and type_info:
+			all_sents = zip(self.ques, self.eqn, self.nums, self.ans, self.grade, self.type)
+		elif grade_info and not type_info:
+			all_sents = zip(self.ques, self.eqn, self.nums, self.ans, self.grade)
+		elif type_info and not grade_info:
+			all_sents = zip(self.ques, self.eqn, self.nums, self.ans, self.type)
+		elif challenge_info:
+			all_sents = zip(self.ques, self.eqn, self.nums, self.ans, self.type, self.var_type, self.annotator, self.alternate)
+		else:
+			all_sents = zip(self.ques, self.eqn, self.nums, self.ans)
+
+		if is_train:
+			all_sents = sorted(all_sents, key = lambda x : len(x[0].split()))
+
+		if grade_info and type_info:
+			self.ques, self.eqn, self.nums, self.ans, self.grade, self.type = zip(*all_sents)
+		elif grade_info and not type_info:
+			self.ques, self.eqn, self.nums, self.ans, self.grade = zip(*all_sents)
+		elif type_info and not grade_info:
+			self.ques, self.eqn, self.nums, self.ans, self.type = zip(*all_sents)
+		elif challenge_info:
+			self.ques, self.eqn, self.nums, self.ans, self.type, self.var_type, self.annotator, self.alternate = zip(*all_sents)
+		else:
+			self.ques, self.eqn, self.nums, self.ans = zip(*all_sents)
+
