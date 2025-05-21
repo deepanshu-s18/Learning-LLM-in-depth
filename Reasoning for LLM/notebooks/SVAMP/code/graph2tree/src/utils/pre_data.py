@@ -322,3 +322,39 @@ def transfer_num(train_ls, dev_ls, chall = False):  # transfer num into "NUM"
 				if e1 not in generate_nums_dict:
 					generate_nums_dict[e1] = 1
 				else:
+					generate_nums_dict[e1] += 1
+				out_seq.append(e1)
+			else:
+				out_seq.append(e1)
+		if chall:
+			dev_pairs.append((input_seq, out_seq, nums, idxs, d['group_nums'], d['Type'], d['Variation Type'], d['Annotator'], d['Alternate']))
+		else:
+			dev_pairs.append((input_seq, out_seq, nums, idxs, d['group_nums']))
+
+	temp_g = []
+	for g in generate_nums_dict:
+		if generate_nums_dict[g] >= 5:
+			temp_g.append(g)
+	return train_pairs, dev_pairs, temp_g, copy_nums
+
+
+def transfer_english_num(data):  # transfer num into "NUM"
+	print("Transfer numbers...")
+	pattern = re.compile("\d+,\d+|\d+\.\d+|\d+")
+	pairs = []
+	generate_nums = {} # Unmentioned numbers used in eqns in atleast 5 examples
+	copy_nums = 0 # Maximum number of numbers in a single sentence
+	for d in data:
+		nums = []
+		input_seq = []
+		seg = d["sQuestion"].strip().split(" ")
+		equations = d["lEquations"]
+
+		for s in seg:
+			pos = re.search(pattern, s)
+			if pos:
+				if pos.start() > 0:
+					input_seq.append(s[:pos.start()])
+				num = s[pos.start(): pos.end()]
+				nums.append(num.replace(",", ""))
+				input_seq.append("NUM")
