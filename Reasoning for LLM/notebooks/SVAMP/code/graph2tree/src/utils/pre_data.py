@@ -286,3 +286,39 @@ def transfer_num(train_ls, dev_ls, chall = False):  # transfer num into "NUM"
 					out_seq.append(e1)
 				else:
 					out_seq.append(e1)
+
+			train_pairs.append((input_seq, out_seq, nums, idxs, d['group_nums']))
+	else:
+		train_pairs = None
+
+	for d in dev_ls:
+		# nums = []
+		nums = d['Numbers'].split()
+		input_seq = []
+		try:
+			seg = nltk.word_tokenize(d["Question"].strip())
+		except:
+			pdb.set_trace()
+		equation = d["Equation"].split()
+
+		numz = ['0','1','2','3','4','5','6','7','8','9']
+		opz = ['+', '-', '*', '/']
+		idxs = []
+		for s in range(len(seg)):
+			if len(seg[s]) >= 7 and seg[s][:6] == "number" and seg[s][6] in numz:
+				input_seq.append("NUM")
+				idxs.append(s)
+			else:
+				input_seq.append(seg[s])
+		if copy_nums < len(nums):
+			copy_nums = len(nums)
+
+		out_seq = []
+		for e1 in equation:
+			if len(e1) >= 7 and e1[:6] == "number":
+				out_seq.append('N'+e1[6:])
+			elif e1 not in opz:
+				generate_nums.append(e1)
+				if e1 not in generate_nums_dict:
+					generate_nums_dict[e1] = 1
+				else:
