@@ -70,3 +70,39 @@ class Lang:
 	def build_output_lang(self, generate_num, copy_nums):  # build the output lang vocab and dict
 		self.index2word = ["PAD", "EOS"] + self.index2word + generate_num + ["N" + str(i) for i in range(copy_nums)] +\
 						  ["SOS", "UNK"]
+		self.n_words = len(self.index2word)
+		for i, j in enumerate(self.index2word):
+			self.word2index[j] = i
+
+	def build_output_lang_for_tree(self, generate_num, copy_nums):  # build the output lang vocab and dict
+		self.num_start = len(self.index2word)
+
+		self.index2word = self.index2word + generate_num + ["N" + str(i) for i in range(copy_nums)] + ["UNK"]
+		self.n_words = len(self.index2word)
+
+		for i, j in enumerate(self.index2word):
+			self.word2index[j] = i
+
+def load_raw_data(data_path, dataset, is_train = True):  # load the data to list(dict())
+	train_ls = None
+	if is_train:
+		train_path = os.path.join(data_path, dataset, 'train.csv')
+		train_df = pd.read_csv(train_path, converters={'group_nums': eval})
+		train_ls = train_df.to_dict('records')
+
+	dev_path = os.path.join(data_path, dataset, 'dev.csv')
+	dev_df = pd.read_csv(dev_path, converters={'group_nums': eval})
+	dev_ls = dev_df.to_dict('records')
+
+	return train_ls, dev_ls
+
+
+# remove the superfluous brackets
+def remove_brackets(x):
+	y = x
+	if x[0] == "(" and x[-1] == ")":
+		x = x[1:-1]
+		flag = True
+		count = 0
+		for s in x:
+			if s == ")":
