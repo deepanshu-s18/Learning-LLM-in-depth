@@ -142,3 +142,39 @@ def load_mawps_data(filename):  # load the json data to list(dict()) for MAWPS
 				if len(set(xt) - set("0123456789.+-*/()")) == 0:
 					temp = d.copy()
 					temp["lEquations"] = xt
+					out_data.append(temp)
+					continue
+
+		if len(set(x) - set("0123456789.+-*/()=xX")) != 0: # If equation has anything not in the set on RHS of -
+			continue
+
+		if x[:2] == "x=" or x[:2] == "X=":
+			if len(set(x[2:]) - set("0123456789.+-*/()")) == 0:
+				temp = d.copy()
+				temp["lEquations"] = x[2:]
+				out_data.append(temp)
+				continue
+		if x[-2:] == "=x" or x[-2:] == "=X":
+			if len(set(x[:-2]) - set("0123456789.+-*/()")) == 0:
+				temp = d.copy()
+				temp["lEquations"] = x[:-2]
+				out_data.append(temp)
+				continue
+	return out_data
+
+
+def load_roth_data(filename):  # load the json data to dict(dict()) for roth data
+	print("Reading lines...")
+	f = open(filename, encoding="utf-8")
+	data = json.load(f)
+	out_data = {}
+	for d in data:
+		if "lEquations" not in d or len(d["lEquations"]) != 1:
+			continue
+		x = d["lEquations"][0].replace(" ", "")
+
+		if "lQueryVars" in d and len(d["lQueryVars"]) == 1:
+			v = d["lQueryVars"][0]
+			if v + "=" == x[:len(v)+1]:
+				xt = x[len(v)+1:]
+				if len(set(xt) - set("0123456789.+-*/()")) == 0:
