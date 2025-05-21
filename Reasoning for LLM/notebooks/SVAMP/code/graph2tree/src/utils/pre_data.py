@@ -106,3 +106,39 @@ def remove_brackets(x):
 		count = 0
 		for s in x:
 			if s == ")":
+				count -= 1
+				if count < 0:
+					flag = False
+					break
+			elif s == "(":
+				count += 1
+		if flag:
+			return x
+	return y
+
+
+def load_mawps_data(filename):  # load the json data to list(dict()) for MAWPS
+	print("Reading lines...")
+	f = open(filename, encoding="utf-8")
+	data = json.load(f)
+	out_data = []
+	for d in data:
+		if "lEquations" not in d or len(d["lEquations"]) != 1: # Only single equations
+			continue
+		x = d["lEquations"][0].replace(" ", "")
+
+		if "lQueryVars" in d and len(d["lQueryVars"]) == 1: # When Equations are annotated with variables
+			v = d["lQueryVars"][0]
+			if v + "=" == x[:len(v)+1]: # If eqn of the form 'Var=...'  
+				xt = x[len(v)+1:]
+				if len(set(xt) - set("0123456789.+-*/()")) == 0:
+					temp = d.copy()
+					temp["lEquations"] = xt
+					out_data.append(temp)
+					continue
+
+			if "=" + v == x[-len(v)-1:]: # If eqn of the form '...=Var'
+				xt = x[:-len(v)-1]
+				if len(set(xt) - set("0123456789.+-*/()")) == 0:
+					temp = d.copy()
+					temp["lEquations"] = xt
