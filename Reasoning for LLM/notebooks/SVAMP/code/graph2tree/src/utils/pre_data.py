@@ -178,3 +178,39 @@ def load_roth_data(filename):  # load the json data to dict(dict()) for roth dat
 			if v + "=" == x[:len(v)+1]:
 				xt = x[len(v)+1:]
 				if len(set(xt) - set("0123456789.+-*/()")) == 0:
+					temp = d.copy()
+					temp["lEquations"] = remove_brackets(xt)
+					y = temp["sQuestion"]
+					seg = y.strip().split(" ")
+					temp_y = ""
+					for s in seg:
+						if len(s) > 1 and (s[-1] == "," or s[-1] == "." or s[-1] == "?"):
+							temp_y += s[:-1] + " " + s[-1:] + " "
+						else:
+							temp_y += s + " "
+					temp["sQuestion"] = temp_y[:-1]
+					out_data[temp["iIndex"]] = temp
+					continue
+
+			if "=" + v == x[-len(v)-1:]:
+				xt = x[:-len(v)-1]
+				if len(set(xt) - set("0123456789.+-*/()")) == 0:
+					temp = d.copy()
+					temp["lEquations"] = remove_brackets(xt)
+					y = temp["sQuestion"]
+					seg = y.strip().split(" ")
+					temp_y = ""
+					for s in seg:
+						if len(s) > 1 and (s[-1] == "," or s[-1] == "." or s[-1] == "?"):
+							temp_y += s[:-1] + " " + s[-1:] + " "
+						else:
+							temp_y += s + " "
+					temp["sQuestion"] = temp_y[:-1]
+					out_data[temp["iIndex"]] = temp
+					continue
+
+		if len(set(x) - set("0123456789.+-*/()=xX")) != 0:
+			continue
+
+		if x[:2] == "x=" or x[:2] == "X=":
+			if len(set(x[2:]) - set("0123456789.+-*/()")) == 0:
