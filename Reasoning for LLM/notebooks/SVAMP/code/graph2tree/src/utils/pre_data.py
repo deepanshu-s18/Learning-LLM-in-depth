@@ -466,3 +466,39 @@ def transfer_roth_num(data):  # transfer num into "NUM"
 		temp_eq = ""
 		for e in equations:
 			if e not in "()+-*/":
+				temp_eq += e
+			elif temp_eq != "":
+				count_eq = []
+				for n_idx, n in enumerate(nums):
+					if abs(float(n) - float(temp_eq)) < 1e-4:
+						count_eq.append(n_idx)
+						if n != temp_eq:
+							nums[n_idx] = temp_eq
+				if len(count_eq) == 0:
+					flag = True
+					for gn in generate_nums:
+						if abs(float(gn) - float(temp_eq)) < 1e-4:
+							generate_nums[gn] += 1
+							if temp_eq != gn:
+								temp_eq = gn
+							flag = False
+					if flag:
+						generate_nums[temp_eq] = 0
+					eq_segs.append(temp_eq)
+				elif len(count_eq) == 1:
+					eq_segs.append("N"+str(count_eq[0]))
+				else:
+					eq_segs.append(temp_eq)
+				eq_segs.append(e)
+				temp_eq = ""
+			else:
+				eq_segs.append(e)
+		if temp_eq != "":
+			count_eq = []
+			for n_idx, n in enumerate(nums):
+				if abs(float(n) - float(temp_eq)) < 1e-4:
+					count_eq.append(n_idx)
+					if n != temp_eq:
+						nums[n_idx] = temp_eq
+			if len(count_eq) == 0:
+				flag = True
