@@ -358,3 +358,39 @@ def transfer_english_num(data):  # transfer num into "NUM"
 				num = s[pos.start(): pos.end()]
 				nums.append(num.replace(",", ""))
 				input_seq.append("NUM")
+				if pos.end() < len(s):
+					input_seq.append(s[pos.end():])
+			else:
+				input_seq.append(s)
+
+		if copy_nums < len(nums):
+			copy_nums = len(nums)
+		eq_segs = []
+		temp_eq = ""
+		for e in equations:
+			if e not in "()+-*/":
+				temp_eq += e
+			elif temp_eq != "":
+				count_eq = []
+				for n_idx, n in enumerate(nums):
+					if abs(float(n) - float(temp_eq)) < 1e-4:
+						count_eq.append(n_idx)
+						if n != temp_eq:
+							nums[n_idx] = temp_eq
+				if len(count_eq) == 0:
+					flag = True
+					for gn in generate_nums:
+						if abs(float(gn) - float(temp_eq)) < 1e-4:
+							generate_nums[gn] += 1
+							if temp_eq != gn:
+								temp_eq = gn
+							flag = False
+					if flag:
+						generate_nums[temp_eq] = 0
+					eq_segs.append(temp_eq)
+				elif len(count_eq) == 1:
+					eq_segs.append("N"+str(count_eq[0]))
+				else:
+					eq_segs.append(temp_eq)
+				eq_segs.append(e)
+				temp_eq = ""
