@@ -430,3 +430,39 @@ def transfer_english_num(data):  # transfer num into "NUM"
 	for g in generate_nums:
 		if generate_nums[g] >= 5:
 			temp_g.append(g)
+
+	return pairs, temp_g, copy_nums
+
+
+def transfer_roth_num(data):  # transfer num into "NUM"
+	print("Transfer numbers...")
+	pattern = re.compile("\d+,\d+|\d+\.\d+|\d+")
+	pairs = {}
+	generate_nums = {}
+	copy_nums = 0
+	for key in data:
+		d = data[key]
+		nums = []
+		input_seq = []
+		seg = d["sQuestion"].strip().split(" ")
+		equations = d["lEquations"]
+
+		for s in seg:
+			pos = re.search(pattern, s)
+			if pos:
+				if pos.start() > 0:
+					input_seq.append(s[:pos.start()])
+				num = s[pos.start(): pos.end()]
+				nums.append(num.replace(",", ""))
+				input_seq.append("NUM")
+				if pos.end() < len(s):
+					input_seq.append(s[pos.end():])
+			else:
+				input_seq.append(s)
+
+		if copy_nums < len(nums):
+			copy_nums = len(nums)
+		eq_segs = []
+		temp_eq = ""
+		for e in equations:
+			if e not in "()+-*/":
