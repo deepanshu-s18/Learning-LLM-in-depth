@@ -574,3 +574,39 @@ def prepare_data(config, logger, pairs_trained, pairs_tested, trim_min_count, ge
 	if config.embedding == 'bert' or config.embedding == 'roberta':
 		for pair in pairs_tested:
 			if not tree:
+				input_lang.add_sen_to_vocab(pair[0])
+			elif pair[-1]:
+				input_lang.add_sen_to_vocab(pair[0])
+
+	if pairs_trained != None:
+
+		input_lang.build_input_lang(logger, trim_min_count)
+		if tree:
+			output_lang.build_output_lang_for_tree(generate_nums, copy_nums)
+		else:
+			output_lang.build_output_lang(generate_nums, copy_nums)
+
+		for pair in pairs_trained:
+			num_stack = []
+			for word in pair[1]: # For each token in equation
+				temp_num = []
+				flag_not = True
+				if word not in output_lang.index2word: # If token is not in output vocab
+					flag_not = False
+					for i, j in enumerate(pair[2]):
+						if j == word:
+							temp_num.append(i) # Append number list index of token not in output vocab
+
+				if not flag_not and len(temp_num) != 0: # Equation has an unknown token and it is a number present in number list (could be default number with freq < 5)
+					num_stack.append(temp_num)
+				if not flag_not and len(temp_num) == 0: # Equation has an unknown token but it is not a number from number list
+					num_stack.append([_ for _ in range(len(pair[2]))])
+
+			num_stack.reverse()
+			input_cell = indexes_from_sentence(input_lang, pair[0])
+			output_cell = indexes_from_sentence(output_lang, pair[1], tree)
+			train_pairs.append((input_cell, len(input_cell), output_cell, len(output_cell),
+								pair[2], pair[3], num_stack, pair[4]))
+
+	logger.debug('Indexed {} words in input language, {} words in output'.format(input_lang.n_words, output_lang.n_words))
+
