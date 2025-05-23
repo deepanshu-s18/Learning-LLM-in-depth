@@ -610,3 +610,39 @@ def prepare_data(config, logger, pairs_trained, pairs_tested, trim_min_count, ge
 
 	logger.debug('Indexed {} words in input language, {} words in output'.format(input_lang.n_words, output_lang.n_words))
 
+	for pair in pairs_tested:
+		num_stack = []
+		for word in pair[1]:
+			temp_num = []
+			flag_not = True
+			if word not in output_lang.index2word:
+				flag_not = False
+				for i, j in enumerate(pair[2]):
+					if j == word:
+						temp_num.append(i)
+
+			if not flag_not and len(temp_num) != 0:
+				num_stack.append(temp_num)
+			if not flag_not and len(temp_num) == 0:
+				num_stack.append([_ for _ in range(len(pair[2]))])
+
+		num_stack.reverse()
+		input_cell = indexes_from_sentence(input_lang, pair[0])
+		output_cell = indexes_from_sentence(output_lang, pair[1], tree)
+		if config.challenge_disp:
+			test_pairs.append((input_cell, len(input_cell), output_cell, len(output_cell),
+						   pair[2], pair[3], num_stack, pair[4], pair[5], pair[6], pair[7], pair[8]))
+		else:
+			test_pairs.append((input_cell, len(input_cell), output_cell, len(output_cell),
+						   pair[2], pair[3], num_stack, pair[4]))
+
+	return input_lang, output_lang, train_pairs, test_pairs
+
+
+def prepare_de_data(pairs_trained, pairs_tested, trim_min_count, generate_nums, copy_nums, tree=False):
+	input_lang = Lang()
+	output_lang = Lang()
+	train_pairs = []
+	test_pairs = []
+
+	print("Indexing words...")
