@@ -538,3 +538,39 @@ def indexes_from_sentence(lang, sentence, tree=False):
 		if len(word) == 0:
 			continue
 		if word in lang.word2index:
+			res.append(lang.word2index[word])
+		else:
+			res.append(lang.word2index["UNK"])
+	if "EOS" in lang.index2word and not tree:
+		res.append(lang.word2index["EOS"])
+	return res
+
+def sentence_from_indexes(lang, indexes):
+	sent = []
+	for ind in indexes:
+		sent.append(lang.index2word[ind])
+	return sent
+
+
+def prepare_data(config, logger, pairs_trained, pairs_tested, trim_min_count, generate_nums, copy_nums, input_lang=None, output_lang=None, tree=False):
+	if input_lang == None:
+		input_lang = Lang()
+	if output_lang == None:
+		output_lang = Lang()
+
+	test_pairs = []
+	train_pairs = None
+
+	if pairs_trained != None:
+		train_pairs = []
+		for pair in pairs_trained:
+			if not tree:
+				input_lang.add_sen_to_vocab(pair[0])
+				output_lang.add_sen_to_vocab(pair[1])
+			elif pair[-1]:
+				input_lang.add_sen_to_vocab(pair[0])
+				output_lang.add_sen_to_vocab(pair[1])
+
+	if config.embedding == 'bert' or config.embedding == 'roberta':
+		for pair in pairs_tested:
+			if not tree:
