@@ -755,3 +755,39 @@ def get_greater_num_graph(max_len, sentence_length, num_list, id_num_list,contai
 		return graph
 	for i in range(len(id_num_list)):
 		for j in range(len(id_num_list)):
+			if float(num_list[i]) > float(num_list[j]):
+				graph[id_num_list[i]][id_num_list[j]] = 1
+			else:
+				graph[id_num_list[j]][id_num_list[i]] = 1
+	return graph
+
+# attribute between graph
+def get_attribute_between_graph(input_batch, max_len, id_num_list, sentence_length, quantity_cell_list,contain_zh_flag=True):
+	diag_ele = np.zeros(max_len)
+	for i in range(sentence_length):
+		diag_ele[i] = 1
+	graph = np.diag(diag_ele)
+	#quantity_cell_list = quantity_cell_list.extend(id_num_list)
+	if not contain_zh_flag:
+		return graph
+	for i in id_num_list:
+		for j in quantity_cell_list:
+			if i < max_len and j < max_len and j not in id_num_list and abs(i-j) < 4:
+				graph[i][j] = 1
+				graph[j][i] = 1
+	for i in quantity_cell_list:
+		for j in quantity_cell_list:
+			if i < max_len and j < max_len:
+				if input_batch[i] == input_batch[j]:
+					graph[i][j] = 1
+					graph[j][i] = 1
+	return graph
+
+# quantity between graph
+def get_quantity_between_graph(max_len, id_num_list, sentence_length, quantity_cell_list,contain_zh_flag=True):
+	diag_ele = np.zeros(max_len)
+	for i in range(sentence_length):
+		diag_ele[i] = 1
+	graph = np.diag(diag_ele)
+	#quantity_cell_list = quantity_cell_list.extend(id_num_list)
+	if not contain_zh_flag:
