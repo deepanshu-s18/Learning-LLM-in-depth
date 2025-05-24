@@ -719,3 +719,39 @@ def change_num(num):
 			new_str = new_str.split('(')[1]
 			a = float(new_str.split('/')[0])
 			b = float(new_str.split('/')[1])
+			value = a/b
+			new_num.append(value)
+		elif '%' in item:
+			value = float(item[0:-1])/100
+			new_num.append(value)
+		else:
+			new_num.append(float(item))
+	return new_num
+
+# num net graph
+def get_lower_num_graph(max_len, sentence_length, num_list, id_num_list,contain_zh_flag=True):
+	diag_ele = np.zeros(max_len)
+	num_list = change_num(num_list)
+	for i in range(sentence_length):
+		diag_ele[i] = 1
+	graph = np.diag(diag_ele)
+	if not contain_zh_flag:
+		return graph
+	for i in range(len(id_num_list)):
+		for j in range(len(id_num_list)):
+			if float(num_list[i]) <= float(num_list[j]):
+				graph[id_num_list[i]][id_num_list[j]] = 1
+			else:
+				graph[id_num_list[j]][id_num_list[i]] = 1
+	return graph
+
+def get_greater_num_graph(max_len, sentence_length, num_list, id_num_list,contain_zh_flag=True):
+	diag_ele = np.zeros(max_len)
+	num_list = change_num(num_list)
+	for i in range(sentence_length):
+		diag_ele[i] = 1
+	graph = np.diag(diag_ele)
+	if not contain_zh_flag:
+		return graph
+	for i in range(len(id_num_list)):
+		for j in range(len(id_num_list)):
