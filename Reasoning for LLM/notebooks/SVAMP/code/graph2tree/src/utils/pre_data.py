@@ -791,3 +791,39 @@ def get_quantity_between_graph(max_len, id_num_list, sentence_length, quantity_c
 	graph = np.diag(diag_ele)
 	#quantity_cell_list = quantity_cell_list.extend(id_num_list)
 	if not contain_zh_flag:
+		return graph
+	for i in id_num_list:
+		for j in quantity_cell_list:
+			if i < max_len and j < max_len and j not in id_num_list and abs(i-j) < 4:
+				graph[i][j] = 1
+				graph[j][i] = 1
+	for i in id_num_list:
+		for j in id_num_list:
+			graph[i][j] = 1
+			graph[j][i] = 1
+	return graph
+
+# quantity cell graph
+def get_quantity_cell_graph(max_len, id_num_list, sentence_length, quantity_cell_list,contain_zh_flag=True):
+	diag_ele = np.zeros(max_len)
+	for i in range(sentence_length):
+		diag_ele[i] = 1
+	graph = np.diag(diag_ele)
+	#quantity_cell_list = quantity_cell_list.extend(id_num_list)
+	if not contain_zh_flag:
+		return graph
+	for i in id_num_list:
+		for j in quantity_cell_list:
+			if i < max_len and j < max_len and j not in id_num_list and abs(i-j) < 4:
+				graph[i][j] = 1
+				graph[j][i] = 1
+	return graph
+
+def get_single_batch_graph(input_batch, input_length,group,num_value,num_pos):
+	# pdb.set_trace()
+	batch_graph = []
+	max_len = max(input_length)
+	for i in range(len(input_length)):
+		input_batch_t = input_batch[i]
+		sentence_length = input_length[i]
+		quantity_cell_list = group[i]
