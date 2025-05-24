@@ -646,3 +646,40 @@ def prepare_de_data(pairs_trained, pairs_tested, trim_min_count, generate_nums, 
 	test_pairs = []
 
 	print("Indexing words...")
+	for pair in pairs_trained:
+		input_lang.add_sen_to_vocab(pair[0])
+		output_lang.add_sen_to_vocab(pair[1])
+
+	input_lang.build_input_lang(trim_min_count)
+
+	if tree:
+		output_lang.build_output_lang_for_tree(generate_nums, copy_nums)
+	else:
+		output_lang.build_output_lang(generate_nums, copy_nums)
+
+	for pair in pairs_trained:
+		num_stack = []
+		for word in pair[1]:
+			temp_num = []
+			flag_not = True
+			if word not in output_lang.index2word:
+				flag_not = False
+				for i, j in enumerate(pair[2]):
+					if j == word:
+						temp_num.append(i)
+
+			if not flag_not and len(temp_num) != 0:
+				num_stack.append(temp_num)
+			if not flag_not and len(temp_num) == 0:
+				num_stack.append([_ for _ in range(len(pair[2]))])
+
+		num_stack.reverse()
+		input_cell = indexes_from_sentence(input_lang, pair[0])
+		# train_pairs.append([input_cell, len(input_cell), pair[1], 0, pair[2], pair[3], num_stack, pair[4]])
+		train_pairs.append([input_cell, len(input_cell), pair[1], 0, pair[2], pair[3], num_stack])
+	print('Indexed %d words in input language, %d words in output' % (input_lang.n_words, output_lang.n_words))
+	print('Number of training data %d' % (len(train_pairs)))
+	for pair in pairs_tested:
+		num_stack = []
+		for word in pair[1]:
+			temp_num = []
