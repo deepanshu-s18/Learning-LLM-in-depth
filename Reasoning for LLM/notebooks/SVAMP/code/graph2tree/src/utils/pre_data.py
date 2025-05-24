@@ -683,3 +683,39 @@ def prepare_de_data(pairs_trained, pairs_tested, trim_min_count, generate_nums, 
 		num_stack = []
 		for word in pair[1]:
 			temp_num = []
+			flag_not = True
+			if word not in output_lang.index2word:
+				flag_not = False
+				for i, j in enumerate(pair[2]):
+					if j == word:
+						temp_num.append(i)
+
+			if not flag_not and len(temp_num) != 0:
+				num_stack.append(temp_num)
+			if not flag_not and len(temp_num) == 0:
+				num_stack.append([_ for _ in range(len(pair[2]))])
+
+		num_stack.reverse()
+		input_cell = indexes_from_sentence(input_lang, pair[0])
+		output_cell = indexes_from_sentence(output_lang, pair[1], tree)
+		# train_pairs.append((input_cell, len(input_cell), output_cell, len(output_cell),
+		#                     pair[2], pair[3], num_stack, pair[4]))
+		test_pairs.append((input_cell, len(input_cell), output_cell, len(output_cell),
+						   pair[2], pair[3], num_stack))
+	print('Number of testind data %d' % (len(test_pairs)))
+	return input_lang, output_lang, train_pairs, test_pairs
+
+
+# Pad a with the PAD symbol
+def pad_seq(seq, seq_len, max_length):
+	seq += [PAD_token for _ in range(max_length - seq_len)]
+	return seq
+
+def change_num(num):
+	new_num = []
+	for item in num:
+		if '/' in item:
+			new_str = item.split(')')[0]
+			new_str = new_str.split('(')[1]
+			a = float(new_str.split('/')[0])
+			b = float(new_str.split('/')[1])
