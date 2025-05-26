@@ -899,3 +899,39 @@ def prepare_train_batch(pairs_to_batch, batch_size):
 		num_size_batch = []
 		group_batch = []
 		num_value_batch = []
+		for i, li, j, lj, num, num_pos, num_stack, group in batch:
+			num_batch.append(len(num))
+			input_batch.append(pad_seq(i, li, input_len_max))
+			output_batch.append(pad_seq(j, lj, output_len_max))
+			num_stack_batch.append(num_stack)
+			num_pos_batch.append(num_pos)
+			num_size_batch.append(len(num_pos))
+			num_value_batch.append(num)
+			group_batch.append(group)
+			
+		input_batches.append(input_batch)
+		nums_batches.append(num_batch)
+		output_batches.append(output_batch)
+		num_stack_batches.append(num_stack_batch)
+		num_pos_batches.append(num_pos_batch)
+		num_size_batches.append(num_size_batch)
+		num_value_batches.append(num_value_batch)
+		group_batches.append(group_batch)
+		graph_batches.append(get_single_batch_graph(input_batch, input_length,group_batch,num_value_batch,num_pos_batch))
+		
+	return input_batches, input_lengths, output_batches, output_lengths, nums_batches, num_stack_batches, num_pos_batches, num_size_batches, num_value_batches, graph_batches, group_batches
+
+def get_num_stack(eq, output_lang, num_pos):
+	num_stack = []
+	for word in eq:
+		temp_num = []
+		flag_not = True
+		if word not in output_lang.index2word:
+			flag_not = False
+			for i, j in enumerate(num_pos):
+				if j == word:
+					temp_num.append(i)
+		if not flag_not and len(temp_num) != 0:
+			num_stack.append(temp_num)
+		if not flag_not and len(temp_num) == 0:
+			num_stack.append([_ for _ in range(len(num_pos))])
