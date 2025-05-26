@@ -1043,3 +1043,39 @@ def exchange(ex_copy, rate):
 						flag += 1
 					lidx -= 1
 				if flag == 1:
+					lidx += 2
+				else:
+					lidx += 1
+
+				flag = 0
+				while not (ridx == len(ex) or ((ex[ridx] == "+" or ex[ridx] == "-") and flag == 0) or flag == -1):
+					if ex[ridx] == ")" or ex[ridx] == "]":
+						flag -= 1
+					elif ex[ridx] == "(" or ex[ridx] == "[":
+						flag += 1
+					ridx += 1
+				if flag == -1:
+					ridx -= 2
+				else:
+					ridx -= 1
+			else:
+				flag = 0
+				while not (lidx == -1
+						   or ((ex[lidx] == "+" or ex[lidx] == "-" or ex[lidx] == "*" or ex[lidx] == "/") and flag == 0)
+						   or flag == 1):
+					if ex[lidx] == ")" or ex[lidx] == "]":
+						flag -= 1
+					elif ex[lidx] == "(" or ex[lidx] == "[":
+						flag += 1
+					lidx -= 1
+				if flag == 1:
+					lidx += 2
+				else:
+					lidx += 1
+
+				flag = 0
+				while not (ridx == len(ex)
+						   or ((ex[ridx] == "+" or ex[ridx] == "-" or ex[ridx] == "*" or ex[ridx] == "/") and flag == 0)
+						   or flag == -1):
+					if ex[ridx] == ")" or ex[ridx] == "]":
+						flag -= 1
