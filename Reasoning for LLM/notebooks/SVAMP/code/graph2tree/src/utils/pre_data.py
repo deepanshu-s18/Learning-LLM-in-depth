@@ -1007,3 +1007,39 @@ def prepare_de_train_batch(pairs_to_batch, batch_size, output_lang, rate, englis
 		input_len_max = input_length[0]
 		output_len_max = max(output_length)
 		input_batch = []
+		output_batch = []
+		num_batch = []
+		num_stack_batch = []
+		num_pos_batch = []
+		for i, li, j, lj, num, num_pos, num_stack in batch:
+			num_batch.append(len(num))
+			input_batch.append(pad_seq(i, li, input_len_max))
+			output_batch.append(pad_seq(j, lj, output_len_max))
+			num_stack_batch.append(num_stack)
+			num_pos_batch.append(num_pos)
+		input_batches.append(input_batch)
+		nums_batches.append(num_batch)
+		output_batches.append(output_batch)
+		num_stack_batches.append(num_stack_batch)
+		num_pos_batches.append(num_pos_batch)
+	return input_batches, input_lengths, output_batches, output_lengths, nums_batches, num_stack_batches, num_pos_batches
+
+
+# Multiplication exchange rate
+def exchange(ex_copy, rate):
+	ex = copy.deepcopy(ex_copy)
+	idx = 1
+	while idx < len(ex):
+		s = ex[idx]
+		if (s == "*" or s == "+") and random.random() < rate:
+			lidx = idx - 1
+			ridx = idx + 1
+			if s == "+":
+				flag = 0
+				while not (lidx == -1 or ((ex[lidx] == "+" or ex[lidx] == "-") and flag == 0) or flag == 1):
+					if ex[lidx] == ")" or ex[lidx] == "]":
+						flag -= 1
+					elif ex[lidx] == "(" or ex[lidx] == "[":
+						flag += 1
+					lidx -= 1
+				if flag == 1:
