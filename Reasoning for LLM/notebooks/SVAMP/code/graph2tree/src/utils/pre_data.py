@@ -827,3 +827,39 @@ def get_single_batch_graph(input_batch, input_length,group,num_value,num_pos):
 		input_batch_t = input_batch[i]
 		sentence_length = input_length[i]
 		quantity_cell_list = group[i]
+		num_list = num_value[i]
+		id_num_list = num_pos[i]
+		graph_newc = get_quantity_cell_graph(max_len, id_num_list, sentence_length, quantity_cell_list)
+		graph_greater = get_greater_num_graph(max_len, sentence_length, num_list, id_num_list)
+		graph_lower = get_lower_num_graph(max_len, sentence_length, num_list, id_num_list)
+		graph_quanbet = get_quantity_between_graph(max_len, id_num_list, sentence_length, quantity_cell_list)
+		graph_attbet = get_attribute_between_graph(input_batch_t, max_len, id_num_list, sentence_length, quantity_cell_list)
+		#graph_newc1 = get_quantity_graph1(input_batch_t, max_len, id_num_list, sentence_length, quantity_cell_list)
+		graph_total = [graph_newc.tolist(),graph_greater.tolist(),graph_lower.tolist(),graph_quanbet.tolist(),graph_attbet.tolist()]
+		batch_graph.append(graph_total)
+	batch_graph = np.array(batch_graph)
+	return batch_graph
+
+def get_single_example_graph(input_batch, input_length,group,num_value,num_pos):
+	batch_graph = []
+	max_len = input_length
+	sentence_length = input_length
+	quantity_cell_list = group
+	num_list = num_value
+	id_num_list = num_pos
+	graph_newc = get_quantity_cell_graph(max_len, id_num_list, sentence_length, quantity_cell_list)
+	graph_quanbet = get_quantity_between_graph(max_len, id_num_list, sentence_length, quantity_cell_list)
+	graph_attbet = get_attribute_between_graph(input_batch, max_len, id_num_list, sentence_length, quantity_cell_list)
+	graph_greater = get_greater_num_graph(max_len, sentence_length, num_list, id_num_list)
+	graph_lower = get_greater_num_graph(max_len, sentence_length, num_list, id_num_list)
+	#graph_newc1 = get_quantity_graph1(input_batch, max_len, id_num_list, sentence_length, quantity_cell_list)
+	graph_total = [graph_newc.tolist(),graph_greater.tolist(),graph_lower.tolist(),graph_quanbet.tolist(),graph_attbet.tolist()]
+	batch_graph.append(graph_total)
+	batch_graph = np.array(batch_graph)
+	return batch_graph
+
+# prepare the batches
+def prepare_train_batch(pairs_to_batch, batch_size):
+	pairs = copy.deepcopy(pairs_to_batch)
+	random.shuffle(pairs)  # shuffle the pairs
+	pos = 0
