@@ -971,3 +971,39 @@ def prepare_de_train_batch(pairs_to_batch, batch_size, output_lang, rate, englis
 			pairs.append(p)
 
 			if temp_out_a != pair[2]:
+				p = copy.deepcopy(pair)
+				temp_out_a = allocation(temp_out, rate)
+				temp_out_a = check_bracket(temp_out_a, english)
+				if temp_out_a != temp_out:
+					p[6] = get_num_stack(temp_out_a, output_lang, p[4])
+					p[2] = indexes_from_sentence(output_lang, temp_out_a)
+					p[3] = len(p[2])
+					pairs.append(p)
+	print("this epoch training data is", len(pairs))
+	random.shuffle(pairs)  # shuffle the pairs
+	pos = 0
+	input_lengths = []
+	output_lengths = []
+	nums_batches = []
+	batches = []
+	input_batches = []
+	output_batches = []
+	num_stack_batches = []  # save the num stack which
+	num_pos_batches = []
+	while pos + batch_size < len(pairs):
+		batches.append(pairs[pos:pos+batch_size])
+		pos += batch_size
+	batches.append(pairs[pos:])
+
+	for batch in batches:
+		batch = sorted(batch, key=lambda tp: tp[1], reverse=True)
+		input_length = []
+		output_length = []
+		for _, i, _, j, _, _, _ in batch:
+			input_length.append(i)
+			output_length.append(j)
+		input_lengths.append(input_length)
+		output_lengths.append(output_length)
+		input_len_max = input_length[0]
+		output_len_max = max(output_length)
+		input_batch = []
