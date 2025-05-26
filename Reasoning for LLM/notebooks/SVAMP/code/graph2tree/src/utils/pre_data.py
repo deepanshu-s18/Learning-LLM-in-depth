@@ -935,3 +935,39 @@ def get_num_stack(eq, output_lang, num_pos):
 			num_stack.append(temp_num)
 		if not flag_not and len(temp_num) == 0:
 			num_stack.append([_ for _ in range(len(num_pos))])
+	num_stack.reverse()
+	return num_stack
+
+
+def prepare_de_train_batch(pairs_to_batch, batch_size, output_lang, rate, english=False):
+	pairs = []
+	b_pairs = copy.deepcopy(pairs_to_batch)
+	for pair in b_pairs:
+		p = copy.deepcopy(pair)
+		pair[2] = check_bracket(pair[2], english)
+
+		temp_out = exchange(pair[2], rate)
+		temp_out = check_bracket(temp_out, english)
+
+		p[2] = indexes_from_sentence(output_lang, pair[2])
+		p[3] = len(p[2])
+		pairs.append(p)
+
+		temp_out_a = allocation(pair[2], rate)
+		temp_out_a = check_bracket(temp_out_a, english)
+
+		if temp_out_a != pair[2]:
+			p = copy.deepcopy(pair)
+			p[6] = get_num_stack(temp_out_a, output_lang, p[4])
+			p[2] = indexes_from_sentence(output_lang, temp_out_a)
+			p[3] = len(p[2])
+			pairs.append(p)
+
+		if temp_out != pair[2]:
+			p = copy.deepcopy(pair)
+			p[6] = get_num_stack(temp_out, output_lang, p[4])
+			p[2] = indexes_from_sentence(output_lang, temp_out)
+			p[3] = len(p[2])
+			pairs.append(p)
+
+			if temp_out_a != pair[2]:
