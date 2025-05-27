@@ -1115,3 +1115,39 @@ def check_bracket(x, english=False):
 					flag += 1
 				temp_idx += 1
 			if temp_idx == len(x):
+				x = x[idx + 1:temp_idx - 1]
+			elif x[temp_idx] != "*" and x[temp_idx] != "/":
+				x = x[idx + 1:temp_idx - 1] + x[temp_idx:]
+		while True:
+			y = len(x)
+			for idx, s in enumerate(x):
+				if s == "+" and idx + 1 < len(x) and x[idx + 1] == "(":
+					flag = 1
+					temp_idx = idx + 2
+					while flag > 0 and temp_idx < len(x):
+						if x[temp_idx] == ")":
+							flag -= 1
+						elif x[temp_idx] == "(":
+							flag += 1
+						temp_idx += 1
+					if temp_idx == len(x):
+						x = x[:idx + 1] + x[idx + 2:temp_idx - 1]
+						break
+					elif x[temp_idx] != "*" and x[temp_idx] != "/":
+						x = x[:idx + 1] + x[idx + 2:temp_idx - 1] + x[temp_idx:]
+						break
+			if y == len(x):
+				break
+		return x
+
+	lx = len(x)
+	for idx, s in enumerate(x):
+		if s == "[":
+			flag_b = 0
+			flag = False
+			temp_idx = idx
+			while temp_idx < lx:
+				if x[temp_idx] == "]":
+					flag_b += 1
+				elif x[temp_idx] == "[":
+					flag_b -= 1
