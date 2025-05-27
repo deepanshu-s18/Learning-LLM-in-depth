@@ -1151,3 +1151,39 @@ def check_bracket(x, english=False):
 					flag_b += 1
 				elif x[temp_idx] == "[":
 					flag_b -= 1
+				if x[temp_idx] == "(" or x[temp_idx] == "[":
+					flag = True
+				if x[temp_idx] == "]" and flag_b == 0:
+					break
+				temp_idx += 1
+			if not flag:
+				x[idx] = "("
+				x[temp_idx] = ")"
+				continue
+		if s == "(":
+			flag_b = 0
+			flag = False
+			temp_idx = idx
+			while temp_idx < lx:
+				if x[temp_idx] == ")":
+					flag_b += 1
+				elif x[temp_idx] == "(":
+					flag_b -= 1
+				if x[temp_idx] == "[":
+					flag = True
+				if x[temp_idx] == ")" and flag_b == 0:
+					break
+				temp_idx += 1
+			if not flag:
+				x[idx] = "["
+				x[temp_idx] = "]"
+	return x
+
+
+# Multiplication allocation rate
+def allocation(ex_copy, rate):
+	ex = copy.deepcopy(ex_copy)
+	idx = 1
+	lex = len(ex)
+	while idx < len(ex):
+		if (ex[idx] == "/" or ex[idx] == "*") and (ex[idx - 1] == "]" or ex[idx - 1] == ")"):
