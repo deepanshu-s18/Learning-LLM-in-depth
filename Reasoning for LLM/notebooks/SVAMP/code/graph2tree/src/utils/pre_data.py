@@ -1079,3 +1079,39 @@ def exchange(ex_copy, rate):
 						   or flag == -1):
 					if ex[ridx] == ")" or ex[ridx] == "]":
 						flag -= 1
+					elif ex[ridx] == "(" or ex[ridx] == "[":
+						flag += 1
+					ridx += 1
+				if flag == -1:
+					ridx -= 2
+				else:
+					ridx -= 1
+			if lidx > 0 and ((s == "+" and ex[lidx - 1] == "-") or (s == "*" and ex[lidx - 1] == "/")):
+				lidx -= 1
+				ex = ex[:lidx] + ex[idx:ridx + 1] + ex[lidx:idx] + ex[ridx + 1:]
+			else:
+				ex = ex[:lidx] + ex[idx + 1:ridx + 1] + [s] + ex[lidx:idx] + ex[ridx + 1:]
+			idx = ridx
+		idx += 1
+	return ex
+
+
+def check_bracket(x, english=False):
+	if english:
+		for idx, s in enumerate(x):
+			if s == '[':
+				x[idx] = '('
+			elif s == '}':
+				x[idx] = ')'
+		s = x[0]
+		idx = 0
+		if s == "(":
+			flag = 1
+			temp_idx = idx + 1
+			while flag > 0 and temp_idx < len(x):
+				if x[temp_idx] == ")":
+					flag -= 1
+				elif x[temp_idx] == "(":
+					flag += 1
+				temp_idx += 1
+			if temp_idx == len(x):
