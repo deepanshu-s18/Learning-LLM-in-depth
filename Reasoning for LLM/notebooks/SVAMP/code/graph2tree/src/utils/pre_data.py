@@ -1295,3 +1295,40 @@ def allocation(ex_copy, rate):
 			while ridx < lex:
 				if ex[ridx] == "(" or ex[ridx] == "[":
 					flag -= 1
+				elif ex[ridx] == ")" or ex[ridx] == "]":
+					flag += 1
+				if flag == 1:
+					if ex[ridx] == "+" or ex[ridx] == "-":
+						flag_al = True
+				if flag == 0:
+					break
+				ridx += 1
+			if not flag_al:
+				idx += 1
+				continue
+			elif random.random() < rate:
+				temp_idx = idx + 1
+				flag = 0
+				lidx = temp_idx + 1
+				while temp_idx < idx - 1:
+					if ex[temp_idx] == "(" or ex[temp_idx] == "[":
+						flag -= 1
+					elif ex[temp_idx] == ")" or ex[temp_idx] == "]":
+						flag += 1
+					if flag == 1:
+						if ex[temp_idx] == "+" or ex[temp_idx] == "-":
+							all_res += l_allo + [ex[idx]] + ex[lidx: temp_idx] + [ex[temp_idx]]
+							lidx = temp_idx + 1
+					if flag == 0:
+						break
+					temp_idx += 1
+				if flag_md:
+					temp_res += all_res + [")"]
+				elif ex[temp_idx + 1] == "*" or ex[temp_idx + 1] == "/":
+					temp_res += ["("] + all_res + [")"]
+				temp_res += ex[temp_idx + 1:]
+				return temp_res
+		idx += 1
+	return ex
+
+
