@@ -1187,3 +1187,39 @@ def allocation(ex_copy, rate):
 	lex = len(ex)
 	while idx < len(ex):
 		if (ex[idx] == "/" or ex[idx] == "*") and (ex[idx - 1] == "]" or ex[idx - 1] == ")"):
+			ridx = idx + 1
+			r_allo = []
+			r_last = []
+			flag = 0
+			flag_mmd = False
+			while ridx < lex:
+				if ex[ridx] == "(" or ex[ridx] == "[":
+					flag += 1
+				elif ex[ridx] == ")" or ex[ridx] == "]":
+					flag -= 1
+				if flag == 0:
+					if ex[ridx] == "+" or ex[ridx] == "-":
+						r_last = ex[ridx:]
+						r_allo = ex[idx + 1: ridx]
+						break
+					elif ex[ridx] == "*" or ex[ridx] == "/":
+						flag_mmd = True
+						r_last = [")"] + ex[ridx:]
+						r_allo = ex[idx + 1: ridx]
+						break
+				elif flag == -1:
+					r_last = ex[ridx:]
+					r_allo = ex[idx + 1: ridx]
+					break
+				ridx += 1
+			if len(r_allo) == 0:
+				r_allo = ex[idx + 1:]
+			flag = 0
+			lidx = idx - 1
+			flag_al = False
+			flag_md = False
+			while lidx > 0:
+				if ex[lidx] == "(" or ex[lidx] == "[":
+					flag -= 1
+				elif ex[lidx] == ")" or ex[lidx] == "]":
+					flag += 1
