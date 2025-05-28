@@ -82,3 +82,24 @@ class Lang:
 def load_raw_data(data_path, dataset, is_train = True):  # load the data to list(dict())
 	train_ls = None
 	if is_train:
+		train_path = os.path.join(data_path, dataset, 'train.csv')
+		train_df = pd.read_csv(train_path)
+		train_ls = train_df.to_dict('records')
+
+	dev_path = os.path.join(data_path, dataset, 'dev.csv')
+	dev_df = pd.read_csv(dev_path)
+	dev_ls = dev_df.to_dict('records')
+
+	return train_ls, dev_ls
+
+# remove the superfluous brackets
+def remove_brackets(x):
+	y = x
+	if x[0] == "(" and x[-1] == ")":
+		x = x[1:-1]
+		flag = True
+		count = 0
+		for s in x:
+			if s == ")":
+				count -= 1
+				if count < 0:
