@@ -103,3 +103,24 @@ def remove_brackets(x):
 			if s == ")":
 				count -= 1
 				if count < 0:
+					flag = False
+					break
+			elif s == "(":
+				count += 1
+		if flag:
+			return x
+	return y
+
+def transfer_num(train_ls, dev_ls, chall=False):  # transfer num into "NUM"
+	print("Transfer numbers...")
+	dev_pairs = []
+	generate_nums = []
+	generate_nums_dict = {}
+	copy_nums = 0
+
+	if train_ls != None:
+		train_pairs = []
+		for d in train_ls:
+			# nums = []
+			nums = d['Numbers'].split()
+			input_seq = []
