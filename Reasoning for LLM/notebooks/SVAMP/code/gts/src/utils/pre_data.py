@@ -40,3 +40,24 @@ class Lang:
 				keep_words.append(k)
 
 		logger.debug('keep_words {} / {} = {}'.format(len(keep_words), len(self.index2word), len(keep_words) / len(self.index2word)))
+
+		# Reinitialize dictionaries
+		self.word2index = {}
+		# self.word2count = {}
+		self.index2word = []
+		self.n_words = 0  # Count default tokens
+
+		for word in keep_words:
+			self.word2index[word] = self.n_words
+			self.index2word.append(word)
+			self.n_words += 1
+
+	def build_input_lang(self, logger, trim_min_count):  # build the input lang vocab and dict
+		if trim_min_count > 0:
+			self.trim(logger, trim_min_count)
+			self.index2word = ["PAD", "NUM", "UNK"] + self.index2word
+		else:
+			self.index2word = ["PAD", "NUM"] + self.index2word
+		self.word2index = {}
+		self.n_words = len(self.index2word)
+		for i, j in enumerate(self.index2word):
