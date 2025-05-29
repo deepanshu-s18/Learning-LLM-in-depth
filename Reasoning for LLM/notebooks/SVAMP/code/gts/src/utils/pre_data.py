@@ -145,3 +145,24 @@ def transfer_num(train_ls, dev_ls, chall=False):  # transfer num into "NUM"
 					out_seq.append('N'+e1[6:])
 				elif e1 not in opz:
 					generate_nums.append(e1)
+					if e1 not in generate_nums_dict:
+						generate_nums_dict[e1] = 1
+					else:
+						generate_nums_dict[e1] += 1
+					out_seq.append(e1)
+				else:
+					out_seq.append(e1)
+
+			train_pairs.append((input_seq, out_seq, nums, idxs))
+	else:
+		train_pairs = None
+
+	for d in dev_ls:
+		# nums = []
+		nums = d['Numbers'].split()
+		input_seq = []
+		seg = nltk.word_tokenize(d["Question"].strip())
+		equation = d["Equation"].split()
+
+		numz = ['0','1','2','3','4','5','6','7','8','9']
+		opz = ['+', '-', '*', '/']
