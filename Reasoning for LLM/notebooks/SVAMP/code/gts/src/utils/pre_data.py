@@ -188,3 +188,24 @@ def transfer_num(train_ls, dev_ls, chall=False):  # transfer num into "NUM"
 					generate_nums_dict[e1] += 1
 				out_seq.append(e1)
 			else:
+				out_seq.append(e1)
+		if chall:
+			dev_pairs.append((input_seq, out_seq, nums, idxs, d['Type'], d['Variation Type'], d['Annotator'], d['Alternate']))
+		else:
+			dev_pairs.append((input_seq, out_seq, nums, idxs))
+
+	temp_g = []
+	for g in generate_nums_dict:
+		if generate_nums_dict[g] >= 5:
+			temp_g.append(g)
+	return train_pairs, dev_pairs, temp_g, copy_nums
+
+# Return a list of indexes, one for each word in the sentence, plus EOS
+def indexes_from_sentence(lang, sentence, tree=False):
+	res = []
+	for word in sentence:
+		if len(word) == 0:
+			continue
+		if word in lang.word2index:
+			res.append(lang.word2index[word])
+		else:
