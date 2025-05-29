@@ -230,3 +230,24 @@ def prepare_data(config, logger, pairs_trained, pairs_tested, trim_min_count, ge
 	train_pairs = None
 
 	if pairs_trained != None:
+		train_pairs = []
+		for pair in pairs_trained:
+			if not tree:
+				input_lang.add_sen_to_vocab(pair[0])
+				output_lang.add_sen_to_vocab(pair[1])
+			elif pair[-1]:
+				input_lang.add_sen_to_vocab(pair[0])
+				output_lang.add_sen_to_vocab(pair[1])
+
+	if config.embedding == 'bert' or config.embedding == 'roberta':
+		for pair in pairs_tested:
+			if not tree:
+				input_lang.add_sen_to_vocab(pair[0])
+			elif pair[-1]:
+				input_lang.add_sen_to_vocab(pair[0])
+
+	if pairs_trained != None:
+
+		input_lang.build_input_lang(logger, trim_min_count)
+		if tree:
+			output_lang.build_output_lang_for_tree(generate_nums, copy_nums)
