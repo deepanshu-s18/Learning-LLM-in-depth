@@ -314,3 +314,24 @@ def pad_seq(seq, seq_len, max_length):
 # prepare the batches
 def prepare_train_batch(pairs_to_batch, batch_size):
 	pairs = copy.deepcopy(pairs_to_batch)
+	random.shuffle(pairs)  # shuffle the pairs
+	pos = 0
+	input_lengths = []
+	output_lengths = []
+	nums_batches = []
+	batches = []
+	input_batches = []
+	output_batches = []
+	num_stack_batches = []  # save the num stack which
+	num_pos_batches = []
+	num_size_batches = []
+	while pos + batch_size < len(pairs):
+		batches.append(pairs[pos:pos+batch_size])
+		pos += batch_size
+	batches.append(pairs[pos:])
+
+	for batch in batches:
+		batch = sorted(batch, key=lambda tp: tp[1], reverse=True)
+		input_length = []
+		output_length = []
+		for _, i, _, j, _, _, _ in batch:
