@@ -293,3 +293,24 @@ def prepare_data(config, logger, pairs_trained, pairs_tested, trim_min_count, ge
 				num_stack.append(temp_num)
 			if not flag_not and len(temp_num) == 0:
 				num_stack.append([_ for _ in range(len(pair[2]))])
+
+		num_stack.reverse()
+		input_cell = indexes_from_sentence(input_lang, pair[0])
+		output_cell = indexes_from_sentence(output_lang, pair[1], tree)
+		if config.challenge_disp:
+			test_pairs.append((input_cell, len(input_cell), output_cell, len(output_cell),
+						   pair[2], pair[3], num_stack, pair[4], pair[5], pair[6], pair[7]))
+		else:
+			test_pairs.append((input_cell, len(input_cell), output_cell, len(output_cell),
+						   pair[2], pair[3], num_stack))
+
+	return input_lang, output_lang, train_pairs, test_pairs
+
+# Pad a with the PAD symbol
+def pad_seq(seq, seq_len, max_length):
+	seq += [PAD_token for _ in range(max_length - seq_len)]
+	return seq
+
+# prepare the batches
+def prepare_train_batch(pairs_to_batch, batch_size):
+	pairs = copy.deepcopy(pairs_to_batch)
