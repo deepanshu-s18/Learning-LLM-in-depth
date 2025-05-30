@@ -335,3 +335,24 @@ def prepare_train_batch(pairs_to_batch, batch_size):
 		input_length = []
 		output_length = []
 		for _, i, _, j, _, _, _ in batch:
+			input_length.append(i)
+			output_length.append(j)
+		input_lengths.append(input_length)
+		output_lengths.append(output_length)
+		input_len_max = input_length[0]
+		output_len_max = max(output_length)
+		input_batch = []
+		output_batch = []
+		num_batch = []
+		num_stack_batch = []
+		num_pos_batch = []
+		num_size_batch = []
+		for i, li, j, lj, num, num_pos, num_stack in batch:
+			num_batch.append(len(num))
+			input_batch.append(pad_seq(i, li, input_len_max))
+			output_batch.append(pad_seq(j, lj, output_len_max))
+			num_stack_batch.append(num_stack)
+			num_pos_batch.append(num_pos)
+			num_size_batch.append(len(num_pos))
+		input_batches.append(input_batch)
+		nums_batches.append(num_batch)
