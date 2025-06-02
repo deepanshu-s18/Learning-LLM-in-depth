@@ -356,3 +356,25 @@ def prepare_train_batch(pairs_to_batch, batch_size):
 			num_size_batch.append(len(num_pos))
 		input_batches.append(input_batch)
 		nums_batches.append(num_batch)
+		output_batches.append(output_batch)
+		num_stack_batches.append(num_stack_batch)
+		num_pos_batches.append(num_pos_batch)
+		num_size_batches.append(num_size_batch)
+	return input_batches, input_lengths, output_batches, output_lengths, nums_batches, num_stack_batches, num_pos_batches, num_size_batches
+
+def get_num_stack(eq, output_lang, num_pos):
+	num_stack = []
+	for word in eq:
+		temp_num = []
+		flag_not = True
+		if word not in output_lang.index2word:
+			flag_not = False
+			for i, j in enumerate(num_pos):
+				if j == word:
+					temp_num.append(i)
+		if not flag_not and len(temp_num) != 0:
+			num_stack.append(temp_num)
+		if not flag_not and len(temp_num) == 0:
+			num_stack.append([_ for _ in range(len(num_pos))])
+	num_stack.reverse()
+	return num_stack
