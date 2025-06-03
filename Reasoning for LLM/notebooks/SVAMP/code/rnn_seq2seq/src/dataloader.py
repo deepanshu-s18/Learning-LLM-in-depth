@@ -118,3 +118,28 @@ class TextDataset(Dataset):
 			type1 = self.type[idx]
 			var_type = self.var_type[idx]
 			annotator = self.annotator[idx]
+			alternate = self.alternate[idx]
+			return {'ques': self.curb_to_length(ques), 'eqn': self.curb_to_length(eqn), 'nums': nums, 'ans': ans, 'type': type1, 
+					'var_type': var_type, 'annotator': annotator, 'alternate': alternate}
+	
+		return {'ques': self.curb_to_length(ques), 'eqn': self.curb_to_length(eqn), 'nums': nums, 'ans': ans}
+
+	def curb_to_length(self, string):
+		return ' '.join(string.strip().split()[:self.max_length])
+
+	def process_string(self, string):
+		#string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+		string = re.sub(r"\'s", " 's", string)
+		string = re.sub(r"\'ve", " 've", string)
+		string = re.sub(r"n\'t", " n't", string)
+		string = re.sub(r"\'re", " 're", string)
+		string = re.sub(r"\'d", " 'd", string)
+		string = re.sub(r"\'ll", " 'll", string)
+		#string = re.sub(r",", " , ", string)
+		#string = re.sub(r"!", " ! ", string)
+		#string = re.sub(r"\(", " ( ", string)
+		#string = re.sub(r"\)", " ) ", string)
+		#string = re.sub(r"\?", " ? ", string)
+		#string = re.sub(r"\s{2,}", " ", string)
+		return string
+
