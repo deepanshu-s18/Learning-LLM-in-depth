@@ -19,3 +19,24 @@ def load_gsm8k(split: str = "test", limit: Optional[int] = 50) -> Dataset:
         limit: Optional maximum number of samples to select
     
     Returns:
+        HuggingFace Dataset subset
+    """
+    print(f"Loading GSM8K ({split} split)...")
+    dataset = load_dataset("openai/gsm8k", "main", split=split)
+    if limit and limit < len(dataset):
+        dataset = dataset.select(range(limit))
+    print(f"Loaded {len(dataset)} GSM8K samples.")
+    return dataset
+
+
+def load_svamp(repo_dir: str = "./SVAMP", limit: Optional[int] = 50) -> Optional[Dataset]:
+    """
+    Load the SVAMP dataset from local clone or GitHub repository.
+    
+    Args:
+        repo_dir: Local path to SVAMP repository
+        limit: Optional maximum number of samples to select
+    
+    Returns:
+        Dataset subset or None if unavailable
+    """
