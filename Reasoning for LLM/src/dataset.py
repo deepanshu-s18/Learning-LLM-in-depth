@@ -40,3 +40,24 @@ def load_svamp(repo_dir: str = "./SVAMP", limit: Optional[int] = 50) -> Optional
     Returns:
         Dataset subset or None if unavailable
     """
+    if not os.path.exists(repo_dir):
+        print(f"SVAMP directory not found at {repo_dir}. Cloning from GitHub...")
+        try:
+            subprocess.run(
+                ["git", "clone", "https://github.com/arkilpatel/SVAMP.git", repo_dir],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+        except Exception as e:
+            print(f"Failed to clone SVAMP: {e}")
+            return None
+
+    json_path = os.path.join(repo_dir, "SVAMP.json")
+    if not os.path.exists(json_path):
+        print(f"SVAMP.json not found at {json_path}")
+        return None
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        raw_data = json.load(f)
+
