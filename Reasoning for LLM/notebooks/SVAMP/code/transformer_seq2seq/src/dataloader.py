@@ -46,3 +46,27 @@ class TextDataset(Dataset):
 			self.challenge_info = False
 
 		file_df= pd.read_csv(file_path)
+
+		self.ques = file_df['Question'].values # np ndarray of size (#examples,)
+		self.eqn = file_df['Equation'].values
+		self.nums = file_df['Numbers'].values
+		self.ans = file_df['Answer'].values
+
+		if grade_info:
+			self.grade = file_df['Grade'].values
+
+		if type_info:
+			self.type = file_df['Type'].values
+
+		if challenge_info:
+			self.type = file_df['Type'].values
+			self.var_type = file_df['Variation Type'].values
+			self.annotator = file_df['Annotator'].values
+			self.alternate = file_df['Alternate'].values
+
+		if is_debug:
+			self.ques = self.ques[:5000:500]
+			self.eqn = self.eqn[:5000:500]
+
+		self.max_length = max_length
+
