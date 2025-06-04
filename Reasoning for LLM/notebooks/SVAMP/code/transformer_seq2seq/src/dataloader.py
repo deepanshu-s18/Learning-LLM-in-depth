@@ -94,3 +94,27 @@ class TextDataset(Dataset):
 			self.ques, self.eqn, self.nums, self.ans, self.type, self.var_type, self.annotator, self.alternate = zip(*all_sents)
 		else:
 			self.ques, self.eqn, self.nums, self.ans = zip(*all_sents)
+
+	def __len__(self):
+		return len(self.ques)
+
+	def __getitem__(self, idx):
+		ques = self.process_string(str(self.ques[idx]))
+		eqn = self.process_string(str(self.eqn[idx]))
+		nums = self.nums[idx]
+		ans = self.ans[idx]
+		
+		if self.grade_info and self.type_info:
+			grade = self.grade[idx]
+			type1 = self.type[idx]
+			return {'ques': self.curb_to_length(ques), 'eqn': self.curb_to_length(eqn), 'nums': nums, 'ans': ans, 'grade': grade, 'type': type1}
+		elif self.grade_info and not self.type_info:
+			grade = self.grade[idx]
+			return {'ques': self.curb_to_length(ques), 'eqn': self.curb_to_length(eqn), 'nums': nums, 'ans': ans, 'grade': grade}
+		elif self.type_info and not self.grade_info:
+			type1 = self.type[idx]
+			return {'ques': self.curb_to_length(ques), 'eqn': self.curb_to_length(eqn), 'nums': nums, 'ans': ans, 'type': type1}
+		elif self.challenge_info:
+			type1 = self.type[idx]
+			var_type = self.var_type[idx]
+			annotator = self.annotator[idx]
