@@ -61,3 +61,24 @@ def load_svamp(repo_dir: str = "./SVAMP", limit: Optional[int] = 50) -> Optional
     with open(json_path, "r", encoding="utf-8") as f:
         raw_data = json.load(f)
 
+    # Format into consistent keys
+    formatted = []
+    for item in raw_data:
+        body = item.get("Body", "").strip()
+        question = item.get("Question", "").strip()
+        full_q = f"{body} {question}".strip()
+        answer = str(item.get("Answer", "")).strip()
+        formatted.append({
+            "question": full_q,
+            "answer": answer,
+            "id": item.get("ID", "")
+        })
+
+    dataset = Dataset.from_list(formatted)
+    if limit and limit < len(dataset):
+        dataset = dataset.select(range(limit))
+    print(f"Loaded {len(dataset)} SVAMP samples.")
+    return dataset
+
+
+def extract_ground_truth_answer(raw_answer: str) -> str:
