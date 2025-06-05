@@ -103,3 +103,24 @@ def extract_predicted_answer(text: str) -> Optional[str]:
     return numbers[-1].strip()
 
 
+def is_answer_match(pred: Optional[str], gt: str) -> bool:
+    """Compare predicted numeric string with ground truth string."""
+    if pred is None or not pred.strip():
+        return False
+    
+    clean_pred = pred.strip().lstrip("0") or "0"
+    clean_gt = gt.strip().lstrip("0") or "0"
+
+    # Direct match
+    if clean_pred == clean_gt:
+        return True
+
+    # Numeric float comparison
+    try:
+        if abs(float(pred) - float(gt)) < 1e-4:
+            return True
+    except ValueError:
+        pass
+
+    return False
+
