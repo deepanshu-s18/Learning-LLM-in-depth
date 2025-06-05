@@ -82,3 +82,24 @@ def load_svamp(repo_dir: str = "./SVAMP", limit: Optional[int] = 50) -> Optional
 
 
 def extract_ground_truth_answer(raw_answer: str) -> str:
+    """
+    Extract the numeric answer from ground truth strings.
+    For GSM8K, extracts text following '####'.
+    """
+    if "####" in raw_answer:
+        return raw_answer.split("####")[-1].strip().replace(",", "")
+    return raw_answer.strip().replace(",", "")
+
+
+def extract_predicted_answer(text: str) -> Optional[str]:
+    """
+    Extract the final numeric prediction from model generation.
+    Handles integers, decimals, and negative numbers.
+    """
+    text = text.replace(",", "")
+    numbers = re.findall(r"[-+]?\d+(?:\.\d+)?", text)
+    if not numbers:
+        return None
+    return numbers[-1].strip()
+
+
