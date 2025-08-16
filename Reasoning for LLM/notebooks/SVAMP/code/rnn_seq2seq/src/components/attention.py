@@ -46,3 +46,27 @@ class Attn(nn.Module):
 class LuongAttnDecoderRNN(nn.Module):
 	def __init__(self, attn_model, embedding, cell_type, hidden_size, output_size, nlayers=1, dropout=0.1):
 		super(LuongAttnDecoderRNN, self).__init__()
+
+		# Keep for reference
+		self.attn_model 	= attn_model
+		self.hidden_size 	= hidden_size
+		self.output_size 	= output_size
+		self.nlayers 		= nlayers
+		self.dropout 		= dropout
+		self.cell_type 		= cell_type
+
+		# Define layers
+		self.embedding = embedding
+		self.embedding_size  = self.embedding.embedding_dim
+		self.embedding_dropout = nn.Dropout(self.dropout)
+		if self.cell_type == 'gru':
+			self.rnn = nn.GRU(self.embedding_size, self.hidden_size, self.nlayers, dropout=(0 if self.nlayers == 1 else self.dropout))
+		else:
+			self.rnn = nn.LSTM(self.embedding_size, self.hidden_size, self.nlayers, dropout=(0 if self.nlayers == 1 else self.dropout))
+		self.concat = nn.Linear(self.hidden_size * 2, self.hidden_size)
+		self.out = nn.Linear(self.hidden_size, self.output_size)
+
+		self.attn = Attn(self.attn_model, self.hidden_size)
+
+	def forward(self, input_step, last_hidden, encoder_outputs):
+		# Note: we run this one step (word) at a time
