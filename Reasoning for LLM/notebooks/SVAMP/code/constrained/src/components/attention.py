@@ -38,3 +38,23 @@ class Attn(nn.Module):
 			attn_energies = self.concat_score(hidden, encoder_outputs)
 		elif self.method == 'dot':
 			attn_energies = self.dot_score(hidden, encoder_outputs)
+
+		# Transpose max_length and batch_size dimensions
+		attn_energies = attn_energies.t()
+
+		# Return the softmax normalized probability scores (with added dimension)
+		return F.softmax(attn_energies, dim=1).unsqueeze(1)
+
+class LuongAttnDecoderRNN(nn.Module):
+	def __init__(self, attn_model, embedding, cell_type, hidden_size, output_size, nlayers=1, dropout=0.1):
+		super(LuongAttnDecoderRNN, self).__init__()
+
+		# Keep for reference
+		self.attn_model 	= attn_model
+		self.hidden_size 	= hidden_size
+		self.output_size 	= output_size
+		self.nlayers 		= nlayers
+		self.dropout 		= dropout
+		self.cell_type 		= cell_type
+
+		# Define layers
