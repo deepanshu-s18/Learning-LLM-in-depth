@@ -61,3 +61,25 @@ def main():
 
     # 3. Print Summary
     print("\n" + "=" * 60)
+    print("🏆 Benchmark Summary")
+    print("=" * 60)
+    for model_name, acc in results:
+        size = MODEL_SIZES.get(model_name, "N/A")
+        print(f"• {model_name:<20} ({size:<6}): {acc:.2%}")
+
+    # 4. Save results to JSON
+    os.makedirs("results", exist_ok=True)
+    summary_data = {
+        "dataset": args.dataset,
+        "sample_limit": args.limit,
+        "results": [{"model": m, "size": MODEL_SIZES.get(m, "N/A"), "accuracy": acc} for m, acc in results]
+    }
+    with open("results/evaluation_summary.json", "w") as f:
+        json.dump(summary_data, f, indent=2)
+
+    # 5. Plot Comparison
+    plot_model_comparison(results, model_sizes=MODEL_SIZES, dataset_name=args.dataset.upper(), save_path=args.output_plot)
+
+
+if __name__ == "__main__":
+    main()
