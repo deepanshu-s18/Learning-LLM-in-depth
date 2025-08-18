@@ -40,3 +40,24 @@ def main():
     results = []
 
     for model_name in args.models:
+        if model_name in SEQ2SEQ_MODELS:
+            model_id = SEQ2SEQ_MODELS[model_name]
+            evaluator = Seq2SeqEvaluator(model_id)
+            if args.preview > 0:
+                evaluator.preview_predictions(dataset, prefix=FEW_SHOT_COT_PREFIX, num_samples=args.preview)
+            acc = evaluator.evaluate(dataset, prefix=FEW_SHOT_COT_PREFIX)
+            results.append((model_name, acc))
+
+        elif model_name in DECODER_MODELS:
+            model_id = DECODER_MODELS[model_name]
+            evaluator = DecoderEvaluator(model_id)
+            if args.preview > 0:
+                evaluator.preview_predictions(dataset, prefix=FEW_SHOT_COT_PREFIX, num_samples=args.preview)
+            acc = evaluator.evaluate(dataset, prefix=FEW_SHOT_COT_PREFIX)
+            results.append((model_name, acc))
+
+        else:
+            print(f"Unknown model '{model_name}'. Available: {list(SEQ2SEQ_MODELS.keys()) + list(DECODER_MODELS.keys())}")
+
+    # 3. Print Summary
+    print("\n" + "=" * 60)
