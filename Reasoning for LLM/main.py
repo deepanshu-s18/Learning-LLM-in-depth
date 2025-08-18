@@ -19,3 +19,24 @@ def main():
     parser.add_argument("--preview", type=int, default=3, help="Number of sample predictions to print")
     parser.add_argument("--models", nargs="+", default=["Flan-T5 Small", "Flan-T5 Base"], help="Models to evaluate")
     parser.add_argument("--output-plot", type=str, default="results/cot_reasoning_benchmark.png", help="Path to save chart")
+    args = parser.parse_args()
+
+    print("=" * 60)
+    print("🧠 Chain of Thought (CoT) Reasoning Evaluation for LLMs")
+    print(f"📊 Dataset: {args.dataset.upper()} | Samples: {args.limit}")
+    print("=" * 60)
+
+    # 1. Load Dataset
+    if args.dataset.lower() == "gsm8k":
+        dataset = load_gsm8k(split="test", limit=args.limit)
+    else:
+        dataset = load_svamp(limit=args.limit)
+
+    if dataset is None or len(dataset) == 0:
+        print("Error: Could not load dataset.")
+        return
+
+    # 2. Run Evaluations
+    results = []
+
+    for model_name in args.models:
