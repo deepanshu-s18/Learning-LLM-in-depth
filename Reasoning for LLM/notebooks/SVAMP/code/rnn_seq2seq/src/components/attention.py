@@ -70,3 +70,28 @@ class LuongAttnDecoderRNN(nn.Module):
 
 	def forward(self, input_step, last_hidden, encoder_outputs):
 		# Note: we run this one step (word) at a time
+		# Get embedding of current input word
+		embedded = self.embedding(input_step)
+		embedded = self.embedding_dropout(embedded)
+
+		try:
+			embedded = embedded.view(1, input_step.size(0), self.embedding_size)
+		except:
+			embedded = embedded.view(1, 1, self.embedding_size)
+
+		rnn_output, hidden = self.rnn(embedded, last_hidden)
+		# Calculate attention weights from the current GRU output
+		attn_weights = self.attn(rnn_output, encoder_outputs)
+		# Multiply attention weights to encoder outputs to get new "weighted sum" context vector
+		context = attn_weights.bmm(encoder_outputs.transpose(0, 1))
+		# Concatenate weighted context vector and GRU output using Luong eq. 5
+		rnn_output = rnn_output.squeeze(0)
+		context = context.squeeze(1)
+		concat_input = torch.cat((rnn_output, context), 1)
+		concat_output = F.relu(self.concat(concat_input))
+		representation = concat_output
+		# Predict next word using Luong eq. 6
+		output = self.out(concat_output)
+		output = F.log_softmax(output, dim=1)
+		# Return output and final hidden state
+		return output, hidden, attn_weights, representation
