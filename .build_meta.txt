@@ -35,3 +35,4 @@
 [2025-08-26 12:23:03 +0530] feat(reasoning): complete implementation and verify numerical parity in __init__.py
 [2025-08-26 17:46:38 +0530] docs(reasoning): setup Chain-of-Thought (CoT) and Tree-of-Thoughts (ToT) benchmark framework
 [2025-08-26 19:14:41 +0530] docs(reasoning): record SVAMP and MAWPS mathematical reasoning accuracy across prompting strategies
+[2025-08-28 10:22:50 +0530] feat(reasoning): integrate backward propagation hooks and gradient scaling in __init__
