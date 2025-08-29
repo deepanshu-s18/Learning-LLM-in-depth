@@ -46,3 +46,27 @@ class BertEncoder(nn.Module):
 		#Feed through bert
 		# cont_reps, _ = self.bert_layer(token_ids, attention_mask = attn_masks)
 		cont_reps = self.roberta_layer.get_input_embeddings()(token_ids.transpose(0,1))
+
+		return cont_reps, input_lengths
+
+class RobertaEncoder(nn.Module):
+	def __init__(self, roberta_model = 'roberta-base', device = 'cuda:0 ', freeze_roberta = False):
+		super(RobertaEncoder, self).__init__()
+		self.roberta_layer = RobertaModel.from_pretrained(roberta_model)
+		self.roberta_tokenizer = RobertaTokenizer.from_pretrained(roberta_model)
+		self.device = device
+		
+		if freeze_roberta:
+			for p in self.roberta_layer.parameters():
+				p.requires_grad = False
+		
+	def robertify_input(self, sentences):
+		'''
+		Preprocess the input sentences using roberta tokenizer and converts them to a torch tensor containing token ids
+
+		'''
+		# Tokenize the input sentences for feeding into RoBERTa
+		all_tokens  = [['<s>'] + self.roberta_tokenizer.tokenize(sentence) + ['</s>'] for sentence in sentences]
+		
+		# Pad all the sentences to a maximum length
+		input_lengths = [len(tokens) for tokens in all_tokens]
