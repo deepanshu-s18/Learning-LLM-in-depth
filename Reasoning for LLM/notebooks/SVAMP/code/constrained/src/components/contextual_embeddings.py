@@ -70,3 +70,27 @@ class RobertaEncoder(nn.Module):
 		
 		# Pad all the sentences to a maximum length
 		input_lengths = [len(tokens) for tokens in all_tokens]
+		max_length    = max(input_lengths)
+		padded_tokens = [tokens + ['<pad>' for _ in range(max_length - len(tokens))] for tokens in all_tokens]
+
+		# Convert tokens to token ids
+		token_ids = torch.tensor([self.roberta_tokenizer.convert_tokens_to_ids(tokens) for tokens in padded_tokens]).to(self.device)
+
+		# Obtain attention masks
+		pad_token = self.roberta_tokenizer.convert_tokens_to_ids('<pad>')
+		attn_masks = (token_ids != pad_token).long()
+
+		return token_ids, attn_masks, input_lengths
+
+	def forward(self, sentences):
+		'''
+		Feed the batch of sentences to a RoBERTa encoder to obtain contextualized representations of each token
+		'''
+		# Preprocess sentences
+		token_ids, attn_masks, input_lengths = self.robertify_input(sentences)
+
+		# Feed through RoBERTa
+		# cont_reps, _ = self.roberta_layer(token_ids, attention_mask = attn_masks)
+		cont_reps = self.roberta_layer.get_input_embeddings()(token_ids.transpose(0,1))
+
+		return cont_reps, input_lengths
