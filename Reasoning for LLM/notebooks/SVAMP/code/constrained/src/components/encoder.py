@@ -58,3 +58,23 @@ class Encoder(nn.Module):
 				output (tensor) : Last State representations of RNN [Seq_len X Batch_size X hidden_size]
 				hidden (tuple)	: Hidden states and (cell states) of recurrent networks
 		'''
+
+		# sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seqs, input_lengths, device)
+
+		#embedded = self.embedding(sorted_seqs)  ### NO MORE IDS
+		# packed = torch.nn.utils.rnn.pack_padded_sequence(
+		# 	sorted_seqs, sorted_len)
+		# outputs, hidden = self.rnn(packed, hidden)
+		# outputs, output_lengths = torch.nn.utils.rnn.pad_packed_sequence(
+		# 	outputs)  # unpack (back to padded)
+
+		# outputs = outputs.index_select(1, orig_idx)
+
+		# if self.bidirectional:
+		# 	outputs = outputs[:, :, :self.hidden_size] + outputs[:, : ,self.hidden_size:] # Sum bidirectional outputs
+
+		outputs = self.fc(sorted_seqs)
+		outputs = outputs.index_select(1, orig_idx)
+		hidden = torch.mean(outputs, 0).unsqueeze(0)
+
+		return outputs, hidden
