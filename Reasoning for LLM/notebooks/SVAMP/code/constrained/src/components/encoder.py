@@ -18,3 +18,23 @@ class Encoder(nn.Module):
 			bidirectional: Bidirectional model to be formed (default: False)
 	'''
 
+	def __init__(self, hidden_size=512,embedding_size = 768, cell_type='lstm', nlayers=1, dropout=0.1, bidirectional=True):
+		super(Encoder, self).__init__()
+		self.hidden_size = hidden_size
+		self.nlayers = nlayers
+		self.dropout = dropout
+		self.cell_type = cell_type
+		self.embedding_size = embedding_size
+		# self.embedding_size = self.embedding.embedding_dim
+		self.bidirectional = bidirectional
+
+		if self.cell_type == 'lstm':
+			self.rnn = nn.LSTM(self.embedding_size, self.hidden_size,
+							   num_layers=self.nlayers,
+							   dropout=(0 if self.nlayers == 1 else dropout),
+							   bidirectional=bidirectional)
+		elif self.cell_type == 'gru':
+			self.rnn = nn.GRU(self.embedding_size, self.hidden_size,
+							  num_layers=self.nlayers,
+							  dropout=(0 if self.nlayers == 1 else dropout),
+							  bidirectional=bidirectional)
