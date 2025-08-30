@@ -28,3 +28,18 @@ class DecoderRNN(nn.Module):
 		self.nlayers            = nlayers
 		self.output_size        = output_size
 
+		if self.cell_type == 'lstm':
+			self.rnn = nn.LSTM(self.embedding_size, self.hidden_size, num_layers=self.nlayers, dropout=(0 if nlayers == 1 else dropout))
+		else:
+			self.rnn = nn.GRU(self.embedding_size, self.hidden_size, num_layers=self.nlayers, dropout=(0 if nlayers == 1 else dropout))
+
+		self.out     = nn.Linear(self.hidden_size, self.output_size)
+
+
+	def forward(self, input_step, last_hidden):
+		'''
+		To Do
+			Args:
+				input_seqs (tensor) : input tensor | size : [Seq_len X Batch_size]
+				input_lengths (list/tensor) : length of each input sentence | size : [Batch_size] 
+				device (gpu) : Used for sorting the sentences and putting it to device
