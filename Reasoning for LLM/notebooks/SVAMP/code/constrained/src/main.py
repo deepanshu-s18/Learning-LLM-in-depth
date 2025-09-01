@@ -41,3 +41,25 @@ def load_data(config, logger):
 
 		Args:
 			config (dict) : configuration/args
+			logger (logger) : logger object for logging
+
+		Returns:
+			dataloader(s) 
+	'''
+	if config.mode == 'train':
+		logger.debug('Loading Training Data...')
+
+		'''Load Datasets'''
+		train_set = TextDataset(data_path=data_path, dataset=config.dataset,
+								datatype='train', max_length=config.max_length, is_debug=config.debug)
+		val_set = TextDataset(data_path=data_path, dataset=config.dataset,  datatype='dev', max_length=config.max_length, 
+								is_debug=config.debug, grade_info=config.grade_disp, type_info=config.type_disp, 
+								challenge_info=config.challenge_disp)
+		
+		'''In case of sort by length, write a different case with shuffle=False '''
+		train_dataloader = DataLoader(
+			train_set, batch_size=config.batch_size, shuffle=True, num_workers=5)
+		val_dataloader = DataLoader(
+			val_set, batch_size=config.batch_size, shuffle=True, num_workers=5)
+
+		train_size = len(train_dataloader) * config.batch_size
