@@ -344,3 +344,25 @@ def main():
 			mode = config.mode
 			dataset = config.dataset
 			batch_size = config.batch_size
+			with open(config_file, 'rb') as f:
+				config = AttrDict(pickle.load(f))
+				config.gpu = gpu
+				config.conf = conf
+				config.sim_criteria = sim_criteria
+				config.adv = adv
+				config.mode = mode
+				config.dataset = dataset
+				config.batch_size = batch_size
+
+			model = build_model(config=config, voc1=voc1, voc2=voc2, device=device, logger=logger,num_iters=len(test_dataloader))
+
+			epoch_offset, min_train_loss, min_val_loss, max_train_acc, max_val_acc, max_val_bleu, best_epoch, voc1, voc2 = load_checkpoint(config, model, config.mode, checkpoint, logger, device)
+
+			logger.info('Prediction from')
+			od = OrderedDict()
+			od['epoch'] = epoch_offset
+			od['min_train_loss'] = min_train_loss
+			od['min_val_loss'] = min_val_loss
+			od['max_train_acc'] = max_train_acc
+			od['max_val_acc'] = max_val_acc
+			od['max_val_bleu'] = max_val_bleu
