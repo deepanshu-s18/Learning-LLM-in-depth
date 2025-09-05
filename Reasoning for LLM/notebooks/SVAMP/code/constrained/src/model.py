@@ -211,3 +211,24 @@ class Seq2SeqModel(nn.Module):
 
 
 	# 	return acc/batch_size, loss/batch_size
+
+	def greedy_decode(self, ques, input_seq2=None, input_len2=None, validation=False, return_probs = True):
+		with torch.no_grad():
+			#pdb.set_trace()
+			input_seq1, input_len1 = self.bert(ques)
+			input_seq1 = input_seq1.transpose(0,1)
+
+			encoder_outputs, encoder_hidden = self.encoder(input_seq1, input_len1, self.device)
+
+			loss =0.0
+			decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device=self.device)
+
+			if self.config.cell_type == 'lstm':
+				decoder_hidden = (encoder_hidden[0][:self.decoder.nlayers], encoder_hidden[1][:self.decoder.nlayers])
+			else:
+				decoder_hidden = encoder_hidden[:self.decoder.nlayers]
+
+			decoded_words = [[] for i in range(input_seq1.size(1))]
+			decoded_probs = [[] for i in range(input_seq1.size(1))]
+			decoder_attentions = []
+
