@@ -275,3 +275,24 @@ class Seq2SeqModel(nn.Module):
 			encoder_outputs, encoder_hidden = self.encoder(input_seq1, input_len1, self.device)
 
 			loss =0.0
+			decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device=self.device)
+
+
+			if self.config.cell_type == 'lstm':
+				decoder_hidden = (encoder_hidden[0][:self.decoder.nlayers], encoder_hidden[1][:self.decoder.nlayers])
+			else:
+				decoder_hidden = encoder_hidden[:self.decoder.nlayers]
+
+			decoded_words = [[] for i in range(input_seq1.size(1))]
+			decoder_attentions = []
+
+			hiddens = []
+
+			target_len = max(input_len2)
+
+
+			for step in range(target_len):
+				if self.config.use_attn:
+					decoder_output, decoder_hidden, decoder_attention, hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+					decoder_attentions.append(decoder_attention)
+				else:
