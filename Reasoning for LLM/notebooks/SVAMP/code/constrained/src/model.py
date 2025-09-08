@@ -253,3 +253,25 @@ class Seq2SeqModel(nn.Module):
 						continue
 					decoded_words[i].append(self.voc2.get_word(topi[i].item()))
 					decoded_probs[i].append(topv[i].item())
+				decoder_input = topi.squeeze().detach()
+
+			if validation:
+				if self.config.use_attn:
+					return loss/target_len, decoded_words, decoder_attentions[:step + 1]
+				else:
+					return loss/target_len, decoded_words, None
+			else:
+				if return_probs:
+					return decoded_words, decoded_probs
+
+				return decoded_words
+
+	def obtain_hidden(self, config, ques, input_seq2=None, input_len2=None):
+		with torch.no_grad():
+			#pdb.set_trace()
+			input_seq1, input_len1 = self.bert(ques)
+			input_seq1 = input_seq1.transpose(0,1)
+
+			encoder_outputs, encoder_hidden = self.encoder(input_seq1, input_len1, self.device)
+
+			loss =0.0
