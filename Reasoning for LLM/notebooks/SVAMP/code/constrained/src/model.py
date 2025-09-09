@@ -317,3 +317,25 @@ def build_model(config, voc1, voc2, device, logger, num_iters):
 
 	return model
 
+
+
+def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, config, logger, epoch_offset= 0, min_val_loss=float('inf'), max_val_score=0.0, max_acc_score = 0.0, writer= None):
+	'''
+		Add Docstring
+	'''
+
+	if config.histogram and writer:
+		for name, param in model.named_parameters():
+			writer.add_histogram(name, param, epoch_offset)
+	
+	estop_count=0
+	
+	for epoch in range(1, config.epochs + 1):
+		od = OrderedDict()
+		od['Epoch'] = epoch + epoch_offset
+		print_log(logger, od)
+
+		batch_num = 1
+		train_loss_epoch = 0.0
+		val_loss_epoch = 0.0
+
