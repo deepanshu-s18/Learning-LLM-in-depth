@@ -339,3 +339,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 		train_loss_epoch = 0.0
 		val_loss_epoch = 0.0
 
+		# Train Mode
+		model.train()
+
+		start_time= time()
+		total_batches = len(train_dataloader)
+		# Batch-wise Training
+		for data in train_dataloader:
+			# if batch_num % config.display_freq==0:
+			# 	od = OrderedDict()
+			# 	od['Batch'] = batch_num
+			# 	od['Loss'] = loss
+			# 	print_log(logger, od)
+
+			#pdb.set_trace()
+
+			ques = data['ques']
+
+			sent1s = sents_to_idx(voc1, data['ques'], config.max_length)
+			sent2s = sents_to_idx(voc2, data['eqn'], config.max_length)
+			sent1_var, sent2_var, input_len1, input_len2  = process_batch(sent1s, sent2s, voc1, voc2, device)
+
