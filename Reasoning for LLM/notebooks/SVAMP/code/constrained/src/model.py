@@ -403,3 +403,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 			save_checkpoint(state, epoch + epoch_offset, logger, config.model_path, config.ckpt)
 			estop_count =0
 		else:
+			estop_count+=1
+
+		if writer:
+			writer.add_scalar('loss/val_loss', val_loss_epoch, epoch + epoch_offset)
+			writer.add_scalar('acc/val_score', val_score_epoch[0], epoch + epoch_offset)
+
+		od = OrderedDict()
+		od['Epoch'] = epoch + epoch_offset
+		od['train_loss'] = train_loss_epoch
+		od['val_loss']= val_loss_epoch
+		od['val_bleu_score'] = max_val_score
+		od['val_acc_score'] = acc_score
+		od['max_acc'] = max_acc_score
+		od['BLEU'] = val_score_epoch
+		print_log(logger, od)
+
+		if config.histogram and writer:
+			# pdb.set_trace()
+			for name, param in model.named_parameters():
+				writer.add_histogram(name, param, epoch + epoch_offset)
+
