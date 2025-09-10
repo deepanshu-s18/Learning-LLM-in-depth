@@ -445,3 +445,25 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 	val_loss_epoch =0.0
 	val_score_epoch =0.0
 	acc_score = 0
+	model.eval()
+
+	refs= []
+	hyps= []
+
+	display_n = 16 if 16 < config.batch_size else config.batch_size
+
+	with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+		f_out.write('---------------------------------------\n')
+		f_out.write('Epoch: ' + str(epoch_num) + '\n')
+		f_out.write('---------------------------------------\n')
+	total_batches = len(val_dataloader)
+	for data in val_dataloader:
+		sent1s = sents_to_idx(voc1, data['ques'], config.max_length)
+		sent2s = sents_to_idx(voc2, data['eqn'], config.max_length)
+		nums = data['nums']
+		ans = data['ans']
+
+		#pdb.set_trace()
+
+		ques = data['ques']
+
