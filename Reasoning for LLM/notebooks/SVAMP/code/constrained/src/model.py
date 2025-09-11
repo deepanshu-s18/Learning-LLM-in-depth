@@ -509,3 +509,25 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 					logger.info('-------------------------------------')
 				except:
 					logger.warning('Exception: Failed to generate')
+					pdb.set_trace()
+					break
+
+		val_loss_epoch += val_loss
+		batch_num +=1
+		print("Completed {} / {}...".format(batch_num, total_batches), end = '\r', flush = True)
+
+	# len(val_dataloader) = len(val_data)/ batch_size
+	# val_loss_epoch = val_loss_epoch/len(val_dataloader)
+	# pdb.set_trace()
+	val_score_epoch = bleu_scorer(refs, hyps)
+
+	return val_score_epoch, val_loss_epoch/len(val_dataloader), acc_score/len(val_dataloader)
+
+
+def get_hiddens(config, model, val_dataloader, voc1, voc2, device):
+	batch_num =1
+	
+	model.eval()
+
+	hiddens = []
+	operands = []
