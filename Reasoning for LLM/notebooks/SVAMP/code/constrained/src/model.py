@@ -531,3 +531,24 @@ def get_hiddens(config, model, val_dataloader, voc1, voc2, device):
 
 	hiddens = []
 	operands = []
+
+	for data in val_dataloader:
+		if len(data['ques']) == config.batch_size:
+			sent1s = sents_to_idx(voc1, data['ques'], config.max_length)
+			sent2s = sents_to_idx(voc2, data['eqn'], config.max_length)
+			nums = data['nums']
+			ans = data['ans']
+
+			#pdb.set_trace()
+
+			ques = data['ques']
+
+			sent1_var, sent2_var, input_len1, input_len2 = process_batch(sent1s, sent2s, voc1, voc2, device)
+
+			hidden, decoder_output = model.obtain_hidden(config, ques, sent2_var, input_len2)
+
+			infix = get_infix_eq(decoder_output, nums)[0] # WORKS ONLY FOR BATCH SIZE 1
+			words = infix.split()
+
+			type_rep = []
+			operand_types = []
