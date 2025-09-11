@@ -573,3 +573,25 @@ def get_hiddens(config, model, val_dataloader, voc1, voc2, device):
 
 			hiddens = hiddens + hidden
 			operands = operands + type_rep
+
+	return hiddens, operands
+
+def decode_greedy(model, sents, config, voc1, voc2, logger, device):
+
+	input_seq, _ , input_len, _ = process_batch(sents, [], voc1, voc2, device)
+
+	decoder_ouput, _ = model.greedy_decode(input_seq)
+
+	outputs= [' '.join(decoder_output[i]) for i in range(len(decoder_output))]
+
+	
+	for i in range(len(sents)):
+		logger.info('---------------------------------------------------')
+		od = OrderedDict()
+		od['Source'] = sents[i]
+		od['Generated'] = outputs[i]
+		print_log(logger, od)
+		logger.info('---------------------------------------------------')
+
+
+
