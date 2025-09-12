@@ -102,3 +102,24 @@ class Seq2SeqModel(nn.Module):
 		weight_req  = torch.randn(self.voc1.nwords, self.config.emb1_size)
 		for key, value in self.voc1.id2w.items():
 			if value in weights_all:
+				weight_req[key] = torch.FloatTensor(weights_all[value])
+
+		return weight_req	
+
+	def _initialize_optimizer(self):
+		self.params =   list(self.embedding1.parameters()) + \
+						list(self.encoder.parameters()) + \
+						list(self.decoder.parameters())
+
+		if self.config.separate_opt:
+			self.emb_optimizer = AdamW(self.embedding1.parameters(), lr = self.config.emb_lr, correct_bias = True)
+			self.optimizer = optim.Adam(
+				[{"params": self.encoder.parameters()},
+				{"params": self.decoder.parameters()}],
+				lr = self.config.lr,
+			)
+		else:
+			if self.config.opt == 'adam':
+				self.optimizer = optim.Adam(
+					[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+					{"params": self.encoder.parameters()},
