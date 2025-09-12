@@ -123,3 +123,24 @@ class Seq2SeqModel(nn.Module):
 				self.optimizer = optim.Adam(
 					[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
 					{"params": self.encoder.parameters()},
+					{"params": self.decoder.parameters()}],
+					lr = self.config.lr
+				)
+			elif self.config.opt == 'adadelta':
+				self.optimizer = optim.Adadelta(
+					[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+					{"params": self.encoder.parameters()},
+					{"params": self.decoder.parameters()}],
+					lr = self.config.lr
+				)
+			elif self.config.opt == 'asgd':
+				self.optimizer = optim.ASGD(
+					[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+					{"params": self.encoder.parameters()},
+					{"params": self.decoder.parameters()}],
+					lr = self.config.lr
+				)
+			else:
+				self.optimizer = optim.SGD(
+					[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+					{"params": self.encoder.parameters()},
