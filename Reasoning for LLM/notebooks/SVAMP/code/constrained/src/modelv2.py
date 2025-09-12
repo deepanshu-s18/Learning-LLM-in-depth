@@ -164,3 +164,24 @@ class Seq2SeqModel(nn.Module):
 			Args:
 				ques (list): input examples as is (i.e. not indexed) | size : [batch_size]
 			Returns:
+				
+		'''
+		self.optimizer.zero_grad()
+		if self.config.separate_opt:
+			self.emb_optimizer.zero_grad()
+
+		if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+			input_seq1, input_len1 = self.embedding1(ques)
+			# input_seq1 = input_seq1.transpose(0,1)
+			# input_seq1: Tensor [max_len x BS x emb1_size]
+			# input_len1: List [BS]
+			sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+			# sorted_seqs: Tensor [max_len x BS x emb1_size]
+			# input_len1: List [BS]
+			# orig_idx: Tensor [BS]
+		else:
+			sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+			# sorted_seqs: Tensor [max_len x BS]
+			sorted_seqs = self.embedding1(sorted_seqs)
+
+		encoder_outputs, encoder_hidden = self.encoder(sorted_seqs, sorted_len, orig_idx, self.device)
