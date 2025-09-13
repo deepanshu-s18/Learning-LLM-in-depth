@@ -248,3 +248,24 @@ class Seq2SeqModel(nn.Module):
 			encoder_hidden_single = encoder_hidden
 			if self.config.depth > 1:
 				for z in range(self.config.depth-1):
+					encoder_hidden = torch.cat((encoder_hidden, encoder_hidden_single), dim = 0)
+
+			loss = 0.0
+			decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device=self.device)
+
+			if self.config.cell_type == 'lstm':
+				# decoder_hidden = (encoder_hidden[0][:self.decoder.nlayers], encoder_hidden[1][:self.decoder.nlayers])
+				decoder_hidden = (encoder_hidden.to(self.device), torch.zeros(encoder_hidden.size()[0], encoder_hidden.size()[1], encoder_hidden.size()[2], device = self.device))
+			else:
+				# decoder_hidden = encoder_hidden[:self.decoder.nlayers]
+				decoder_hidden = encoder_hidden.to(self.device)
+
+			decoded_words = [[] for i in range(input_seq1.size(1))]
+			decoded_probs = [[] for i in range(input_seq1.size(1))]
+			decoder_attentions = []
+
+			if validation:
+				target_len = max(input_len2)
+			else:
+				target_len = self.config.max_length
+
