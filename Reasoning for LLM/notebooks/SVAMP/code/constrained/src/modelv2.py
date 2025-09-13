@@ -206,3 +206,24 @@ class Seq2SeqModel(nn.Module):
 		target_len = max(input_len2)
 
 		if use_teacher_forcing:
+			for step in range(target_len):
+				if self.config.use_attn:
+					decoder_output, decoder_hidden, decoder_attention, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+				else:
+					decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
+				self.loss += self.criterion(decoder_output, input_seq2[step])
+				decoder_input = input_seq2[step]
+		else:
+			for step in range(target_len):
+				if self.config.use_attn:
+					decoder_output, decoder_hidden, decoder_attention, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+				else:
+					decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
+				
+				topv, topi = decoder_output.topk(1)
+				self.loss += self.criterion(decoder_output, input_seq2[step])
+				decoder_input = topi.squeeze().detach() 
+
+		self.loss.backward()
+		if self.config.max_grad_norm > 0:
+			torch.nn.utils.clip_grad_norm_(self.params, self.config.max_grad_norm)
