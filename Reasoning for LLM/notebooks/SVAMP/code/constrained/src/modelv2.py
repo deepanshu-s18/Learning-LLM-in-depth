@@ -185,3 +185,24 @@ class Seq2SeqModel(nn.Module):
 			sorted_seqs = self.embedding1(sorted_seqs)
 
 		encoder_outputs, encoder_hidden = self.encoder(sorted_seqs, sorted_len, orig_idx, self.device)
+
+		encoder_hidden_single = encoder_hidden
+		if self.config.depth > 1:
+			for z in range(self.config.depth-1):
+				encoder_hidden = torch.cat((encoder_hidden, encoder_hidden_single), dim = 0)
+		
+		self.loss =0
+
+		decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device = self.device)
+
+		if config.cell_type == 'lstm':
+			# decoder_hidden = (encoder_hidden[0][:self.decoder.nlayers], encoder_hidden[1][:self.decoder.nlayers])
+			decoder_hidden = (encoder_hidden.to(self.device), torch.zeros(encoder_hidden.size()[0], encoder_hidden.size()[1], encoder_hidden.size()[2], device = self.device))
+		else:
+			# decoder_hidden = encoder_hidden[:self.decoder.nlayers]
+			decoder_hidden = encoder_hidden.to(self.device)
+
+		use_teacher_forcing = True if random.random() < self.config.teacher_forcing_ratio else False
+		target_len = max(input_len2)
+
+		if use_teacher_forcing:
