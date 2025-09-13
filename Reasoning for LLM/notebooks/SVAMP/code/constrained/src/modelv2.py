@@ -227,3 +227,24 @@ class Seq2SeqModel(nn.Module):
 		self.loss.backward()
 		if self.config.max_grad_norm > 0:
 			torch.nn.utils.clip_grad_norm_(self.params, self.config.max_grad_norm)
+		self.optimizer.step()
+		if self.config.separate_opt:
+			self.emb_optimizer.step()
+
+		return self.loss.item()/target_len
+
+	def greedy_decode(self, ques, input_seq1=None, input_seq2=None, input_len1=None, input_len2=None, validation=False, return_probs = False):
+		with torch.no_grad():
+			if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+				input_seq1, input_len1 = self.embedding1(ques)
+				# input_seq1 = input_seq1.transpose(0,1)
+				sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+			else:
+				sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+				sorted_seqs = self.embedding1(sorted_seqs)
+
+			encoder_outputs, encoder_hidden = self.encoder(sorted_seqs, sorted_len, orig_idx, self.device)
+
+			encoder_hidden_single = encoder_hidden
+			if self.config.depth > 1:
+				for z in range(self.config.depth-1):
