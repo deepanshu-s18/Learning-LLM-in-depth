@@ -290,3 +290,23 @@ class Seq2SeqModel(nn.Module):
 					decoder_input = topi.squeeze().detach()
 					
 			if validation:
+				if self.config.use_attn:
+					return loss/target_len, decoded_words, decoder_attentions[:step + 1]
+				else:
+					return loss/target_len, decoded_words, None
+			else:
+				if return_probs:
+					return decoded_words, decoded_probs
+
+				return decoded_words, decoder_attentions[:step + 1]
+
+	def obtain_hidden(self, config, ques, input_seq1=None, input_seq2=None, input_len1=None, input_len2=None):
+		with torch.no_grad():
+			if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+				input_seq1, input_len1 = self.embedding1(ques)
+				input_seq1 = input_seq1.transpose(0,1)
+				sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+			else:
+				sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+				sorted_seqs = self.embedding1(sorted_seqs)
+
