@@ -269,3 +269,24 @@ class Seq2SeqModel(nn.Module):
 			else:
 				target_len = self.config.max_length
 
+			for step in range(target_len):
+				if self.config.use_attn:
+					decoder_output, decoder_hidden, decoder_attention, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+					decoder_attentions.append(decoder_attention.squeeze(1).tolist())
+				else:
+					decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
+
+				if validation:
+					loss += self.criterion(decoder_output, input_seq2[step])
+				topv, topi = decoder_output.topk(1)
+				for i in range(input_seq1.size(1)):
+					if topi[i].item() == self.EOS_token:
+						continue
+					decoded_words[i].append(self.voc2.get_word(topi[i].item()))
+					decoded_probs[i].append(topv[i].item())
+				if topi.size()[0] == 1 and topi.size()[1] == 1:
+					decoder_input = topi.squeeze(0).detach()
+				else:
+					decoder_input = topi.squeeze().detach()
+					
+			if validation:
