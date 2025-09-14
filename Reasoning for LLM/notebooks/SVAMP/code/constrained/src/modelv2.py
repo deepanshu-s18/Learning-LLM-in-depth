@@ -331,3 +331,24 @@ class Seq2SeqModel(nn.Module):
 				if self.config.use_attn:
 					decoder_output, decoder_hidden, decoder_attention, hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
 					decoder_attentions.append(decoder_attention)
+				else:
+					decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
+
+				topv, topi = decoder_output.topk(1)
+				for i in range(input_seq1.size(1)):
+					if topi[i].item() == self.EOS_token:
+						continue
+					decoded_words[i].append(self.voc2.get_word(topi[i].item()))
+					hiddens.append([self.voc2.get_word(topi[i].item()), hidden[i]])
+				decoder_input = topi.squeeze().detach()
+
+			return hiddens, decoded_words
+
+def build_model(config, voc1, voc2, device, logger, num_iters):
+	'''
+		Add Docstring
+	'''
+	model = Seq2SeqModel(config, voc1, voc2, device, logger, num_iters)
+	model = model.to(device)
+
+	return model
