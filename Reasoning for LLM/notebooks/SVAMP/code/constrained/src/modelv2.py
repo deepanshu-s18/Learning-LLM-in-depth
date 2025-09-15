@@ -373,3 +373,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 		train_loss_epoch = 0.0
 		train_acc_epoch = 0.0
 		train_acc_epoch_cnt = 0.0
+		train_acc_epoch_tot = 0.0
+		val_loss_epoch = 0.0
+
+		start_time= time()
+		total_batches = len(train_dataloader)
+
+		for data in train_dataloader:
+			ques = data['ques']
+
+			sent1s = sents_to_idx(voc1, data['ques'], config.max_length)
+			sent2s = sents_to_idx(voc2, data['eqn'], config.max_length)
+			sent1_var, sent2_var, input_len1, input_len2  = process_batch(sent1s, sent2s, voc1, voc2, device)
+
+			nums = data['nums']
+			ans = data['ans']
+
+			model.train()
+
+			loss = model.trainer(ques, sent1_var, sent2_var, input_len1, input_len2, config, device, logger)
+			train_loss_epoch += loss
+
