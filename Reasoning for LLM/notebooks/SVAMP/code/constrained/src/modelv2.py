@@ -394,3 +394,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 			loss = model.trainer(ques, sent1_var, sent2_var, input_len1, input_len2, config, device, logger)
 			train_loss_epoch += loss
 
+			if config.show_train_acc:
+				model.eval()
+
+				_, decoder_output, _ = model.greedy_decode(ques, sent1_var, sent2_var, input_len1, input_len2, validation=True)
+				temp_acc_cnt, temp_acc_tot, _ = cal_score(decoder_output, nums, ans)
+				train_acc_epoch_cnt += temp_acc_cnt
+				train_acc_epoch_tot += temp_acc_tot
+
+			batch_num+=1
+			print("Completed {} / {}...".format(batch_num, total_batches), end = '\r', flush = True)
+
+		train_loss_epoch = train_loss_epoch/len(train_dataloader)
+		if config.show_train_acc:
+			train_acc_epoch = train_acc_epoch_cnt/train_acc_epoch_tot
+		else:
+			train_acc_epoch = 0.0
+
+		time_taken = (time() - start_time)/60.0
+
+		if config.save_writer and writer:
+			writer.add_scalar('loss/train_loss', train_loss_epoch, epoch + epoch_offset)
