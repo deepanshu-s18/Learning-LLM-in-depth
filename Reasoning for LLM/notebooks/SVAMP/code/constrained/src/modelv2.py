@@ -436,3 +436,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 		if val_acc_epoch > max_val_acc:
 			max_val_acc = val_acc_epoch
 			best_epoch = epoch + epoch_offset
+
+			attn_path = os.path.join(config.outputs_path, 'attn.p')
+			with open(attn_path, 'wb') as f:
+				pickle.dump(val_attn_wts, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+			if config.separate_opt:
+				state = {
+					'epoch' : epoch + epoch_offset,
+					'best_epoch': best_epoch,
+					'model_state_dict': model.state_dict(),
+					'voc1': model.voc1,
+					'voc2': model.voc2,
+					'optimizer_state_dict': model.optimizer.state_dict(),
+					'emb_optimizer_state_dict': model.emb_optimizer.state_dict(),
+					'train_loss_epoch' : train_loss_epoch,
+					'min_train_loss' : min_train_loss,
+					'train_acc_epoch' : train_acc_epoch,
+					'max_train_acc' : max_train_acc,
+					'val_loss_epoch' : val_loss_epoch,
+					'min_val_loss' : min_val_loss,
+					'val_acc_epoch' : val_acc_epoch,
