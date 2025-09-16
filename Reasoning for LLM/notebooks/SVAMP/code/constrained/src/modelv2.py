@@ -457,3 +457,23 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 					'val_loss_epoch' : val_loss_epoch,
 					'min_val_loss' : min_val_loss,
 					'val_acc_epoch' : val_acc_epoch,
+					'max_val_acc' : max_val_acc,
+					'val_bleu_epoch': val_bleu_epoch[0],
+					'max_val_bleu': max_val_bleu
+				}
+			else:
+				state = {
+					'epoch' : epoch + epoch_offset,
+					'best_epoch': best_epoch,
+					'model_state_dict': model.state_dict(),
+					'voc1': model.voc1,
+					'voc2': model.voc2,
+					'optimizer_state_dict': model.optimizer.state_dict(),
+					'train_loss_epoch' : train_loss_epoch,
+					'min_train_loss' : min_train_loss,
+					'train_acc_epoch' : train_acc_epoch,
+					'max_train_acc' : max_train_acc,
+					'val_loss_epoch' : val_loss_epoch,
+					'min_val_loss' : min_val_loss,
+					'val_acc_epoch' : val_acc_epoch,
+					'max_val_acc' : max_val_acc,
