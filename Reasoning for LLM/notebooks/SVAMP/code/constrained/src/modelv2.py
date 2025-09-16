@@ -477,3 +477,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 					'min_val_loss' : min_val_loss,
 					'val_acc_epoch' : val_acc_epoch,
 					'max_val_acc' : max_val_acc,
+					'val_bleu_epoch': val_bleu_epoch[0],
+					'max_val_bleu': max_val_bleu
+				}
+			logger.debug('Validation Bleu: {}'.format(val_bleu_epoch[0]))
+
+			if config.save_model:
+				save_checkpoint(state, epoch + epoch_offset, logger, config.model_path, config.ckpt)
+			estop_count = 0
+		else:
+			estop_count+=1
+
+		if config.save_writer and writer:
+			writer.add_scalar('loss/val_loss', val_loss_epoch, epoch + epoch_offset)
+			writer.add_scalar('acc/val_score', val_bleu_epoch[0], epoch + epoch_offset)
+
+		od = OrderedDict()
+		od['Epoch'] = epoch + epoch_offset
+		od['best_epoch'] = best_epoch
+		od['train_loss_epoch'] = train_loss_epoch
+		od['min_train_loss'] = min_train_loss
+		od['val_loss_epoch']= val_loss_epoch
