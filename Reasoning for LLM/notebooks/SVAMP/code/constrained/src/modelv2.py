@@ -498,3 +498,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 		od['train_loss_epoch'] = train_loss_epoch
 		od['min_train_loss'] = min_train_loss
 		od['val_loss_epoch']= val_loss_epoch
+		od['min_val_loss']= min_val_loss
+		od['train_acc_epoch'] = train_acc_epoch
+		od['max_train_acc'] = max_train_acc
+		od['val_acc_epoch'] = val_acc_epoch
+		od['max_val_acc'] = max_val_acc
+		od['val_bleu_epoch'] = val_bleu_epoch
+		od['max_val_bleu'] = max_val_bleu
+		print_log(logger, od)
+
+		if config.histogram and config.save_writer and writer:
+			for name, param in model.named_parameters():
+				writer.add_histogram(name, param, epoch + epoch_offset)
+
+		if estop_count > config.early_stopping:
+			logger.debug('Early Stopping at Epoch: {} after no improvement in {} epochs'.format(epoch, estop_count))
+			break
+
+	if config.save_writer:
+		writer.export_scalars_to_json(os.path.join(config.board_path, 'all_scalars.json'))
+		writer.close()
+
