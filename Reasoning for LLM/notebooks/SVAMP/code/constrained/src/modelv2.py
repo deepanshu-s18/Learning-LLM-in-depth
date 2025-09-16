@@ -561,3 +561,24 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
 			grade = data['grade']
 		if config.type_disp:
 			type1 = data['type']
+		if config.challenge_disp:
+			type1 = data['type']
+			var_type = data['var_type']
+			annotator = data['annotator']
+			alternate = data['alternate']
+
+		ques = data['ques']
+
+		sent1_var, sent2_var, input_len1, input_len2 = process_batch(sent1s, sent2s, voc1, voc2, device)
+
+		val_loss, decoder_output, decoder_attn = model.greedy_decode(ques, sent1_var, sent2_var, input_len1, input_len2, validation=True)
+
+		temp_acc_cnt, temp_acc_tot, disp_corr = cal_score(decoder_output, nums, ans)
+		val_acc_epoch_cnt += temp_acc_cnt
+		val_acc_epoch_tot += temp_acc_tot
+
+		for yz in range(len(decoder_output)):
+			if disp_corr[yz] == 1 and len(decoder_output[yz]) == 3:
+				attn_wts_ls.append([data['ques'][yz], data['eqn'][yz], decoder_attn[0][yz]])
+
+		sent1s = idx_to_sents(voc1, sent1_var, no_eos= True)
