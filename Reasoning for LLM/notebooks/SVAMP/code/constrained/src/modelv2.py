@@ -665,3 +665,24 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
 		return sum(scores)/len(scores)
 
 	val_acc_epoch = val_acc_epoch_cnt/val_acc_epoch_tot
+
+	return val_bleu_epoch, val_loss_epoch/len(dataloader), val_acc_epoch, attn_wts_ls
+
+def estimate_confidence(config, model, dataloader, logger):
+	
+	questions	= []
+	act_eqns 	= []
+	gen_eqns	= []
+	scores		= []
+	confs		= []
+	batch_num = 0
+	
+	#Load training data (Will be useful for similarity based methods)
+	train_df 	= pd.read_csv(os.path.join('data',config.dataset,'train.csv'))
+	train_ques	= train_df['Question'].values 
+	
+	total_batches = len(dataloader)
+	logger.info("Beginning estimating confidence based on {} criteria".format(config.conf))
+	start = time()
+	for data in dataloader:
+		ques, eqn, nums, ans = data['ques'], data['eqn'], data['nums'], data['ans']
