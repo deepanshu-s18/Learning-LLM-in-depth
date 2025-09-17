@@ -623,3 +623,24 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
 								tgt_nums += 1
 						for k in range(len(decoder_output[i])):
 							if decoder_output[i][k][:6] == 'number':
+								pred_nums += 1
+						f_out.write('Numbers in question: ' + str(src_nums) + '\n')
+						f_out.write('Numbers in Target Equation: ' + str(tgt_nums) + '\n')
+						f_out.write('Numbers in Predicted Equation: ' + str(pred_nums) + '\n')
+					f_out.write('Result: ' + str(disp_corr[i]) + '\n' + '\n')
+				except:
+					logger.warning('Exception: Failed to generate')
+					pdb.set_trace()
+					break
+			f_out.write('---------------------------------------\n')
+			f_out.close()
+
+		if batch_num % config.display_freq ==0:
+			for i in range(len(sent1s[:display_n])):
+				try:
+					od = OrderedDict()
+					logger.info('-------------------------------------')
+					od['Source'] = ' '.join(sent1s[i])
+
+					od['Target'] = ' '.join(sent2s[i])
+
