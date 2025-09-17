@@ -603,3 +603,23 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
 						f_out.write('Grade: ' + str(grade[i].item()) + '\n')
 					if config.type_disp:
 						f_out.write('Type: ' + str(type1[i]) + '\n')
+					f_out.write('Source: ' + stack_to_string(sent1s[i]) + '\n')
+					f_out.write('Target: ' + stack_to_string(sent2s[i]) + '\n')
+					f_out.write('Generated: ' + stack_to_string(decoder_output[i]) + '\n')
+					if config.challenge_disp:
+						f_out.write('Type: ' + str(type1[i]) + '\n')
+						f_out.write('Variation Type: ' + str(var_type[i]) + '\n')
+						f_out.write('Annotator: ' + str(annotator[i]) + '\n')
+						f_out.write('Alternate: ' + str(alternate[i].item()) + '\n')
+					if config.nums_disp:
+						src_nums = 0
+						tgt_nums = 0
+						pred_nums = 0
+						for k in range(len(sent1s[i])):
+							if sent1s[i][k][:6] == 'number':
+								src_nums += 1
+						for k in range(len(sent2s[i])):
+							if sent2s[i][k][:6] == 'number':
+								tgt_nums += 1
+						for k in range(len(decoder_output[i])):
+							if decoder_output[i][k][:6] == 'number':
