@@ -707,3 +707,24 @@ def estimate_confidence(config, model, dataloader, logger):
 		gen_eqns	+= gen_eqn
 		scores		+= correct_or_not
 		confs		+= list(confidence)
+		batch_num	+= 1
+		print("Completed {} / {}...".format(batch_num, total_batches), end = '\r', flush = True)
+
+	results_df = pd.DataFrame([questions, act_eqns, gen_eqns, scores, confs]).transpose()
+	results_df.columns = ['Question', 'Actual Equation', 'Generated Equation', 'Score', 'Confidence']
+	if config.conf != 'similarity':
+		csv_file_path = os.path.join('ConfidenceEstimates',config.dataset + '_' + config.run_name + '_' + config.conf + '.csv')
+	else:
+		csv_file_path = os.path.join('ConfidenceEstimates',config.dataset + '_' + config.run_name + '_' + config.conf + '_' + config.sim_criteria + '.csv')
+	results_df.to_csv(csv_file_path)
+	logger.info("Done in {} seconds".format(time() - start))
+
+def get_hiddens(config, model, val_dataloader, voc1, voc2, device):
+	batch_num =1
+	
+	model.eval()
+
+	hiddens = []
+	operands = []
+
+	for data in val_dataloader:
