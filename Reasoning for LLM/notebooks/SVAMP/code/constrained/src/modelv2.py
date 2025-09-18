@@ -686,3 +686,24 @@ def estimate_confidence(config, model, dataloader, logger):
 	start = time()
 	for data in dataloader:
 		ques, eqn, nums, ans = data['ques'], data['eqn'], data['nums'], data['ans']
+		
+		if config.conf == 'posterior':
+			decoded_words, confidence = posterior_based_conf(ques, model)
+		elif config.conf == 'similarity':
+			decoded_words, confidence = similarity_based_conf(ques, train_ques, model, sim_criteria= config.sim_criteria)
+		else:
+			#TODO: Implement other methods
+			raise ValueError("Other confidence methods not implemented yet. Use -conf posterior")
+		
+		if not config.adv:
+			correct_or_not = [cal_score([decoded_words[i]], [nums[i]], [ans[i]])[0] for i in range(len(decoded_words))]
+		else:
+			correct_or_not = [-1 for i in range(len(decoded_words))]
+
+		gen_eqn = [' '.join(words) for words in decoded_words]
+		
+		questions 	+= ques
+		act_eqns	+= eqn
+		gen_eqns	+= gen_eqn
+		scores		+= correct_or_not
+		confs		+= list(confidence)
