@@ -39,3 +39,4 @@
 [2025-08-28 16:02:33 +0530] feat(reasoning): implement core computation pass and tensor flows in __init__
 [2025-08-28 21:20:18 +0530] feat(reasoning): complete implementation and verify numerical parity in __init__.py
 [2025-09-19 14:57:21 +0530] feat(reasoning): add numerical stability clamping and shape assertions in __init__
+[2025-09-19 20:33:53 +0530] feat(reasoning): enhance error handling and configuration flexibility in __init__
