@@ -41,3 +41,24 @@ def save_checkpoint(state, epoch, logger, model_path, ckpt):
 	torch.save(state, ckpt_path)
 
 def get_latest_checkpoint(model_path, logger):
+	'''
+		Looks for the checkpoint with highest epoch number in the directory "model_path" 
+
+		Args:
+			model_path: including the run_name
+			logger variable: to log messages
+		Returns:
+			checkpoint: path to the latest checkpoint 
+	'''
+
+	ckpts = glob('{}/*.pt'.format(model_path))
+	ckpts = sorted(ckpts)
+
+	if len(ckpts) == 0:
+		logger.warning('No Checkpoints Found')
+
+		return None
+	else:
+		#pdb.set_trace()
+		#latest_epoch = max([int(x.split('_')[-1].split('.')[0]) for x in ckpts])
+		#ckpts = sorted(ckpts, key= lambda x: int(x.split('_')[-1].split('.')[0]) , reverse=True )
