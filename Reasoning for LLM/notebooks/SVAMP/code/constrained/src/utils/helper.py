@@ -62,3 +62,25 @@ def get_latest_checkpoint(model_path, logger):
 		#pdb.set_trace()
 		#latest_epoch = max([int(x.split('_')[-1].split('.')[0]) for x in ckpts])
 		#ckpts = sorted(ckpts, key= lambda x: int(x.split('_')[-1].split('.')[0]) , reverse=True )
+		ckpt_path = ckpts[0]
+		#logger.info('Checkpoint found with epoch number : {}'.format(latest_epoch))
+		logger.debug('Checkpoint found at : {}'.format(ckpt_path))
+
+		return ckpt_path
+
+def load_checkpoint(config, model, mode, ckpt_path, logger, device):
+	checkpoint = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
+	model.load_state_dict(checkpoint['model_state_dict'])
+	model.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+	if config.separate_opt:
+		model.emb_optimizer.load_state_dict(checkpoint['emb_optimizer_state_dict'])
+	start_epoch = checkpoint['epoch']
+	min_train_loss  =checkpoint['min_train_loss']
+	min_val_loss = checkpoint['min_val_loss']
+	voc1 = checkpoint['voc1']
+	voc2 = checkpoint['voc2']
+	max_train_acc = checkpoint['max_train_acc']
+	max_val_acc = checkpoint['max_val_acc']
+	max_val_bleu = checkpoint['max_val_bleu']
+	best_epoch = checkpoint['best_epoch']
+
