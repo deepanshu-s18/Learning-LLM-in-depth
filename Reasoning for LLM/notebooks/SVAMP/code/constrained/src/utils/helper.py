@@ -149,3 +149,24 @@ class Voc1:
 		for k, v in self.w2c.items():
 			if v >= mincount:
 				keep_words += [k]*v
+
+		self.w2id = {'<s>': 0, '</s>': 1, 'unk': 2}
+		self.id2w = {0: '<s>', 1: '</s>', 2: 'unk'}
+		self.w2c = {}
+		self.nwords = 3
+		for word in keep_words:
+			self.addWord(word)
+
+	def get_id(self, idx):
+		return self.w2id[idx]
+
+	def get_word(self, idx):
+		return self.id2w[idx]
+
+	def create_vocab_dict(self, args, train_dataloader):
+		for data in train_dataloader:
+			for sent in data['ques']:
+				self.add_sent(sent)
+
+		self.most_frequent(args.vocab_size)
+		assert len(self.w2id) == self.nwords
