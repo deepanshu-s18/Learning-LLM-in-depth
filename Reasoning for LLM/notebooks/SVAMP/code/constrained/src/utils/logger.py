@@ -44,3 +44,26 @@ def store_results(config, max_val_bleu, max_val_acc, min_val_loss, max_train_acc
 		pass
 	try:
 		min_val_loss = min_val_loss.item()
+	except:
+		pass
+	try:
+		data= {'run name' : str(config.run_name)
+		, 'max val acc': str(max_val_acc)
+		, 'max train acc': str(max_train_acc)
+		, 'max val bleu' : str(max_val_bleu)
+		, 'min val loss' : str(min_val_loss)
+		, 'min train loss': str(min_train_loss)
+		, 'best epoch': str(best_epoch)
+		, 'epochs' : config.epochs
+		, 'dataset' : config.dataset
+		, 'embedding': config.embedding
+		, 'embedding_size': config.emb1_size
+		, 'embedding_lr': config.emb_lr
+		, 'freeze_emb': config.freeze_emb
+		, 'cell_type' : config.cell_type
+		, 'bidirectional' : config.bidirectional
+		, 'hidden_size' : config.hidden_size
+		, 'depth' : config.depth
+		, 'lr' : config.lr
+		, 'batch_size' : config.batch_size
+		, 'dropout' : config.dropout
