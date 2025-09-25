@@ -70,3 +70,27 @@ def idx_to_sents(voc, tensors, no_eos=False):
 
 def pad_seq(seq, max_length, voc):
 	seq += [voc.get_id('</s>') for i in range(max_length - len(seq))]
+	return seq
+
+# def process_single(sent, label, voc, device):
+
+def sort_by_len(seqs, input_len, device=None, dim=1):
+	orig_idx = list(range(seqs.size(dim)))
+	# pdb.set_trace()
+
+	# Index by which sorting needs to be done
+	sorted_idx = sorted(orig_idx, key=lambda k: input_len[k], reverse=True)
+	sorted_idx = torch.LongTensor(sorted_idx)
+	if device:
+		sorted_idx = sorted_idx.to(device)
+
+	sorted_seqs = seqs.index_select(1, sorted_idx)
+	sorted_lens = [input_len[i] for i in sorted_idx]
+
+	# For restoring original order
+	orig_idx = sorted(orig_idx, key=lambda k: sorted_idx[k])
+	orig_idx = torch.LongTensor(orig_idx)
+	if device:
+		orig_idx = orig_idx.to(device)
+	return sorted_seqs, sorted_lens, orig_idx
+
