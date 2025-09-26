@@ -20,3 +20,25 @@ def build_parser():
 
 	# Meta Attributes
 	# parser.add_argument('-vocab_size', type=int, default=30000, help='Vocabulary size to consider')
+	parser.add_argument('-trim_threshold', type=int, default=1, help='Remove words with frequency less than this from vocab')
+
+	# Device Configuration
+	parser.add_argument('-gpu', type=int, default=2, help='Specify the gpu to use')
+	parser.add_argument('-seed', type=int, default=6174, help='Default seed to set')
+	parser.add_argument('-logging', type=int, default=1, help='Set to 0 if you do not require logging')
+	parser.add_argument('-ckpt', type=str, default='model', help='Checkpoint file name')
+	parser.add_argument('-save_model', dest='save_model',action='store_true', help='To save the model')
+	parser.add_argument('-no-save_model', dest='save_model', action='store_false', help='Dont save the model')
+	parser.set_defaults(save_model=True)
+	# parser.add_argument('-log_fmt', type=str, default='%(asctime)s | %(levelname)s | %(name)s | %(message)s', help='Specify format of the logger')
+
+	# Model parameters
+	# parser.add_argument('-cell_type', type=str, default='gru', help='RNN cell for encoder, default: gru')
+	parser.add_argument('-embedding', type=str, default='roberta', choices=['bert', 'roberta', 'word2vec', 'random'], help='Embeddings')
+	parser.add_argument('-emb_name', type=str, default='roberta-base', choices=['bert-base-uncased', 'roberta-base'], help='Which pre-trained model')
+	parser.add_argument('-embedding_size', type=int, default=768, help='Embedding dimensions of inputs')
+	parser.add_argument('-emb_lr', type=float, default=1e-5, help='Larning rate to train embeddings')
+	parser.add_argument('-freeze_emb', dest='freeze_emb', action='store_true', help='Freeze embedding weights')
+	parser.add_argument('-no-freeze_emb', dest='freeze_emb', action='store_false', help='Train embedding weights')
+	parser.set_defaults(freeze_emb=False)
+	parser.add_argument('-word2vec_bin', type=str, default='/datadrive/global_files/GoogleNews-vectors-negative300.bin', help='Binary file of word2vec')
