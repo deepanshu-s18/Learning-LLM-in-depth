@@ -20,3 +20,26 @@ class BertEncoder(nn.Module):
 
 		'''
 		#Tokenize the input sentences for feeding into BERT
+		# pdb.set_trace()
+		all_tokens  = [['[CLS]'] + self.bert_tokenizer.tokenize(sentence) + ['[SEP]'] for sentence in sentences]
+
+		index_retrieve = []
+		for sent in all_tokens:
+			cur_ls = []
+			for j in range(1, len(sent)):
+				if sent[j][0] == '#':
+					continue
+				else:
+					cur_ls.append(j)
+			index_retrieve.append(cur_ls)
+		
+		#Pad all the sentences to a maximum length
+		input_lengths = [len(tokens) for tokens in all_tokens]
+		max_length    = max(input_lengths)
+		padded_tokens = [tokens + ['[PAD]' for _ in range(max_length - len(tokens))] for tokens in all_tokens]
+
+		#Convert tokens to token ids
+		token_ids = torch.tensor([self.bert_tokenizer.convert_tokens_to_ids(tokens) for tokens in padded_tokens]).to(self.device)
+
+		#Obtain attention masks
+		pad_token = self.bert_tokenizer.convert_tokens_to_ids('[PAD]')
