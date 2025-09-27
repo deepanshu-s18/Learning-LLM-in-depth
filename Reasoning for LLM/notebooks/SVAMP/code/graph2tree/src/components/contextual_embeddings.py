@@ -65,3 +65,26 @@ class RobertaEncoder(nn.Module):
 		self.roberta_layer = RobertaModel.from_pretrained(roberta_model)
 		self.roberta_tokenizer = RobertaTokenizer.from_pretrained(roberta_model)
 		self.device = device
+		
+		if freeze_roberta:
+			for p in self.roberta_layer.parameters():
+				p.requires_grad = False
+		
+	def robertify_input(self, sentences):
+		'''
+		Preprocess the input sentences using roberta tokenizer and converts them to a torch tensor containing token ids
+
+		'''
+		# Tokenize the input sentences for feeding into RoBERTa
+		all_tokens  = [['<s>'] + self.roberta_tokenizer.tokenize(sentence) + ['</s>'] for sentence in sentences]
+		
+		index_retrieve = []
+		for sent in all_tokens:
+			cur_ls = [1]
+			for j in range(2, len(sent)):
+				if sent[j][0] == '\u0120':
+					cur_ls.append(j)
+			index_retrieve.append(cur_ls)				
+		
+		# Pad all the sentences to a maximum length
+		input_lengths = [len(tokens) for tokens in all_tokens]
