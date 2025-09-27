@@ -43,3 +43,25 @@ class BertEncoder(nn.Module):
 
 		#Obtain attention masks
 		pad_token = self.bert_tokenizer.convert_tokens_to_ids('[PAD]')
+		attn_masks = (token_ids != pad_token).long()
+
+		return token_ids, attn_masks, input_lengths, index_retrieve
+
+	def forward(self, sentences):
+		'''
+		Feed the batch of sentences to a BERT encoder to obtain contextualized representations of each token
+		'''
+		#Preprocess sentences
+		token_ids, attn_masks, input_lengths, index_retrieve = self.bertify_input(sentences)
+
+		#Feed through bert
+		cont_reps, _ = self.bert_layer(token_ids, attention_mask = attn_masks)
+
+		return cont_reps, input_lengths, token_ids, index_retrieve
+
+class RobertaEncoder(nn.Module):
+	def __init__(self, roberta_model = 'roberta-base', device = 'cuda:0 ', freeze_roberta = False):
+		super(RobertaEncoder, self).__init__()
+		self.roberta_layer = RobertaModel.from_pretrained(roberta_model)
+		self.roberta_tokenizer = RobertaTokenizer.from_pretrained(roberta_model)
+		self.device = device
