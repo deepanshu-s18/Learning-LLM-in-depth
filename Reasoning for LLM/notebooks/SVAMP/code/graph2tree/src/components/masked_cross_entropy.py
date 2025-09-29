@@ -70,3 +70,27 @@ def masked_cross_entropy_without_logit(logits, target, length):
             which contains the length of each data in a batch.
     Returns:
         loss: An average loss value masked by the length.
+    """
+
+    # logits_flat: (batch * max_len, num_classes)
+    logits_flat = logits.view(-1, logits.size(-1))
+
+    # log_probs_flat: (batch * max_len, num_classes)
+    log_probs_flat = torch.log(logits_flat + 1e-12)
+
+    # target_flat: (batch * max_len, 1)
+    target_flat = target.view(-1, 1)
+    # losses_flat: (batch * max_len, 1)
+    losses_flat = -torch.gather(log_probs_flat, dim=1, index=target_flat)
+
+    # losses: (batch, max_len)
+    losses = losses_flat.view(*target.size())
+
+    # mask: (batch, max_len)
+    mask = sequence_mask(sequence_length=length, max_len=target.size(1))
+    losses = losses * mask.float()
+    loss = losses.sum() / length.float().sum()
+    # if loss.item() > 10:
+    #     print(losses, target)
+    return loss
+
