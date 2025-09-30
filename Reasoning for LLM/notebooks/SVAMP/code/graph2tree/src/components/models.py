@@ -101,3 +101,24 @@ class AttnDecoderRNN(nn.Module):
 
 		# Keep for reference
 		self.embedding_size = embedding_size
+		self.hidden_size = hidden_size
+		self.input_size = input_size
+		self.output_size = output_size
+		self.n_layers = n_layers
+		self.dropout = dropout
+
+		# Define layers
+		self.em_dropout = nn.Dropout(dropout)
+		self.embedding = nn.Embedding(input_size, embedding_size, padding_idx=0)
+		self.gru = nn.GRU(hidden_size + embedding_size, hidden_size, n_layers, dropout=dropout)
+		self.concat = nn.Linear(hidden_size * 2, hidden_size)
+		self.out = nn.Linear(hidden_size, output_size)
+		# Choose attention model
+		self.attn = Attn(hidden_size)
+
+	def forward(self, input_seq, last_hidden, encoder_outputs, seq_mask):
+		# Get the embedding of the current input word (last output word)
+		batch_size = input_seq.size(0)
+		embedded = self.embedding(input_seq)
+		embedded = self.em_dropout(embedded)
+		embedded = embedded.view(1, batch_size, self.embedding_size)  # S=1 x B x N
