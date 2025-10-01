@@ -205,3 +205,24 @@ class EncoderSeq(nn.Module):
 
 		# self.input_size = input_size
 		self.embedding_size = embedding_size
+		self.hidden_size = hidden_size
+		self.n_layers = n_layers
+		self.dropout = dropout
+
+		# self.embedding = nn.Embedding(input_size, embedding_size, padding_idx=0)
+		# self.em_dropout = nn.Dropout(dropout)
+
+		if cell_type == 'lstm':
+			self.rnn = nn.LSTM(self.embedding_size, self.hidden_size,
+							   num_layers=self.n_layers,
+							   dropout=(0 if self.n_layers == 1 else self.dropout),
+							   bidirectional=True)
+		elif cell_type == 'gru':
+			self.rnn = nn.GRU(embedding_size, hidden_size, n_layers, dropout=dropout, bidirectional=True)
+		else:
+			self.rnn = nn.RNN(self.embedding_size, self.hidden_size,
+							  num_layers=self.n_layers,
+							  nonlinearity='tanh',							# ['relu', 'tanh']
+							  dropout=(0 if self.n_layers == 1 else self.dropout),
+							  bidirectional=True)
+
