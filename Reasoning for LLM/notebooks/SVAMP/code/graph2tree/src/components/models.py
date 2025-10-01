@@ -226,3 +226,24 @@ class EncoderSeq(nn.Module):
 							  dropout=(0 if self.n_layers == 1 else self.dropout),
 							  bidirectional=True)
 
+		self.gcn = Graph_Module(hidden_size, hidden_size, hidden_size)
+
+	def forward(self, embedded, input_lengths, orig_idx, batch_graph, hidden=None):
+		# Note: we run this all at once (over multiple batches of multiple sequences)
+		# embedded = self.embedding(input_seqs)  # S x B x E
+		# embedded = self.em_dropout(embedded)
+		packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
+		pade_hidden = hidden
+		# pade_outputs, pade_hidden = self.gru_pade(packed, pade_hidden)
+		pade_outputs, pade_hidden = self.rnn(packed, pade_hidden)
+		pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs)
+
+		if orig_idx is not None:
+			pade_outputs = pade_outputs.index_select(1, orig_idx)
+
+		problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
+		pade_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
+		# pdb.set_trace()
+		_, pade_outputs = self.gcn(pade_outputs, batch_graph)
+		pade_outputs = pade_outputs.transpose(0, 1)
+		return pade_outputs, problem_output
