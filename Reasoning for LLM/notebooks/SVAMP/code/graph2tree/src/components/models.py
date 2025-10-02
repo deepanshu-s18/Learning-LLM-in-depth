@@ -351,3 +351,24 @@ class GenerateNode(nn.Module):
 	def forward(self, node_embedding, node_label, current_context):
 		node_label_ = self.embeddings(node_label)
 		node_label = self.em_dropout(node_label_)
+		node_embedding = node_embedding.squeeze(1)
+		current_context = current_context.squeeze(1)
+		node_embedding = self.em_dropout(node_embedding)
+		current_context = self.em_dropout(current_context)
+
+		l_child = torch.tanh(self.generate_l(torch.cat((node_embedding, current_context, node_label), 1)))
+		l_child_g = torch.sigmoid(self.generate_lg(torch.cat((node_embedding, current_context, node_label), 1)))
+		r_child = torch.tanh(self.generate_r(torch.cat((node_embedding, current_context, node_label), 1)))
+		r_child_g = torch.sigmoid(self.generate_rg(torch.cat((node_embedding, current_context, node_label), 1)))
+		l_child = l_child * l_child_g
+		r_child = r_child * r_child_g
+		return l_child, r_child, node_label_
+
+
+class Merge(nn.Module):
+	def __init__(self, hidden_size, embedding_size, dropout=0.5):
+		super(Merge, self).__init__()
+
+		self.embedding_size = embedding_size
+		self.hidden_size = hidden_size
+
