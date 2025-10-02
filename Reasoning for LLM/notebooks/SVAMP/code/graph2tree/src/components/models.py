@@ -247,3 +247,24 @@ class EncoderSeq(nn.Module):
 		_, pade_outputs = self.gcn(pade_outputs, batch_graph)
 		pade_outputs = pade_outputs.transpose(0, 1)
 		return pade_outputs, problem_output
+
+
+class Prediction(nn.Module):
+	# a seq2tree decoder with Problem aware dynamic encoding
+
+	def __init__(self, hidden_size, op_nums, input_size, dropout=0.5):
+		super(Prediction, self).__init__()
+
+		# Keep for reference
+		self.hidden_size = hidden_size
+		self.input_size = input_size
+		self.op_nums = op_nums
+
+		# Define layers
+		self.dropout = nn.Dropout(dropout)
+
+		self.embedding_weight = nn.Parameter(torch.randn(1, input_size, hidden_size))
+
+		# for Computational symbols and Generated numbers
+		self.concat_l = nn.Linear(hidden_size, hidden_size)
+		self.concat_r = nn.Linear(hidden_size * 2, hidden_size)
