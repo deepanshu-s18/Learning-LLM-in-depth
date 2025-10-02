@@ -330,3 +330,24 @@ class Prediction(nn.Module):
 		op = self.ops(leaf_input)
 
 		# return p_leaf, num_score, op, current_embeddings, current_attn
+
+		return num_score, op, current_node, current_context, embedding_weight
+
+
+class GenerateNode(nn.Module):
+	def __init__(self, hidden_size, op_nums, embedding_size, dropout=0.5):
+		super(GenerateNode, self).__init__()
+
+		self.embedding_size = embedding_size
+		self.hidden_size = hidden_size
+
+		self.embeddings = nn.Embedding(op_nums, embedding_size)
+		self.em_dropout = nn.Dropout(dropout)
+		self.generate_l = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
+		self.generate_r = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
+		self.generate_lg = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
+		self.generate_rg = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
+
+	def forward(self, node_embedding, node_label, current_context):
+		node_label_ = self.embeddings(node_label)
+		node_label = self.em_dropout(node_label_)
