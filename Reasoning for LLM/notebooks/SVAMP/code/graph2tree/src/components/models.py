@@ -309,3 +309,24 @@ class Prediction(nn.Module):
 
 		# the information to get the current quantity
 		batch_size = current_embeddings.size(0)
+		# predict the output (this node corresponding to output(number or operator)) with PADE
+
+		repeat_dims = [1] * self.embedding_weight.dim()
+		repeat_dims[0] = batch_size
+		embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
+		embedding_weight = torch.cat((embedding_weight, num_pades), dim=1)  # B x O x N
+
+		leaf_input = torch.cat((current_node, current_context), 2)
+		leaf_input = leaf_input.squeeze(1)
+		leaf_input = self.dropout(leaf_input)
+
+		# p_leaf = nn.functional.softmax(self.is_leaf(leaf_input), 1)
+		# max pooling the embedding_weight
+		embedding_weight_ = self.dropout(embedding_weight)
+		num_score = self.score(leaf_input.unsqueeze(1), embedding_weight_, mask_nums)
+
+		# num_score = nn.functional.softmax(num_score, 1)
+
+		op = self.ops(leaf_input)
+
+		# return p_leaf, num_score, op, current_embeddings, current_attn
