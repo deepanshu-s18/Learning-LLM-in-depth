@@ -289,3 +289,23 @@ class Prediction(nn.Module):
 		current_node_temp = []
 		for l, c in zip(left_childs, current_embeddings):
 			if l is None:
+				c = self.dropout(c)
+				g = torch.tanh(self.concat_l(c))
+				t = torch.sigmoid(self.concat_lg(c))
+				current_node_temp.append(g * t)
+			else:
+				ld = self.dropout(l)
+				c = self.dropout(c)
+				g = torch.tanh(self.concat_r(torch.cat((ld, c), 1)))
+				t = torch.sigmoid(self.concat_rg(torch.cat((ld, c), 1)))
+				current_node_temp.append(g * t)
+
+		current_node = torch.stack(current_node_temp)
+
+		current_embeddings = self.dropout(current_node)
+
+		current_attn = self.attn(current_embeddings.transpose(0, 1), encoder_outputs, seq_mask)
+		current_context = current_attn.bmm(encoder_outputs.transpose(0, 1))  # B x 1 x N
+
+		# the information to get the current quantity
+		batch_size = current_embeddings.size(0)
