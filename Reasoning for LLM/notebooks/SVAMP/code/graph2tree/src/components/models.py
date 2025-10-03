@@ -455,3 +455,24 @@ class Graph_Module(nn.Module):
 		'''
 		## Inputs:
 		- graph_nodes (batch_size, K, in_feat_dim): input features
+		## Returns:
+		- adjacency matrix (batch_size, K, K)
+		'''
+		self.K = graph_nodes.size(1)
+		graph_nodes = graph_nodes.contiguous().view(-1, self.in_dim)
+		
+		# layer 1
+		h = self.edge_layer_1(graph_nodes)
+		h = F.relu(h)
+		
+		# layer 2
+		h = self.edge_layer_2(h)
+		h = F.relu(h)
+
+		# outer product
+		h = h.view(-1, self.K, self.combined_dim)
+		adjacency_matrix = torch.matmul(h, h.transpose(1, 2))
+		
+		adjacency_matrix = self.b_normal(adjacency_matrix)
+
+		return adjacency_matrix
