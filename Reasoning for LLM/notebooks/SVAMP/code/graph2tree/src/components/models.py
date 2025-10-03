@@ -434,3 +434,24 @@ class Graph_Module(nn.Module):
 		#self.edge_layer_1 = nn.Linear(indim, outdim)
 		#self.edge_layer_2 = nn.Linear(outdim, outdim)
 		
+		#self.dropout = nn.Dropout(p=dropout)
+		#self.edge_layer_1 = nn.utils.weight_norm(self.edge_layer_1)
+		#self.edge_layer_2 = nn.utils.weight_norm(self.edge_layer_2)
+		self.h = 4
+		self.d_k = outdim//self.h
+		
+		#layer = GCN(indim, hiddim, self.d_k, dropout)
+		self.graph = clones(GCN(indim, hiddim, self.d_k, dropout), 4)
+		
+		#self.Graph_0 = GCN(indim, hiddim, outdim//4, dropout)
+		#self.Graph_1 = GCN(indim, hiddim, outdim//4, dropout)
+		#self.Graph_2 = GCN(indim, hiddim, outdim//4, dropout)
+		#self.Graph_3 = GCN(indim, hiddim, outdim//4, dropout)
+		
+		self.feed_foward = PositionwiseFeedForward(indim, hiddim, outdim, dropout)
+		self.norm = LayerNorm(outdim)
+
+	def get_adj(self, graph_nodes):
+		'''
+		## Inputs:
+		- graph_nodes (batch_size, K, in_feat_dim): input features
