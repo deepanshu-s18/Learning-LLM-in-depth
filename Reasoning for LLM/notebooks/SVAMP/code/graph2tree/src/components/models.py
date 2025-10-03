@@ -476,3 +476,24 @@ class Graph_Module(nn.Module):
 		adjacency_matrix = self.b_normal(adjacency_matrix)
 
 		return adjacency_matrix
+	
+	def normalize(self, A, symmetric=True):
+		'''
+		## Inputs:
+		- adjacency matrix (K, K) : A
+		## Returns:
+		- adjacency matrix (K, K) 
+		'''
+		A = A + torch.eye(A.size(0)).cuda().float()
+		d = A.sum(1)
+		if symmetric:
+			# D = D^{-1/2}
+			D = torch.diag(torch.pow(d, -0.5))
+			return D.mm(A).mm(D)
+		else :
+			D = torch.diag(torch.pow(d,-1))
+			return D.mm(A)
+	   
+	def b_normal(self, adj):
+		batch = adj.size(0)
+		for i in range(batch):
