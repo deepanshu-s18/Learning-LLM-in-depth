@@ -413,3 +413,24 @@ class PositionwiseFeedForward(nn.Module):
 		self.w_1 = nn.Linear(d_model, d_ff)
 		self.w_2 = nn.Linear(d_ff, d_out)
 		self.dropout = nn.Dropout(dropout)
+
+	def forward(self, x):
+		return self.w_2(self.dropout(F.relu(self.w_1(x))))
+
+class Graph_Module(nn.Module):
+	def __init__(self, indim, hiddim, outdim, dropout=0.3):
+		super(Graph_Module, self).__init__()
+		'''
+		## Variables:
+		- indim: dimensionality of input node features
+		- hiddim: dimensionality of the joint hidden embedding
+		- outdim: dimensionality of the output node features
+		- combined_feature_dim: dimensionality of the joint hidden embedding for graph
+		- K: number of graph nodes/objects on the image
+		'''
+		self.in_dim = indim
+		#self.combined_dim = outdim
+		
+		#self.edge_layer_1 = nn.Linear(indim, outdim)
+		#self.edge_layer_2 = nn.Linear(outdim, outdim)
+		
