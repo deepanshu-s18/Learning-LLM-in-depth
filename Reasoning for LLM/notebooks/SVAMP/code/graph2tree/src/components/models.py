@@ -372,3 +372,24 @@ class Merge(nn.Module):
 		self.embedding_size = embedding_size
 		self.hidden_size = hidden_size
 
+		self.em_dropout = nn.Dropout(dropout)
+		self.merge = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
+		self.merge_g = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
+
+	def forward(self, node_embedding, sub_tree_1, sub_tree_2):
+		sub_tree_1 = self.em_dropout(sub_tree_1)
+		sub_tree_2 = self.em_dropout(sub_tree_2)
+		node_embedding = self.em_dropout(node_embedding)
+
+		sub_tree = torch.tanh(self.merge(torch.cat((node_embedding, sub_tree_1, sub_tree_2), 1)))
+		sub_tree_g = torch.sigmoid(self.merge_g(torch.cat((node_embedding, sub_tree_1, sub_tree_2), 1)))
+		sub_tree = sub_tree * sub_tree_g
+		return sub_tree
+	
+	
+	
+# Graph Module
+def clones(module, N):
+	"Produce N identical layers."
+	return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
+
