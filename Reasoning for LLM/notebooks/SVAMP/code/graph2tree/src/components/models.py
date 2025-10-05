@@ -559,3 +559,24 @@ class GCN(nn.Module):
 		x = F.relu(self.gc1(x, adj))
 		x = F.dropout(x, self.dropout, training=self.training)
 		x = self.gc2(x, adj)
+		return x
+	
+# Graph_Conv
+class GraphConvolution(Module):
+	"""
+	Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
+	"""
+
+	def __init__(self, in_features, out_features, bias=True):
+		super(GraphConvolution, self).__init__()
+		self.in_features = in_features
+		self.out_features = out_features
+		self.weight = Parameter(torch.FloatTensor(in_features, out_features))
+		if bias:
+			self.bias = Parameter(torch.FloatTensor(out_features))
+		else:
+			self.register_parameter('bias', None)
+		self.reset_parameters()
+
+	def reset_parameters(self):
+		stdv = 1. / math.sqrt(self.weight.size(1))
