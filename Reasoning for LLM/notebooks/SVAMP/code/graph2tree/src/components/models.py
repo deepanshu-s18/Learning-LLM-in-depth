@@ -517,3 +517,24 @@ class Graph_Module(nn.Module):
 			#adj = adj.unsqueeze(1)
 			#adj = torch.cat((adj,adj,adj),1)
 			adj_list = [adj,adj,adj,adj]
+		else:
+			adj = graph.float()
+			adj_list = [adj[:,1,:],adj[:,1,:],adj[:,4,:],adj[:,4,:]]
+		#print(adj)
+		
+		g_feature = \
+			tuple([l(graph_nodes,x) for l, x in zip(self.graph,adj_list)])
+		#g_feature_0 = self.Graph_0(graph_nodes,adj[0])
+		#g_feature_1 = self.Graph_1(graph_nodes,adj[1])
+		#g_feature_2 = self.Graph_2(graph_nodes,adj[2])
+		#g_feature_3 = self.Graph_3(graph_nodes,adj[3])
+		#print('g_feature')
+		#print(type(g_feature))
+		
+		
+		g_feature = self.norm(torch.cat(g_feature,2)) + graph_nodes
+		#print('g_feature')
+		#print(g_feature.shape)
+		
+		graph_encode_features = self.feed_foward(g_feature) + g_feature
+		
