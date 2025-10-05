@@ -497,3 +497,23 @@ class Graph_Module(nn.Module):
 	def b_normal(self, adj):
 		batch = adj.size(0)
 		for i in range(batch):
+			adj[i] = self.normalize(adj[i])
+		return adj
+
+	def forward(self, graph_nodes, graph):
+		'''
+		## Inputs:
+		- graph_nodes (batch_size, K, in_feat_dim): input features
+		## Returns:
+		- graph_encode_features (batch_size, K, out_feat_dim)
+		'''
+		nbatches = graph_nodes.size(0)
+		mbatches = graph.size(0)
+		if nbatches != mbatches:
+			graph_nodes = graph_nodes.transpose(0, 1)
+		# adj (batch_size, K, K): adjacency matrix
+		if not bool(graph.numel()):
+			adj = self.get_adj(graph_nodes)
+			#adj = adj.unsqueeze(1)
+			#adj = torch.cat((adj,adj,adj),1)
+			adj_list = [adj,adj,adj,adj]
