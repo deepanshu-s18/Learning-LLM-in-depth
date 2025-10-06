@@ -63,3 +63,25 @@ def change_num(num):
 			value = float(item[0:-1])/100
 			new_num.append(value)
 		else:
+			new_num.append(float(item))
+	return new_num
+
+def main():
+	parser = build_parser()
+	args = parser.parse_args()
+	config = args
+
+	if config.mode == 'train':
+		is_train = True
+	else:
+		is_train = False
+
+	''' Set seed for reproducibility'''
+	np.random.seed(config.seed)
+	torch.manual_seed(config.seed)
+	random.seed(config.seed)
+
+	'''GPU initialization'''
+	device = gpu_init_pytorch(config.gpu)
+
+	if config.full_cv:
