@@ -41,3 +41,25 @@ def read_json(path):
 USE_CUDA = True
 
 def get_new_fold(data,pairs,group):
+	new_fold = []
+	for item,pair,g in zip(data, pairs, group):
+		pair = list(pair)
+		pair.append(g['group_num'])
+		pair = tuple(pair)
+		new_fold.append(pair)
+	return new_fold
+
+def change_num(num):
+	new_num = []
+	for item in num:
+		if '/' in item:
+			new_str = item.split(')')[0]
+			new_str = new_str.split('(')[1]
+			a = float(new_str.split('/')[0])
+			b = float(new_str.split('/')[1])
+			value = a/b
+			new_num.append(value)
+		elif '%' in item:
+			value = float(item[0:-1])/100
+			new_num.append(value)
+		else:
