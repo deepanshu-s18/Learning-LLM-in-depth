@@ -106,3 +106,25 @@ def main():
 			log_file = os.path.join(config.log_path, 'log.txt')
 
 			if config.results:
+				config.result_path = os.path.join(result_folder, 'val_results_{}.json'.format(config.dataset))
+
+			create_save_directories(config.log_path)
+			create_save_directories(config.model_path)
+			create_save_directories(config.outputs_path)
+
+			logger = get_logger(run_name, log_file, logging.DEBUG)
+
+			logger.info('Experiment Name: {}'.format(config.run_name))
+			logger.debug('Created Relevant Directories')
+
+			logger.info('Loading Data...')
+
+			train_ls, dev_ls = load_raw_data(data_path, config.dataset, is_train)
+
+			pairs_trained, pairs_tested, generate_nums, copy_nums = transfer_num(train_ls, dev_ls, config.challenge_disp)
+
+			logger.debug('Data Loaded...')
+			logger.debug('Number of Training Examples: {}'.format(len(pairs_trained)))
+			logger.debug('Number of Testing Examples: {}'.format(len(pairs_tested)))
+			logger.debug('Extra Numbers: {}'.format(generate_nums))
+			logger.debug('Maximum Number of Numbers: {}'.format(copy_nums))
