@@ -19,3 +19,25 @@ from src.components.contextual_embeddings import *
 from src.utils.helper import *
 from src.utils.logger import *
 from src.utils.expressions_transfer import *
+
+global log_folder
+global model_folder
+global result_folder
+global data_path
+global board_path
+
+log_folder = 'logs'
+model_folder = 'models'
+outputs_folder = 'outputs'
+result_folder = './out/'
+data_path = './data/'
+board_path = './runs/'
+
+def read_json(path):
+	with open(path,'r') as f:
+		file = json.load(f)
+	return file
+
+USE_CUDA = True
+
+def get_new_fold(data,pairs,group):
