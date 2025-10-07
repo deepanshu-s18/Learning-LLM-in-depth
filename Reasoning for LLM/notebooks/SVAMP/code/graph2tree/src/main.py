@@ -237,3 +237,25 @@ def main():
 				encoder_scheduler.step()
 				predict_scheduler.step()
 				generate_scheduler.step()
+				merge_scheduler.step()
+
+				logger.debug('Training for epoch {} completed...\nTime Taken: {}'.format(epoch, time_since(time.time() - start)))
+				
+				if loss_total / len(input_lengths) < min_train_loss:
+					min_train_loss = loss_total / len(input_lengths)
+
+				train_value_ac = 0
+				train_equation_ac = 0
+				train_eval_total = 1
+				if config.show_train_acc:
+					train_eval_total = 0
+					logger.info('Computing Train Accuracy')
+					start = time.time()
+					with torch.no_grad():
+						for train_batch in train_pairs:
+							batch_graph = get_single_example_graph(train_batch[0], train_batch[1], train_batch[7], train_batch[4], train_batch[5])
+							train_res = evaluate_tree(config, train_batch[0], train_batch[1], generate_num_ids, embedding, encoder, predict, generate,
+													 merge, input_lang, output_lang, train_batch[4], train_batch[5], batch_graph, test_batch[7], beam_size=config.beam_size)
+							train_val_ac, train_equ_ac, _, _ = compute_prefix_tree_result(train_res, train_batch[2], output_lang, train_batch[4], train_batch[6])
+
+							if train_val_ac:
