@@ -193,3 +193,25 @@ def main():
 
 			logger.debug('Schedulers Initialized')
 
+			logger.info('Loading Models on GPU {}...'.format(config.gpu))
+
+			# Move models to GPU
+			if USE_CUDA:
+				embedding.to(device)
+				encoder.to(device)
+				predict.to(device)
+				generate.to(device)
+				merge.to(device)
+
+			logger.debug('Models loaded on GPU {}'.format(config.gpu))
+
+			max_value_corr = 0
+			len_total_eval = 0
+			max_val_acc = 0.0
+			max_train_acc = 0.0
+			eq_acc = 0.0
+			best_epoch = -1
+			min_train_loss = float('inf')
+
+			logger.info('Starting Training Procedure')
+
