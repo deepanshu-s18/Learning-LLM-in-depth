@@ -324,3 +324,25 @@ def main():
 					max_value_corr = value_ac
 					len_total_eval = eval_total
 					max_val_acc = float(value_ac) / eval_total
+					eq_acc = float(equation_ac) / eval_total
+					best_epoch = epoch+1
+
+					state = {
+							'epoch' : epoch,
+							'best_epoch': best_epoch-1,
+							'embedding_state_dict': embedding.state_dict(),
+							'encoder_state_dict': encoder.state_dict(),
+							'predict_state_dict': predict.state_dict(),
+							'generate_state_dict': generate.state_dict(),
+							'merge_state_dict': merge.state_dict(),
+							'embedding_optimizer_state_dict': embedding_optimizer.state_dict(),
+							'encoder_optimizer_state_dict': encoder_optimizer.state_dict(),
+							'predict_optimizer_state_dict': predict_optimizer.state_dict(),
+							'generate_optimizer_state_dict': generate_optimizer.state_dict(),
+							'merge_optimizer_state_dict': merge_optimizer.state_dict(),
+							'embedding_scheduler_state_dict': embedding_scheduler.state_dict(),
+							'encoder_scheduler_state_dict': encoder_scheduler.state_dict(),
+							'predict_scheduler_state_dict': predict_scheduler.state_dict(),
+							'generate_scheduler_state_dict': generate_scheduler.state_dict(),
+							'merge_scheduler_state_dict': merge_scheduler.state_dict(),
+							'voc1': input_lang,
