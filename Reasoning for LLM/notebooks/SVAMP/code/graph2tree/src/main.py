@@ -259,3 +259,24 @@ def main():
 							train_val_ac, train_equ_ac, _, _ = compute_prefix_tree_result(train_res, train_batch[2], output_lang, train_batch[4], train_batch[6])
 
 							if train_val_ac:
+								train_value_ac += 1
+							if train_equ_ac:
+								train_equation_ac += 1
+							train_eval_total += 1
+
+					logger.debug('Train Accuracy Computed...\nTime Taken: {}'.format(time_since(time.time() - start)))
+
+				logger.info('Starting Validation')
+
+				value_ac = 0
+				equation_ac = 0
+				eval_total = 0
+				start = time.time()
+
+				with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+					f_out.write('---------------------------------------\n')
+					f_out.write('Epoch: ' + str(epoch) + '\n')
+					f_out.write('---------------------------------------\n')
+					f_out.close()
+
+				ex_num = 0
