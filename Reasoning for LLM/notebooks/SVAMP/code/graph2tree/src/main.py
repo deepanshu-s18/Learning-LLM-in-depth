@@ -302,3 +302,25 @@ def main():
 						if config.nums_disp:
 							src_nums = len(test_batch[4])
 							tgt_nums = 0
+							pred_nums = 0
+							for k_tgt in sentence_from_indexes(output_lang, test_batch[2]):
+								if k_tgt not in ['+', '-', '*', '/']:
+									tgt_nums += 1
+							for k_pred in sentence_from_indexes(output_lang, test_res):
+								if k_pred not in ['+', '-', '*', '/']:
+									pred_nums += 1
+							f_out.write('Numbers in question: ' + str(src_nums) + '\n')
+							f_out.write('Numbers in Target Equation: ' + str(tgt_nums) + '\n')
+							f_out.write('Numbers in Predicted Equation: ' + str(pred_nums) + '\n')
+						f_out.write('Result: ' + str(cur_result) + '\n' + '\n')
+						f_out.close()
+
+					ex_num+=1
+
+				if float(train_value_ac) / train_eval_total > max_train_acc:
+					max_train_acc = float(train_value_ac) / train_eval_total
+
+				if float(value_ac) / eval_total > max_val_acc:
+					max_value_corr = value_ac
+					len_total_eval = eval_total
+					max_val_acc = float(value_ac) / eval_total
