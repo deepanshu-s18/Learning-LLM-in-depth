@@ -433,3 +433,24 @@ def main():
 		logger.debug('Extra Numbers: {}'.format(generate_nums))
 		logger.debug('Maximum Number of Numbers: {}'.format(copy_nums))
 
+		if is_train:
+			logger.info('Creating Vocab...')
+			input_lang = None
+			output_lang = None
+		else:
+			logger.info('Loading Vocab File...')
+
+			with open(vocab1_path, 'rb') as f:
+				input_lang = pickle.load(f)
+			with open(vocab2_path, 'rb') as f:
+				output_lang = pickle.load(f)
+
+			logger.info('Vocab Files loaded from {}\nNumber of Words: {}'.format(vocab1_path, input_lang.n_words))
+
+		input_lang, output_lang, train_pairs, test_pairs = prepare_data(config, logger, pairs_trained, pairs_tested, config.trim_threshold, generate_nums, copy_nums, input_lang, output_lang, tree=True)
+
+		checkpoint = get_latest_checkpoint(config.model_path, logger)
+
+		if is_train:
+			with open(vocab1_path, 'wb') as f:
+				pickle.dump(input_lang, f, protocol=pickle.HIGHEST_PROTOCOL)
