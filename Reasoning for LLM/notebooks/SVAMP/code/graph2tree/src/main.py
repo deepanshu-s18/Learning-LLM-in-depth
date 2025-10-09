@@ -367,3 +367,25 @@ def main():
 				od['train_acc_epoch'] = float(train_value_ac) / train_eval_total
 				od['max_train_acc'] = max_train_acc
 				od['val_acc_epoch'] = float(value_ac) / eval_total
+				od['equation_acc_epoch'] = float(equation_ac) / eval_total
+				od['max_val_acc'] = max_val_acc
+				od['equation_acc'] = eq_acc
+				print_log(logger, od)
+
+				logger.debug('Validation Completed...\nTime Taken: {}'.format(time_since(time.time() - start)))
+
+			if config.results:
+				store_results(config, max_train_acc, max_val_acc, eq_acc, min_train_loss, best_epoch)
+				logger.info('Scores saved at {}'.format(config.result_path))
+
+			best_acc.append((max_value_corr, len_total_eval))
+
+		total_value_corr = 0
+		total_len = 0
+		for w in range(len(best_acc)):
+			folds_scores.append(float(best_acc[w][0])/best_acc[w][1])
+			total_value_corr += best_acc[w][0]
+			total_len += best_acc[w][1]
+		fold_acc_score = float(total_value_corr)/total_len
+
+		store_val_results(config, fold_acc_score, folds_scores)
