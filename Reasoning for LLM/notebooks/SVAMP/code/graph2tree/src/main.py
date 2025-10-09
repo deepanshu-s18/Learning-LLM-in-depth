@@ -346,3 +346,24 @@ def main():
 							'generate_scheduler_state_dict': generate_scheduler.state_dict(),
 							'merge_scheduler_state_dict': merge_scheduler.state_dict(),
 							'voc1': input_lang,
+							'voc2': output_lang,
+							'train_loss_epoch' : loss_total / len(input_lengths),
+							'min_train_loss' : min_train_loss,
+							'val_acc_epoch' : float(value_ac) / eval_total,
+							'max_val_acc' : max_val_acc,
+							'equation_acc' : eq_acc,
+							'max_train_acc' : max_train_acc,
+							'generate_nums' : generate_nums
+						}
+
+					if config.save_model:
+						save_checkpoint(state, epoch, logger, config.model_path, config.ckpt)
+
+				od = OrderedDict()
+				od['Epoch'] = epoch + 1
+				od['best_epoch'] = best_epoch
+				od['train_loss_epoch'] = loss_total / len(input_lengths)
+				od['min_train_loss'] = min_train_loss
+				od['train_acc_epoch'] = float(train_value_ac) / train_eval_total
+				od['max_train_acc'] = max_train_acc
+				od['val_acc_epoch'] = float(value_ac) / eval_total
