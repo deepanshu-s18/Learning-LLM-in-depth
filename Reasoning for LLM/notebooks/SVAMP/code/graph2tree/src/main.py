@@ -454,3 +454,25 @@ def main():
 		if is_train:
 			with open(vocab1_path, 'wb') as f:
 				pickle.dump(input_lang, f, protocol=pickle.HIGHEST_PROTOCOL)
+			with open(vocab2_path, 'wb') as f:
+				pickle.dump(output_lang, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+			logger.debug('Vocab saved at {}'.format(vocab1_path))
+
+			generate_num_ids = []
+			for num in generate_nums:
+				generate_num_ids.append(output_lang.word2index[num])
+
+			config.len_generate_nums = len(generate_nums)
+			config.copy_nums = copy_nums
+
+			with open(config_file, 'wb') as f:
+				pickle.dump(vars(config), f, protocol=pickle.HIGHEST_PROTOCOL)
+
+			logger.debug('Config File Saved')
+
+			logger.info('Initializing Models...')
+
+			# Initialize models
+			embedding = None
+			if config.embedding == 'bert':
