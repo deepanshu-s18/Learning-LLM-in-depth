@@ -585,3 +585,25 @@ def main():
 				equation_ac = 0
 				eval_total = 0
 				start = time.time()
+
+				with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+					f_out.write('---------------------------------------\n')
+					f_out.write('Epoch: ' + str(epoch) + '\n')
+					f_out.write('---------------------------------------\n')
+					f_out.close()
+
+				ex_num = 0
+				for test_batch in test_pairs:
+					batch_graph = get_single_example_graph(test_batch[0], test_batch[1], test_batch[7], test_batch[4], test_batch[5])
+					test_res = evaluate_tree(config, test_batch[0], test_batch[1], generate_num_ids, embedding, encoder, predict, generate,
+											 merge, input_lang, output_lang, test_batch[4], test_batch[5], batch_graph, test_batch[7], beam_size=config.beam_size)
+					val_ac, equ_ac, _, _ = compute_prefix_tree_result(test_res, test_batch[2], output_lang, test_batch[4], test_batch[6])
+					
+					cur_result = 0
+					if val_ac:
+						value_ac += 1
+						cur_result = 1
+					if equ_ac:
+						equation_ac += 1
+					eval_total += 1
+
