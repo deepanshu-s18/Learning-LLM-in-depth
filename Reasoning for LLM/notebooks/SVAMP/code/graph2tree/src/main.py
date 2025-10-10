@@ -498,3 +498,25 @@ def main():
 			merge_optimizer = torch.optim.Adam(merge.parameters(), lr=config.lr, weight_decay=config.weight_decay)
 
 			logger.debug('Optimizers Initialized')
+			logger.info('Initializing Schedulers...')
+
+			embedding_scheduler = torch.optim.lr_scheduler.StepLR(embedding_optimizer, step_size=20, gamma=0.5)
+			encoder_scheduler = torch.optim.lr_scheduler.StepLR(encoder_optimizer, step_size=20, gamma=0.5)
+			predict_scheduler = torch.optim.lr_scheduler.StepLR(predict_optimizer, step_size=20, gamma=0.5)
+			generate_scheduler = torch.optim.lr_scheduler.StepLR(generate_optimizer, step_size=20, gamma=0.5)
+			merge_scheduler = torch.optim.lr_scheduler.StepLR(merge_optimizer, step_size=20, gamma=0.5)
+
+			logger.debug('Schedulers Initialized')
+
+			logger.info('Loading Models on GPU {}...'.format(config.gpu))
+
+			# Move models to GPU
+			if USE_CUDA:
+				embedding.to(device)
+				encoder.to(device)
+				predict.to(device)
+				generate.to(device)
+				merge.to(device)
+
+			logger.debug('Models loaded on GPU {}'.format(config.gpu))
+
