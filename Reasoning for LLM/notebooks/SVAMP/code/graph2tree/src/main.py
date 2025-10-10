@@ -541,3 +541,25 @@ def main():
 					loss = train_tree(
 						config, input_batches[idx], input_lengths[idx], output_batches[idx], output_lengths[idx],
 						num_stack_batches[idx], num_size_batches[idx], num_value_batches[idx], group_batches[idx], generate_num_ids, embedding, encoder, predict, generate, merge,
+						embedding_optimizer, encoder_optimizer, predict_optimizer, generate_optimizer, merge_optimizer, input_lang, output_lang, 
+						num_pos_batches[idx], graph_batches[idx])
+					loss_total += loss
+					print("Completed {} / {}...".format(idx, len(input_lengths)), end = '\r', flush = True)
+
+				embedding_scheduler.step()
+				encoder_scheduler.step()
+				predict_scheduler.step()
+				generate_scheduler.step()
+				merge_scheduler.step()
+
+				logger.debug('Training for epoch {} completed...\nTime Taken: {}'.format(epoch, time_since(time.time() - start)))
+				
+				if loss_total / len(input_lengths) < min_train_loss:
+					min_train_loss = loss_total / len(input_lengths)
+
+				train_value_ac = 0
+				train_equation_ac = 0
+				train_eval_total = 1
+				if config.show_train_acc:
+					train_eval_total = 0
+					logger.info('Computing Train Accuracy')
