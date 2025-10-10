@@ -520,3 +520,24 @@ def main():
 
 			logger.debug('Models loaded on GPU {}'.format(config.gpu))
 
+			max_val_acc = 0.0
+			max_train_acc = 0.0
+			eq_acc = 0.0
+			best_epoch = -1
+			min_train_loss = float('inf')
+
+			logger.info('Starting Training Procedure')
+
+			for epoch in range(config.epochs):
+				loss_total = 0
+				input_batches, input_lengths, output_batches, output_lengths, nums_batches, num_stack_batches, num_pos_batches, num_size_batches, num_value_batches, graph_batches, group_batches = prepare_train_batch(train_pairs, config.batch_size)
+				
+				od = OrderedDict()
+				od['Epoch'] = epoch + 1
+				print_log(logger, od)
+
+				start = time.time()
+				for idx in range(len(input_lengths)):
+					loss = train_tree(
+						config, input_batches[idx], input_lengths[idx], output_batches[idx], output_lengths[idx],
+						num_stack_batches[idx], num_size_batches[idx], num_value_batches[idx], group_batches[idx], generate_num_ids, embedding, encoder, predict, generate, merge,
