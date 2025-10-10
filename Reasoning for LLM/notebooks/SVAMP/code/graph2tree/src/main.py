@@ -607,3 +607,24 @@ def main():
 						equation_ac += 1
 					eval_total += 1
 
+					with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+						f_out.write('Example: ' + str(ex_num) + '\n')
+						f_out.write('Source: ' + stack_to_string(sentence_from_indexes(input_lang, test_batch[0])) + '\n')
+						f_out.write('Target: ' + stack_to_string(sentence_from_indexes(output_lang, test_batch[2])) + '\n')
+						f_out.write('Generated: ' + stack_to_string(sentence_from_indexes(output_lang, test_res)) + '\n')
+						if config.challenge_disp:
+							f_out.write('Type: ' + test_batch[8] + '\n')
+							f_out.write('Variation Type: ' + test_batch[9] + '\n')
+							f_out.write('Annotator: ' + test_batch[10] + '\n')
+							f_out.write('Alternate: ' + str(test_batch[11]) + '\n')
+						if config.nums_disp:
+							src_nums = len(test_batch[4])
+							tgt_nums = 0
+							pred_nums = 0
+							for k_tgt in sentence_from_indexes(output_lang, test_batch[2]):
+								if k_tgt not in ['+', '-', '*', '/']:
+									tgt_nums += 1
+							for k_pred in sentence_from_indexes(output_lang, test_res):
+								if k_pred not in ['+', '-', '*', '/']:
+									pred_nums += 1
+							f_out.write('Numbers in question: ' + str(src_nums) + '\n')
