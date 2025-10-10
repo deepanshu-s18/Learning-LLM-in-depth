@@ -563,3 +563,25 @@ def main():
 				if config.show_train_acc:
 					train_eval_total = 0
 					logger.info('Computing Train Accuracy')
+					start = time.time()
+					with torch.no_grad():
+						for train_batch in train_pairs:
+							batch_graph = get_single_example_graph(train_batch[0], train_batch[1], train_batch[7], train_batch[4], train_batch[5])
+							train_res = evaluate_tree(config, train_batch[0], train_batch[1], generate_num_ids, embedding, encoder, predict, generate,
+													 merge, input_lang, output_lang, train_batch[4], train_batch[5], batch_graph, test_batch[7], beam_size=config.beam_size)
+							train_val_ac, train_equ_ac, _, _ = compute_prefix_tree_result(train_res, train_batch[2], output_lang, train_batch[4], train_batch[6])
+
+							if train_val_ac:
+								train_value_ac += 1
+							if train_equ_ac:
+								train_equation_ac += 1
+							train_eval_total += 1
+
+					logger.debug('Train Accuracy Computed...\nTime Taken: {}'.format(time_since(time.time() - start)))
+
+				logger.info('Starting Validation')
+
+				value_ac = 0
+				equation_ac = 0
+				eval_total = 0
+				start = time.time()
