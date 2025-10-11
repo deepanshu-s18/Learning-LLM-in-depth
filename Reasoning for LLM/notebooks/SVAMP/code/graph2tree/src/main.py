@@ -672,3 +672,25 @@ def main():
 							'generate_nums' : generate_nums
 						}
 
+					if config.save_model:
+						save_checkpoint(state, epoch, logger, config.model_path, config.ckpt)
+
+				od = OrderedDict()
+				od['Epoch'] = epoch + 1
+				od['best_epoch'] = best_epoch
+				od['train_loss_epoch'] = loss_total / len(input_lengths)
+				od['min_train_loss'] = min_train_loss
+				od['train_acc_epoch'] = float(train_value_ac) / train_eval_total
+				od['max_train_acc'] = max_train_acc
+				od['val_acc_epoch'] = float(value_ac) / eval_total
+				od['equation_acc_epoch'] = float(equation_ac) / eval_total
+				od['max_val_acc'] = max_val_acc
+				od['equation_acc'] = eq_acc
+				print_log(logger, od)
+
+				logger.debug('Validation Completed...\nTime Taken: {}'.format(time_since(time.time() - start)))
+
+			if config.results:
+				store_results(config, max_train_acc, max_val_acc, eq_acc, min_train_loss, best_epoch)
+				logger.info('Scores saved at {}'.format(config.result_path))
+
