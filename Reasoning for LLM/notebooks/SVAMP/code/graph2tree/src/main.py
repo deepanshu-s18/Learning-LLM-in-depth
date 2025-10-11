@@ -737,3 +737,25 @@ def main():
 			od['max_val_acc'] = max_val_acc
 			od['equation_acc'] = equation_acc
 			od['best_epoch'] = best_epoch
+			print_log(logger, od)
+
+			generate_num_ids = []
+			for num in generate_nums:
+				generate_num_ids.append(output_lang.word2index[num])
+
+			value_ac = 0
+			equation_ac = 0
+			eval_total = 0
+			start = time.time()
+
+			with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+				f_out.write('---------------------------------------\n')
+				f_out.write('Test Name: ' + old_run_name + '\n')
+				f_out.write('---------------------------------------\n')
+				f_out.close()
+
+			test_res_ques, test_res_act, test_res_gen, test_res_scores = [], [], [], []
+
+			ex_num = 0
+			for test_batch in test_pairs:
+				batch_graph = get_single_example_graph(test_batch[0], test_batch[1], test_batch[7], test_batch[4], test_batch[5])
