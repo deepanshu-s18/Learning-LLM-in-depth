@@ -694,3 +694,24 @@ def main():
 				store_results(config, max_train_acc, max_val_acc, eq_acc, min_train_loss, best_epoch)
 				logger.info('Scores saved at {}'.format(config.result_path))
 
+		else:
+			gpu = config.gpu
+			mode = config.mode
+			dataset = config.dataset
+			batch_size = config.batch_size
+			old_run_name = config.run_name
+			with open(config_file, 'rb') as f:
+				config = AttrDict(pickle.load(f))
+				config.gpu = gpu
+				config.mode = mode
+				config.dataset = dataset
+				config.batch_size = batch_size
+
+			logger.info('Initializing Models...')
+
+			# Initialize models
+			embedding = None
+			if config.embedding == 'bert':
+				embedding = BertEncoder(config.emb_name, device, config.freeze_emb)
+			elif config.embedding == 'roberta':
+				embedding = RobertaEncoder(config.emb_name, device, config.freeze_emb)
