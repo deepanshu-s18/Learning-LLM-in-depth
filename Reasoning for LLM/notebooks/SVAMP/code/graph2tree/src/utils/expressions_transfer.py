@@ -41,3 +41,24 @@ def construct_exp_tree(postfix):
 
 
 def from_infix_to_postfix(expression):
+    st = list()
+    res = list()
+    priority = {"+": 0, "-": 0, "*": 1, "/": 1, "^": 2}
+    for e in expression:
+        if e in ["(", "["]:
+            st.append(e)
+        elif e == ")":
+            c = st.pop()
+            while c != "(":
+                res.append(c)
+                c = st.pop()
+        elif e == "]":
+            c = st.pop()
+            while c != "[":
+                res.append(c)
+                c = st.pop()
+        elif e in priority:
+            while len(st) > 0 and st[-1] not in ["(", "["] and priority[e] <= priority[st[-1]]:
+                res.append(st.pop())
+            st.append(e)
+        else:
