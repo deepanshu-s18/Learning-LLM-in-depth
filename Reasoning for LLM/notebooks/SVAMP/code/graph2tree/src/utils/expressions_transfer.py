@@ -62,3 +62,25 @@ def from_infix_to_postfix(expression):
                 res.append(st.pop())
             st.append(e)
         else:
+            res.append(e)
+    while len(st) > 0:
+        res.append(st.pop())
+    return res
+
+
+def from_infix_to_prefix(expression):
+    st = list()
+    res = list()
+    priority = {"+": 0, "-": 0, "*": 1, "/": 1, "^": 2}
+    expression = deepcopy(expression)
+    expression.reverse()
+    for e in expression:
+        if e in [")", "]"]:
+            st.append(e)
+        elif e == "(":
+            c = st.pop()
+            while c != ")":
+                res.append(c)
+                c = st.pop()
+        elif e == "[":
+            c = st.pop()
