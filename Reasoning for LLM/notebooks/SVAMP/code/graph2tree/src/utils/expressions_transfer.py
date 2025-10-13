@@ -19,3 +19,25 @@ def construct_exp_tree(postfix):
     for char in postfix:
 
         # if operand, simply push into stack
+        if char not in ["+", "-", "*", "/", "^"]:
+            t = Et(char)
+            stack.append(t)
+        # Operator
+        else:
+            # Pop two top nodes
+            t = Et(char)
+            t1 = stack.pop()
+            t2 = stack.pop()
+
+            # make them children
+            t.right = t1
+            t.left = t2
+
+            # Add this subexpression to stack
+            stack.append(t)
+    # Only element  will be the root of expression tree
+    t = stack.pop()
+    return t
+
+
+def from_infix_to_postfix(expression):
