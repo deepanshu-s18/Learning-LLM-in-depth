@@ -84,3 +84,24 @@ def from_infix_to_prefix(expression):
                 c = st.pop()
         elif e == "[":
             c = st.pop()
+            while c != "]":
+                res.append(c)
+                c = st.pop()
+        elif e in priority:
+            while len(st) > 0 and st[-1] not in [")", "]"] and priority[e] < priority[st[-1]]:
+                res.append(st.pop())
+            st.append(e)
+        else:
+            res.append(e)
+    while len(st) > 0:
+        res.append(st.pop())
+    res.reverse()
+    return res
+
+
+def out_expression_list(test, output_lang, num_list, num_stack=None):
+    max_index = output_lang.n_words
+    res = []
+    for i in test:
+        # if i == 0:
+        #     return res
