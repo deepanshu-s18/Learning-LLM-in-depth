@@ -170,3 +170,24 @@ def compute_prefix_expression(pre_fix):
     operators = ["+", "-", "^", "*", "/"]
     pre_fix = deepcopy(pre_fix)
     pre_fix.reverse()
+    for p in pre_fix:
+        if p not in operators:
+            pos = re.search("\d+\(", p)
+            if pos:
+                st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
+            elif p[-1] == "%":
+                st.append(float(p[:-1]) / 100)
+            else:
+                st.append(eval(p))
+        elif p == "+" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            st.append(a + b)
+        elif p == "*" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            st.append(a * b)
+        elif p == "*" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            st.append(a * b)
