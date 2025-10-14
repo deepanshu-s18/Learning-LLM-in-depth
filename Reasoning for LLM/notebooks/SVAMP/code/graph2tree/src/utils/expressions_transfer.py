@@ -191,3 +191,25 @@ def compute_prefix_expression(pre_fix):
             a = st.pop()
             b = st.pop()
             st.append(a * b)
+        elif p == "/" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            if b == 0:
+                return None
+            st.append(a / b)
+        elif p == "-" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            st.append(a - b)
+        elif p == "^" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            if float(eval(b)) != 2.0 or float(eval(b)) != 3.0:
+                return None
+            st.append(a ** b)
+        else:
+            return None
+    if len(st) == 1:
+        return st.pop()
+    return None
+
