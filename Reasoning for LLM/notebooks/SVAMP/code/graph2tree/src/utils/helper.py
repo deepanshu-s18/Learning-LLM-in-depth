@@ -71,3 +71,27 @@ def sort_by_len(seqs, input_len, device=None, dim=1):
 	return sorted_seqs, sorted_lens, orig_idx
 
 def save_checkpoint(state, epoch, logger, model_path, ckpt):
+	'''
+		Saves the model state along with epoch number. The name format is important for 
+		the load functions. Don't mess with it.
+
+		Args:
+			model state
+			epoch number
+			logger variable
+			directory to save models
+			checkpoint name
+	'''
+	ckpt_path = os.path.join(model_path, '{}.pt'.format(ckpt))
+	logger.info('Saving Checkpoint at : {}'.format(ckpt_path))
+	torch.save(state, ckpt_path)
+
+def load_checkpoint(config, embedding, encoder, predict, generate, merge, mode, ckpt_path, logger, device,
+					embedding_optimizer = None, encoder_optimizer = None, predict_optimizer = None, generate_optimizer = None, merge_optimizer = None,
+					embedding_scheduler = None, encoder_scheduler = None, predict_scheduler = None, generate_scheduler = None, merge_scheduler = None
+					):
+	checkpoint = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
+
+	embedding.load_state_dict(checkpoint['embedding_state_dict'])
+	encoder.load_state_dict(checkpoint['encoder_state_dict'])
+	predict.load_state_dict(checkpoint['predict_state_dict'])
