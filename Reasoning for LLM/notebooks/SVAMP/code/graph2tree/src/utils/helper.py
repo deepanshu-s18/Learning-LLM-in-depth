@@ -120,3 +120,27 @@ def load_checkpoint(config, embedding, encoder, predict, generate, merge, mode, 
 	generate_nums = checkpoint['generate_nums']
 
 	embedding.to(device)
+	encoder.to(device)
+	predict.to(device)
+	generate.to(device)
+	merge.to(device)
+
+	logger.info('Successfully Loaded Checkpoint from {}, with epoch number: {} for {}'.format(ckpt_path, start_epoch, mode))
+
+	if mode == 'train':
+		embedding.train()
+		encoder.train()
+		predict.train()
+		generate.train()
+		merge.train()
+	else:
+		embedding.eval()
+		encoder.eval()
+		predict.eval()
+		generate.eval()
+		merge.eval()		
+
+	return start_epoch, min_train_loss, max_train_acc, max_val_acc, equation_acc, best_epoch, generate_nums
+
+def get_latest_checkpoint(model_path, logger):
+	'''
