@@ -42,3 +42,25 @@ def build_parser():
 	parser.add_argument('-no-freeze_emb', dest='freeze_emb', action='store_false', help='Train embedding weights')
 	parser.set_defaults(freeze_emb=False)
 	parser.add_argument('-word2vec_bin', type=str, default='/datadrive/global_files/GoogleNews-vectors-negative300.bin', help='Binary file of word2vec')
+
+	parser.add_argument('-cell_type', type=str, default='lstm', help='RNN cell for encoder and decoder, default: lstm')
+	parser.add_argument('-hidden_size', type=int, default=512, help='Number of hidden units in each layer')
+	parser.add_argument('-depth', type=int, default=2, help='Number of layers in each encoder')
+	parser.add_argument('-lr', type=float, default=0.0008, help='Learning rate')
+	parser.add_argument('-batch_size', type=int, default=4, help='Batch size')
+	parser.add_argument('-weight_decay', type=float, default=1e-5, help='Weight Decay')
+	parser.add_argument('-beam_size', type=float, default=5, help='Beam Size')
+	parser.add_argument('-epochs', type=int, default=50, help='Maximum # of training epochs')	
+	parser.add_argument('-dropout', type=float, default=0.5, help= 'Dropout probability for input/output/state units (0.0: no dropout)')
+	
+	# parser.add_argument('-max_length', type=int, default=100, help='Specify max decode steps: Max length string to output')
+	# parser.add_argument('-init_range', type=float, default=0.08, help='Initialization range for seq2seq model')
+	# parser.add_argument('-bidirectional', dest='bidirectional', action='store_true', help='Bidirectionality in LSTMs')
+	# parser.add_argument('-no-bidirectional', dest='bidirectional', action='store_false', help='Bidirectionality in LSTMs')
+	# parser.set_defaults(bidirectional=False)
+	
+	# parser.add_argument('-max_grad_norm', type=float, default=0.25, help='Clip gradients to this norm')
+	# parser.add_argument('-opt', type=str, default='adam', choices=['adam', 'adadelta', 'sgd', 'asgd'], help='Optimizer for training')
+
+	# parser.add_argument('-grade_disp', dest='grade_disp', action='store_true', help='Display grade information in validation outputs')
+	# parser.add_argument('-no-grade_disp', dest='grade_disp', action='store_false', help='Don\'t display grade information')
