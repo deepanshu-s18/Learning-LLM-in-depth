@@ -64,3 +64,26 @@ def build_parser():
 
 	# parser.add_argument('-grade_disp', dest='grade_disp', action='store_true', help='Display grade information in validation outputs')
 	# parser.add_argument('-no-grade_disp', dest='grade_disp', action='store_false', help='Don\'t display grade information')
+	# parser.set_defaults(grade_disp=True)
+	# parser.add_argument('-type_disp', dest='type_disp', action='store_true', help='Display Type information in validation outputs')
+	# parser.add_argument('-no-type_disp', dest='type_disp', action='store_false', help='Don\'t display Type information')
+	# parser.set_defaults(type_disp=True)
+	parser.add_argument('-nums_disp', dest='nums_disp', action='store_true', help='Display number of numbers information in validation outputs')
+	parser.add_argument('-no-nums_disp', dest='nums_disp', action='store_false', help='Don\'t display number of numbers information')
+	parser.set_defaults(nums_disp=True)
+	parser.add_argument('-challenge_disp', dest='challenge_disp', action='store_true', help='Display information in validation outputs')
+	parser.add_argument('-no-challenge_disp', dest='challenge_disp', action='store_false', help='Don\'t display information')
+	parser.set_defaults(challenge_disp=False)
+
+	parser.add_argument('-show_train_acc', dest='show_train_acc', action='store_true', help='Calculate the train accuracy')
+	parser.add_argument('-no-show_train_acc', dest='show_train_acc', action='store_false', help='Don\'t calculate the train accuracy')
+	parser.set_defaults(show_train_acc=True)
+
+	parser.add_argument('-full_cv', dest='full_cv', action='store_true', help='5-fold CV')
+	parser.add_argument('-no-full_cv', dest='full_cv', action='store_false', help='No 5-fold CV')
+	parser.set_defaults(full_cv=False)
+
+	parser.add_argument('-len_generate_nums', type=int, default=0, help='store length of generate_nums')
+	parser.add_argument('-copy_nums', type=int, default=0, help='store copy_nums')
+	
+	return parser
