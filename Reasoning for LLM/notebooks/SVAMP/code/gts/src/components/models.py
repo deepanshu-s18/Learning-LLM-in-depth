@@ -61,3 +61,24 @@ class EncoderRNN(nn.Module):
 		outputs, hidden = self.gru(packed, hidden)
 		outputs, output_lengths = torch.nn.utils.rnn.pad_packed_sequence(outputs)  # unpack (back to padded)
 		outputs = outputs[:, :, :self.hidden_size] + outputs[:, :, self.hidden_size:]  # Sum bidirectional outputs
+		# S x B x H
+		return outputs, hidden
+
+
+class Attn(nn.Module):
+	def __init__(self, hidden_size):
+		super(Attn, self).__init__()
+		self.hidden_size = hidden_size
+		self.attn = nn.Linear(hidden_size * 2, hidden_size)
+		self.score = nn.Linear(hidden_size, 1, bias=False)
+		self.softmax = nn.Softmax(dim=1)
+
+	def forward(self, hidden, encoder_outputs, seq_mask=None):
+		max_len = encoder_outputs.size(0)
+		repeat_dims = [1] * hidden.dim()
+		repeat_dims[0] = max_len
+		hidden = hidden.repeat(*repeat_dims)  # S x B x H
+		# For each position of encoder outputs
+		this_batch_size = encoder_outputs.size(1)
+		energy_in = torch.cat((hidden, encoder_outputs), 2).view(-1, 2 * self.hidden_size)
+		attn_energies = self.score(torch.tanh(self.attn(energy_in)))  # (S x B) x 1
