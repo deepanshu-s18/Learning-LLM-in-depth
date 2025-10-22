@@ -82,3 +82,24 @@ class Attn(nn.Module):
 		this_batch_size = encoder_outputs.size(1)
 		energy_in = torch.cat((hidden, encoder_outputs), 2).view(-1, 2 * self.hidden_size)
 		attn_energies = self.score(torch.tanh(self.attn(energy_in)))  # (S x B) x 1
+		attn_energies = attn_energies.squeeze(1)
+		attn_energies = attn_energies.view(max_len, this_batch_size).transpose(0, 1)  # B x S
+		if seq_mask is not None:
+			attn_energies = attn_energies.masked_fill_(seq_mask, -1e12)
+		attn_energies = self.softmax(attn_energies)
+		# Normalize energies to weights in range 0 to 1, resize to B x 1 x S
+		return attn_energies.unsqueeze(1)
+
+
+class AttnDecoderRNN(nn.Module):
+	def __init__(
+			self, hidden_size, embedding_size, input_size, output_size, n_layers=2, dropout=0.5):
+		super(AttnDecoderRNN, self).__init__()
+
+		# Keep for reference
+		self.embedding_size = embedding_size
+		self.hidden_size = hidden_size
+		self.input_size = input_size
+		self.output_size = output_size
+		self.n_layers = n_layers
+		self.dropout = dropout
