@@ -19,3 +19,24 @@ class Embedding(nn.Module):
 			self.embedding = nn.Embedding(input_size, embedding_size, padding_idx=0)
 		self.em_dropout = nn.Dropout(dropout)
 
+	def _form_embeddings(self, file_path):
+		weights_all = models.KeyedVectors.load_word2vec_format(file_path, limit=200000, binary=True)
+		weight_req  = torch.randn(self.input_size, self.config.embedding_size)
+		for temp_ind in range(len(self.input_lang.index2word)):
+			value = self.input_lang.index2word[temp_ind]
+			if value in weights_all:
+				weight_req[temp_ind] = torch.FloatTensor(weights_all[value])
+		# for key, value in self.voc1.id2w.items():
+		# 	if value in weights_all:
+		# 		weight_req[key] = torch.FloatTensor(weights_all[value])
+
+		return weight_req
+
+	def forward(self, input_seqs):
+		embedded = self.embedding(input_seqs)  # S x B x E
+		embedded = self.em_dropout(embedded)
+		return embedded
+
+class EncoderRNN(nn.Module):
+	# def __init__(self, input_size, embedding_size, hidden_size, n_layers=2, dropout=0.5):
+	def __init__(self, embedding_size, hidden_size, n_layers=2, dropout=0.5):
