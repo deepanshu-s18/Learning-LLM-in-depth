@@ -124,3 +124,24 @@ class AttnDecoderRNN(nn.Module):
 		# apply to encoder outputs to get weighted average
 		attn_weights = self.attn(last_hidden[-1].unsqueeze(0), encoder_outputs, seq_mask)
 		context = attn_weights.bmm(encoder_outputs.transpose(0, 1))  # B x S=1 x N
+
+		# Get current hidden state from input word and last hidden state
+		rnn_output, hidden = self.gru(torch.cat((embedded, context.transpose(0, 1)), 2), last_hidden)
+
+		# Attentional vector using the RNN hidden state and context vector
+		# concatenated together (Luong eq. 5)
+		output = self.out(torch.tanh(self.concat(torch.cat((rnn_output.squeeze(0), context.squeeze(1)), 1))))
+
+		# Return final output, hidden state
+		return output, hidden
+
+
+class TreeNode:  # the class save the tree node
+	def __init__(self, embedding, left_flag=False):
+		self.embedding = embedding
+		self.left_flag = left_flag
+
+
+class Score(nn.Module):
+	def __init__(self, input_size, hidden_size):
+		super(Score, self).__init__()
