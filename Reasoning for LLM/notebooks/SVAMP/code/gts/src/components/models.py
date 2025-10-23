@@ -251,3 +251,24 @@ class Prediction(nn.Module):
 		# Keep for reference
 		self.hidden_size = hidden_size
 		self.input_size = input_size
+		self.op_nums = op_nums
+
+		# Define layers
+		self.dropout = nn.Dropout(dropout)
+
+		self.embedding_weight = nn.Parameter(torch.randn(1, input_size, hidden_size))
+
+		# for Computational symbols and Generated numbers
+		self.concat_l = nn.Linear(hidden_size, hidden_size)
+		self.concat_r = nn.Linear(hidden_size * 2, hidden_size)
+		self.concat_lg = nn.Linear(hidden_size, hidden_size)
+		self.concat_rg = nn.Linear(hidden_size * 2, hidden_size)
+
+		self.ops = nn.Linear(hidden_size * 2, op_nums)
+
+		self.attn = TreeAttn(hidden_size, hidden_size)
+		self.score = Score(hidden_size * 2, hidden_size)
+
+	def forward(self, node_stacks, left_childs, encoder_outputs, num_pades, padding_hidden, seq_mask, mask_nums):
+		current_embeddings = []
+
