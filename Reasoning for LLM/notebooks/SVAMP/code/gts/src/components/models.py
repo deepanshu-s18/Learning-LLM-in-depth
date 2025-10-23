@@ -209,3 +209,24 @@ class EncoderSeq(nn.Module):
 		# self.embedding = nn.Embedding(input_size, embedding_size, padding_idx=0)
 		# self.em_dropout = nn.Dropout(dropout)
 
+		if cell_type == 'lstm':
+			self.rnn = nn.LSTM(self.embedding_size, self.hidden_size,
+							   num_layers=self.n_layers,
+							   dropout=(0 if self.n_layers == 1 else self.dropout),
+							   bidirectional=True)
+		elif cell_type == 'gru':
+			self.rnn = nn.GRU(embedding_size, hidden_size, n_layers, dropout=dropout, bidirectional=True)
+		else:
+			self.rnn = nn.RNN(self.embedding_size, self.hidden_size,
+							  num_layers=self.n_layers,
+							  nonlinearity='tanh',							# ['relu', 'tanh']
+							  dropout=(0 if self.n_layers == 1 else self.dropout),
+							  bidirectional=True)		
+
+	# def forward(self, input_seqs, input_lengths, hidden=None):
+	def forward(self, embedded, input_lengths, orig_idx, hidden=None):
+		# Note: we run this all at once (over multiple batches of multiple sequences)
+		# embedded = self.embedding(input_seqs)  # S x B x E
+		# embedded = self.em_dropout(embedded)
+		packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
+		pade_hidden = hidden
