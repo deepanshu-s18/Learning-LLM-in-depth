@@ -230,3 +230,24 @@ class EncoderSeq(nn.Module):
 		# embedded = self.em_dropout(embedded)
 		packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
 		pade_hidden = hidden
+		# pade_outputs, pade_hidden = self.gru_pade(packed, pade_hidden)
+		pade_outputs, pade_hidden = self.rnn(packed, pade_hidden)
+		pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs)
+
+		if orig_idx is not None:
+			pade_outputs = pade_outputs.index_select(1, orig_idx)
+
+		problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
+		pade_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
+		return pade_outputs, problem_output
+
+
+class Prediction(nn.Module):
+	# a seq2tree decoder with Problem aware dynamic encoding
+
+	def __init__(self, hidden_size, op_nums, input_size, dropout=0.5):
+		super(Prediction, self).__init__()
+
+		# Keep for reference
+		self.hidden_size = hidden_size
+		self.input_size = input_size
