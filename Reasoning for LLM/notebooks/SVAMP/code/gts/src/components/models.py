@@ -188,3 +188,24 @@ class TreeAttn(nn.Module):
 		attn_energies = self.score(score_feature)  # (S x B) x 1
 		attn_energies = attn_energies.squeeze(1)
 		attn_energies = attn_energies.view(max_len, this_batch_size).transpose(0, 1)  # B x S
+		if seq_mask is not None:
+			attn_energies = attn_energies.masked_fill_(seq_mask, -1e12)
+		attn_energies = nn.functional.softmax(attn_energies, dim=1)  # B x S
+
+		return attn_energies.unsqueeze(1)
+
+
+class EncoderSeq(nn.Module):
+	# def __init__(self, input_size, embedding_size, hidden_size, n_layers=2, dropout=0.5):
+	def __init__(self, cell_type, embedding_size, hidden_size, n_layers=2, dropout=0.5):
+		super(EncoderSeq, self).__init__()
+
+		# self.input_size = input_size
+		self.embedding_size = embedding_size
+		self.hidden_size = hidden_size
+		self.n_layers = n_layers
+		self.dropout = dropout
+
+		# self.embedding = nn.Embedding(input_size, embedding_size, padding_idx=0)
+		# self.em_dropout = nn.Dropout(dropout)
+
