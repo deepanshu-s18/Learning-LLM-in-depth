@@ -166,3 +166,25 @@ class Score(nn.Module):
 		return score
 
 
+class TreeAttn(nn.Module):
+	def __init__(self, input_size, hidden_size):
+		super(TreeAttn, self).__init__()
+		self.input_size = input_size
+		self.hidden_size = hidden_size
+		self.attn = nn.Linear(hidden_size + input_size, hidden_size)
+		self.score = nn.Linear(hidden_size, 1)
+
+	def forward(self, hidden, encoder_outputs, seq_mask=None):
+		max_len = encoder_outputs.size(0)
+
+		repeat_dims = [1] * hidden.dim()
+		repeat_dims[0] = max_len
+		hidden = hidden.repeat(*repeat_dims)  # S x B x H
+		this_batch_size = encoder_outputs.size(1)
+
+		energy_in = torch.cat((hidden, encoder_outputs), 2).view(-1, self.input_size + self.hidden_size)
+
+		score_feature = torch.tanh(self.attn(energy_in))
+		attn_energies = self.score(score_feature)  # (S x B) x 1
+		attn_energies = attn_energies.squeeze(1)
+		attn_energies = attn_energies.view(max_len, this_batch_size).transpose(0, 1)  # B x S
