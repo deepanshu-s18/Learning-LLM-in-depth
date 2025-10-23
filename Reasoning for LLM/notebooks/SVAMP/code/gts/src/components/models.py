@@ -145,3 +145,24 @@ class TreeNode:  # the class save the tree node
 class Score(nn.Module):
 	def __init__(self, input_size, hidden_size):
 		super(Score, self).__init__()
+		self.input_size = input_size
+		self.hidden_size = hidden_size
+		self.attn = nn.Linear(hidden_size + input_size, hidden_size)
+		self.score = nn.Linear(hidden_size, 1, bias=False)
+
+	def forward(self, hidden, num_embeddings, num_mask=None):
+		max_len = num_embeddings.size(1)
+		repeat_dims = [1] * hidden.dim()
+		repeat_dims[1] = max_len
+		hidden = hidden.repeat(*repeat_dims)  # B x O x H
+		# For each position of encoder outputs
+		this_batch_size = num_embeddings.size(0)
+		energy_in = torch.cat((hidden, num_embeddings), 2).view(-1, self.input_size + self.hidden_size)
+		score = self.score(torch.tanh(self.attn(energy_in)))  # (B x O) x 1
+		score = score.squeeze(1)
+		score = score.view(this_batch_size, -1)  # B x O
+		if num_mask is not None:
+			score = score.masked_fill_(num_mask, -1e12)
+		return score
+
+
