@@ -272,3 +272,24 @@ class Prediction(nn.Module):
 	def forward(self, node_stacks, left_childs, encoder_outputs, num_pades, padding_hidden, seq_mask, mask_nums):
 		current_embeddings = []
 
+		for st in node_stacks:
+			if len(st) == 0:
+				current_embeddings.append(padding_hidden)
+			else:
+				current_node = st[-1]
+				current_embeddings.append(current_node.embedding)
+
+		current_node_temp = []
+		for l, c in zip(left_childs, current_embeddings):
+			if l is None:
+				c = self.dropout(c)
+				g = torch.tanh(self.concat_l(c))
+				t = torch.sigmoid(self.concat_lg(c))
+				current_node_temp.append(g * t)
+			else:
+				ld = self.dropout(l)
+				c = self.dropout(c)
+				g = torch.tanh(self.concat_r(torch.cat((ld, c), 1)))
+				t = torch.sigmoid(self.concat_rg(torch.cat((ld, c), 1)))
+				current_node_temp.append(g * t)
+
