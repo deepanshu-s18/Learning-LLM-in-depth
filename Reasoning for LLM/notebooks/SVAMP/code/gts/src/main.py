@@ -41,3 +41,25 @@ def main():
 	if config.mode == 'train':
 		is_train = True
 	else:
+		is_train = False
+
+	''' Set seed for reproducibility'''
+	np.random.seed(config.seed)
+	torch.manual_seed(config.seed)
+	random.seed(config.seed)
+
+	'''GPU initialization'''
+	device = gpu_init_pytorch(config.gpu)
+
+	if config.full_cv:
+		global data_path
+		data_name = config.dataset
+		data_path = data_path + data_name + '/'
+		config.val_result_path = os.path.join(result_folder, 'CV_results_{}.json'.format(data_name))
+		fold_acc_score = 0.0
+		folds_scores = []
+		best_acc = []
+		for z in range(5):
+			run_name = config.run_name + '_fold' + str(z)
+			config.dataset = 'fold' + str(z)
+			config.log_path = os.path.join(log_folder, run_name)
