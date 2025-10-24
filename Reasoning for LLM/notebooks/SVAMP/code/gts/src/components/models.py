@@ -293,3 +293,24 @@ class Prediction(nn.Module):
 				t = torch.sigmoid(self.concat_rg(torch.cat((ld, c), 1)))
 				current_node_temp.append(g * t)
 
+		current_node = torch.stack(current_node_temp)
+
+		current_embeddings = self.dropout(current_node)
+
+		current_attn = self.attn(current_embeddings.transpose(0, 1), encoder_outputs, seq_mask)
+		current_context = current_attn.bmm(encoder_outputs.transpose(0, 1))  # B x 1 x N
+
+		# the information to get the current quantity
+		batch_size = current_embeddings.size(0)
+		# predict the output (this node corresponding to output(number or operator)) with PADE
+
+		repeat_dims = [1] * self.embedding_weight.dim()
+		repeat_dims[0] = batch_size
+		embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
+		embedding_weight = torch.cat((embedding_weight, num_pades), dim=1)  # B x O x N
+
+		leaf_input = torch.cat((current_node, current_context), 2)
+		leaf_input = leaf_input.squeeze(1)
+		leaf_input = self.dropout(leaf_input)
+
+		# p_leaf = nn.functional.softmax(self.is_leaf(leaf_input), 1)
