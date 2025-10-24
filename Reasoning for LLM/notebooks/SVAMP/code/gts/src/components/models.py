@@ -314,3 +314,24 @@ class Prediction(nn.Module):
 		leaf_input = self.dropout(leaf_input)
 
 		# p_leaf = nn.functional.softmax(self.is_leaf(leaf_input), 1)
+		# max pooling the embedding_weight
+		embedding_weight_ = self.dropout(embedding_weight)
+		num_score = self.score(leaf_input.unsqueeze(1), embedding_weight_, mask_nums)
+
+		# num_score = nn.functional.softmax(num_score, 1)
+
+		op = self.ops(leaf_input)
+
+		# return p_leaf, num_score, op, current_embeddings, current_attn
+
+		return num_score, op, current_node, current_context, embedding_weight
+
+
+class GenerateNode(nn.Module):
+	def __init__(self, hidden_size, op_nums, embedding_size, dropout=0.5):
+		super(GenerateNode, self).__init__()
+
+		self.embedding_size = embedding_size
+		self.hidden_size = hidden_size
+
+		self.embeddings = nn.Embedding(op_nums, embedding_size)
