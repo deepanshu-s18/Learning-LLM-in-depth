@@ -172,3 +172,25 @@ def main():
 				encoder.to(device)
 				predict.to(device)
 				generate.to(device)
+				merge.to(device)
+
+			logger.debug('Models loaded on GPU {}'.format(config.gpu))
+
+			generate_num_ids = []
+			for num in generate_nums:
+				generate_num_ids.append(output_lang.word2index[num])
+
+			max_value_corr = 0
+			len_total_eval = 0
+			max_val_acc = 0.0
+			max_train_acc = 0.0
+			eq_acc = 0.0
+			best_epoch = -1
+			min_train_loss = float('inf')
+
+			logger.info('Starting Training Procedure')
+
+			for epoch in range(config.epochs):
+				loss_total = 0
+				input_batches, input_lengths, output_batches, output_lengths, nums_batches, num_stack_batches, num_pos_batches, num_size_batches = prepare_train_batch(train_pairs, config.batch_size)
+
