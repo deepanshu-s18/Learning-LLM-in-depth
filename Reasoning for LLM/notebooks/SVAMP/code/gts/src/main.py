@@ -85,3 +85,25 @@ def main():
 			logger.debug('Created Relevant Directories')
 
 			logger.info('Loading Data...')
+
+			train_ls, dev_ls = load_raw_data(data_path, config.dataset)
+			pairs_trained, pairs_tested, generate_nums, copy_nums = transfer_num(train_ls, dev_ls, config.challenge_disp)
+
+			logger.debug('Data Loaded...')
+			logger.debug('Number of Training Examples: {}'.format(len(pairs_trained)))
+			logger.debug('Number of Testing Examples: {}'.format(len(pairs_tested)))
+			logger.debug('Extra Numbers: {}'.format(generate_nums))
+			logger.debug('Maximum Number of Numbers: {}'.format(copy_nums))
+
+			# pairs: ([list of words in question], [list of infix Equation tokens incl brackets and N0, N1], [list of numbers], [list of indexes of numbers])
+			# generate_nums: Unmentioned numbers used in eqns in atleast 5 examples ['1', '3.14']
+			# copy_nums: Maximum number of numbers in a single sentence: 15
+
+			# pairs: ([list of words in question], [list of prefix Equation tokens w/ metasymbols as N0, N1], [list of numbers], [list of indexes of numbers])
+
+			logger.info('Creating Vocab...')
+			input_lang = None
+			output_lang = None
+
+			input_lang, output_lang, train_pairs, test_pairs = prepare_data(config, logger, pairs_trained, pairs_tested, config.trim_threshold, generate_nums, copy_nums, input_lang, output_lang, tree=True)
+
