@@ -565,3 +565,25 @@ def main():
 						for train_batch in train_pairs:
 							# train_res = evaluate_tree(train_batch[0], train_batch[1], generate_num_ids, encoder, predict, generate,
 							# 						 merge, output_lang, train_batch[5], beam_size=config.beam_size)
+							train_res = evaluate_tree(config, train_batch[0], train_batch[1], generate_num_ids, embedding, encoder, predict, generate,
+													 merge, input_lang, output_lang, train_batch[5], beam_size=config.beam_size)
+							train_val_ac, train_equ_ac, _, _ = compute_prefix_tree_result(train_res, train_batch[2], output_lang, train_batch[4], train_batch[6])
+
+							if train_val_ac:
+								train_value_ac += 1
+							if train_equ_ac:
+								train_equation_ac += 1
+							train_eval_total += 1
+
+					logger.debug('Train Accuracy Computed...\nTime Taken: {}'.format(time_since(time.time() - start)))
+				
+				logger.info('Starting Validation')
+
+				value_ac = 0
+				equation_ac = 0
+				eval_total = 0
+				start = time.time()
+
+				with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+					f_out.write('---------------------------------------\n')
+					f_out.write('Epoch: ' + str(epoch) + '\n')
