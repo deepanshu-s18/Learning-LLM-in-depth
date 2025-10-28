@@ -543,3 +543,25 @@ def main():
 					loss_total += loss
 					print("Completed {} / {}...".format(idx, len(input_lengths)), end = '\r', flush = True)
 
+				embedding_scheduler.step()
+				encoder_scheduler.step()
+				predict_scheduler.step()
+				generate_scheduler.step()
+				merge_scheduler.step()
+
+				logger.debug('Training for epoch {} completed...\nTime Taken: {}'.format(epoch, time_since(time.time() - start)))
+
+				if loss_total / len(input_lengths) < min_train_loss:
+					min_train_loss = loss_total / len(input_lengths)
+
+				train_value_ac = 0
+				train_equation_ac = 0
+				train_eval_total = 1
+				if config.show_train_acc:
+					train_eval_total = 0
+					logger.info('Computing Train Accuracy')
+					start = time.time()
+					with torch.no_grad():
+						for train_batch in train_pairs:
+							# train_res = evaluate_tree(train_batch[0], train_batch[1], generate_num_ids, encoder, predict, generate,
+							# 						 merge, output_lang, train_batch[5], beam_size=config.beam_size)
