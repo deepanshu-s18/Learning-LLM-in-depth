@@ -500,3 +500,25 @@ def main():
 			logger.info('Loading Models on GPU {}...'.format(config.gpu))
 
 			# Move models to GPU
+			if USE_CUDA:
+				embedding.to(device)
+				encoder.to(device)
+				predict.to(device)
+				generate.to(device)
+				merge.to(device)
+
+			logger.debug('Models loaded on GPU {}'.format(config.gpu))
+
+			# generate_num_ids = []
+			# for num in generate_nums:
+			# 	generate_num_ids.append(output_lang.word2index[num])
+
+			max_val_acc = 0.0
+			max_train_acc = 0.0
+			eq_acc = 0.0
+			best_epoch = -1
+			min_train_loss = float('inf')
+
+			logger.info('Starting Training Procedure')
+
+			for epoch in range(config.epochs):
