@@ -522,3 +522,24 @@ def main():
 			logger.info('Starting Training Procedure')
 
 			for epoch in range(config.epochs):
+				loss_total = 0
+				input_batches, input_lengths, output_batches, output_lengths, nums_batches, num_stack_batches, num_pos_batches, num_size_batches = prepare_train_batch(train_pairs, config.batch_size)
+
+				od = OrderedDict()
+				od['Epoch'] = epoch + 1
+				print_log(logger, od)
+
+				start = time.time()
+				for idx in range(len(input_lengths)):
+					# loss = train_tree(
+					# 	input_batches[idx], input_lengths[idx], output_batches[idx], output_lengths[idx],
+					# 	num_stack_batches[idx], num_size_batches[idx], generate_num_ids, encoder, predict, generate, merge,
+					# 	encoder_optimizer, predict_optimizer, generate_optimizer, merge_optimizer, output_lang, num_pos_batches[idx])
+					loss = train_tree(
+						config, input_batches[idx], input_lengths[idx], output_batches[idx], output_lengths[idx],
+						num_stack_batches[idx], num_size_batches[idx], generate_num_ids, embedding, encoder, predict, generate, merge,
+						embedding_optimizer, encoder_optimizer, predict_optimizer, generate_optimizer, merge_optimizer, input_lang, output_lang, 
+						num_pos_batches[idx])
+					loss_total += loss
+					print("Completed {} / {}...".format(idx, len(input_lengths)), end = '\r', flush = True)
+
