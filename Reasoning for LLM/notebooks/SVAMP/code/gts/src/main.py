@@ -762,3 +762,25 @@ def main():
 				val_ac, equ_ac, _, _ = compute_prefix_tree_result(test_res, test_batch[2], output_lang, test_batch[4], test_batch[6])
 
 				cur_result = 0
+				if val_ac:
+					value_ac += 1
+					cur_result = 1
+				if equ_ac:
+					equation_ac += 1
+				eval_total += 1
+
+				test_res_ques.append(stack_to_string(sentence_from_indexes(input_lang, test_batch[0])))
+				test_res_act.append(stack_to_string(sentence_from_indexes(output_lang, test_batch[2])))
+				test_res_gen.append(stack_to_string(sentence_from_indexes(output_lang, test_res)))
+				test_res_scores.append(cur_result)
+
+				with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+					f_out.write('Example: ' + str(ex_num) + '\n')
+					f_out.write('Source: ' + stack_to_string(sentence_from_indexes(input_lang, test_batch[0])) + '\n')
+					f_out.write('Target: ' + stack_to_string(sentence_from_indexes(output_lang, test_batch[2])) + '\n')
+					f_out.write('Generated: ' + stack_to_string(sentence_from_indexes(output_lang, test_res)) + '\n')
+					if config.nums_disp:
+						src_nums = len(test_batch[4])
+						tgt_nums = 0
+						pred_nums = 0
+						for k_tgt in sentence_from_indexes(output_lang, test_batch[2]):
