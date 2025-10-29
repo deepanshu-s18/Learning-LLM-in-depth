@@ -696,3 +696,25 @@ def main():
 		else:
 			gpu = config.gpu
 			mode = config.mode
+			dataset = config.dataset
+			batch_size = config.batch_size
+			old_run_name = config.run_name
+			with open(config_file, 'rb') as f:
+				config = AttrDict(pickle.load(f))
+				config.gpu = gpu
+				config.mode = mode
+				config.dataset = dataset
+				config.batch_size = batch_size
+
+			logger.info('Initializing Models...')
+
+			# Initialize models
+			embedding = None
+			if config.embedding == 'bert':
+				embedding = BertEncoder(config.emb_name, device, config.freeze_emb)
+			elif config.embedding == 'roberta':
+				embedding = RobertaEncoder(config.emb_name, device, config.freeze_emb)
+			else:
+				embedding = Embedding(config, input_lang, input_size=input_lang.n_words, embedding_size=config.embedding_size, dropout=config.dropout)
+
+			# encoder = EncoderSeq(input_size=input_lang.n_words, embedding_size=config.embedding_size, hidden_size=config.hidden_size, n_layers=config.depth, dropout=config.dropout)
