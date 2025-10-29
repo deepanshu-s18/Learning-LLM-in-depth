@@ -784,3 +784,25 @@ def main():
 						tgt_nums = 0
 						pred_nums = 0
 						for k_tgt in sentence_from_indexes(output_lang, test_batch[2]):
+							if k_tgt not in ['+', '-', '*', '/']:
+								tgt_nums += 1
+						for k_pred in sentence_from_indexes(output_lang, test_res):
+							if k_pred not in ['+', '-', '*', '/']:
+								pred_nums += 1
+						f_out.write('Numbers in question: ' + str(src_nums) + '\n')
+						f_out.write('Numbers in Target Equation: ' + str(tgt_nums) + '\n')
+						f_out.write('Numbers in Predicted Equation: ' + str(pred_nums) + '\n')
+					f_out.write('Result: ' + str(cur_result) + '\n' + '\n')
+					f_out.close()
+
+				ex_num+=1
+
+			results_df = pd.DataFrame([test_res_ques, test_res_act, test_res_gen, test_res_scores]).transpose()
+			results_df.columns = ['Question', 'Actual Equation', 'Generated Equation', 'Score']
+			csv_file_path = os.path.join(config.outputs_path, config.dataset+'.csv')
+			results_df.to_csv(csv_file_path, index = False)
+			logger.info('Accuracy: {}'.format(sum(test_res_scores)/len(test_res_scores)))
+
+
+if __name__ == '__main__':
+	main()
