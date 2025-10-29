@@ -653,3 +653,24 @@ def main():
 							'embedding_optimizer_state_dict': embedding_optimizer.state_dict(),
 							'encoder_optimizer_state_dict': encoder_optimizer.state_dict(),
 							'predict_optimizer_state_dict': predict_optimizer.state_dict(),
+							'generate_optimizer_state_dict': generate_optimizer.state_dict(),
+							'merge_optimizer_state_dict': merge_optimizer.state_dict(),
+							'embedding_scheduler_state_dict': embedding_scheduler.state_dict(),
+							'encoder_scheduler_state_dict': encoder_scheduler.state_dict(),
+							'predict_scheduler_state_dict': predict_scheduler.state_dict(),
+							'generate_scheduler_state_dict': generate_scheduler.state_dict(),
+							'merge_scheduler_state_dict': merge_scheduler.state_dict(),
+							'voc1': input_lang,
+							'voc2': output_lang,
+							'train_loss_epoch' : loss_total / len(input_lengths),
+							'min_train_loss' : min_train_loss,
+							'val_acc_epoch' : float(value_ac) / eval_total,
+							'max_val_acc' : max_val_acc,
+							'equation_acc' : eq_acc,
+							'max_train_acc' : max_train_acc,
+							'generate_nums' : generate_nums
+						}
+
+					if config.save_model:
+						save_checkpoint(state, epoch, logger, config.model_path, config.ckpt)
+
