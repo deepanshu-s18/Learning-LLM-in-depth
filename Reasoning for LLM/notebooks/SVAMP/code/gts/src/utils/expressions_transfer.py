@@ -105,3 +105,25 @@ def out_expression_list(test, output_lang, num_list, num_stack=None):
     for i in test:
         # if i == 0:
         #     return res
+        if i < max_index - 1:
+            idx = output_lang.index2word[i]
+            if idx[0] == "N":
+                if int(idx[1:]) >= len(num_list):
+                    return None
+                res.append(num_list[int(idx[1:])])
+            else:
+                res.append(idx)
+        else:
+            pos_list = num_stack.pop()
+            c = num_list[pos_list[0]]
+            res.append(c)
+    return res
+
+
+def compute_postfix_expression(post_fix):
+    st = list()
+    operators = ["+", "-", "^", "*", "/"]
+    for p in post_fix:
+        if p not in operators:
+            pos = re.search("\d+\(", p)
+            if pos:
