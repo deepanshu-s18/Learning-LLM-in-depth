@@ -148,3 +148,25 @@ def compute_postfix_expression(post_fix):
             a = st.pop()
             b = st.pop()
             if a == 0:
+                return None
+            st.append(b / a)
+        elif p == "-" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            st.append(b - a)
+        elif p == "^" and len(st) > 1:
+            a = st.pop()
+            b = st.pop()
+            st.append(a ** b)
+        else:
+            return None
+    if len(st) == 1:
+        return st.pop()
+    return None
+
+
+def compute_prefix_expression(pre_fix):
+    st = list()
+    operators = ["+", "-", "^", "*", "/"]
+    pre_fix = deepcopy(pre_fix)
+    pre_fix.reverse()
