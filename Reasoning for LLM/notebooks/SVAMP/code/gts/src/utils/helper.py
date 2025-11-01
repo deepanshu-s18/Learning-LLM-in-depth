@@ -95,3 +95,28 @@ def load_checkpoint(config, embedding, encoder, predict, generate, merge, mode, 
 	embedding.load_state_dict(checkpoint['embedding_state_dict'])
 	encoder.load_state_dict(checkpoint['encoder_state_dict'])
 	predict.load_state_dict(checkpoint['predict_state_dict'])
+	generate.load_state_dict(checkpoint['generate_state_dict'])
+	merge.load_state_dict(checkpoint['merge_state_dict'])
+
+	if mode == 'train':
+		embedding_optimizer.load_state_dict(checkpoint['embedding_optimizer_state_dict'])
+		encoder_optimizer.load_state_dict(checkpoint['encoder_optimizer_state_dict'])
+		predict_optimizer.load_state_dict(checkpoint['predict_optimizer_state_dict'])
+		generate_optimizer.load_state_dict(checkpoint['generate_optimizer_state_dict'])
+		merge_optimizer.load_state_dict(checkpoint['merge_optimizer_state_dict'])
+
+		embedding_scheduler.load_state_dict(checkpoint['embedding_scheduler_state_dict'])
+		encoder_scheduler.load_state_dict(checkpoint['encoder_scheduler_state_dict'])
+		predict_scheduler.load_state_dict(checkpoint['predict_scheduler_state_dict'])
+		generate_scheduler.load_state_dict(checkpoint['generate_scheduler_state_dict'])
+		merge_scheduler.load_state_dict(checkpoint['merge_scheduler_state_dict'])
+
+	start_epoch = checkpoint['epoch']
+	min_train_loss  = checkpoint['min_train_loss']
+	max_train_acc = checkpoint['max_train_acc']
+	max_val_acc = checkpoint['max_val_acc']
+	equation_acc = checkpoint['equation_acc']
+	best_epoch = checkpoint['best_epoch']
+	generate_nums = checkpoint['generate_nums']
+
+	embedding.to(device)
