@@ -102,3 +102,24 @@ def build_parser():
 	parser.add_argument('-nums_disp', dest='nums_disp', action='store_true', help='Display number of numbers information in validation outputs')
 	parser.add_argument('-no-nums_disp', dest='nums_disp', action='store_false', help='Don\'t display number of numbers information')
 	parser.set_defaults(nums_disp=True)
+	parser.add_argument('-more_nums', dest='more_nums', action='store_true', help='More numbers in Voc2')
+	parser.add_argument('-no-more_nums', dest='more_nums', action='store_false', help='Usual numbers in Voc2')
+	parser.set_defaults(more_nums=False)
+	parser.add_argument('-mawps_vocab', dest='mawps_vocab', action='store_true', help='Custom Numbers in Voc2')
+	parser.add_argument('-no-mawps_vocab', dest='mawps_vocab', action='store_false', help='No Custom Numbers in Voc2')
+	parser.set_defaults(mawps_vocab=False)
+
+	parser.add_argument('-show_train_acc', dest='show_train_acc', action='store_true', help='Calculate the train accuracy')
+	parser.add_argument('-no-show_train_acc', dest='show_train_acc', action='store_false', help='Don\'t calculate the train accuracy')
+	parser.set_defaults(show_train_acc=True)
+
+	parser.add_argument('-full_cv', dest='full_cv', action='store_true', help='5-fold CV')
+	parser.add_argument('-no-full_cv', dest='full_cv', action='store_false', help='No 5-fold CV')
+	parser.set_defaults(full_cv=False)
+
+	#Conf parameters
+	parser.add_argument('-conf', type = str, default = 'posterior', choices = ["posterior", "similarity"], help = 'Confidence estimation criteria to use, ["posterior", "similarity"]')
+	parser.add_argument('-sim_criteria', type = str, default = 'bleu', choices = ['bert_score', 'bleu_score'], help = 'Only applicable if similarity based criteria is selected for confidence.')
+	parser.add_argument('-adv', action = 'store_true', help = 'If dealing with out of distribution examples')
+	
+	return parser
