@@ -39,3 +39,24 @@ def build_parser():
 	parser.add_argument('-logging', type=int, default=1, help='Set to 0 if you do not require logging')
 	parser.add_argument('-ckpt', type=str, default='model', help='Checkpoint file name')
 	parser.add_argument('-save_model', dest='save_model',action='store_true', help='To save the model')
+	parser.add_argument('-no-save_model', dest='save_model', action='store_false', help='Dont save the model')
+	parser.set_defaults(save_model=False)
+	# parser.add_argument('-log_fmt', type=str, default='%(asctime)s | %(levelname)s | %(name)s | %(message)s', help='Specify format of the logger')
+
+	# LSTM parameters
+	parser.add_argument('-emb2_size', type=int, default=16, help='Embedding dimensions of inputs')
+	parser.add_argument('-cell_type', type=str, default='lstm', help='RNN cell for encoder and decoder, default: lstm')
+
+	parser.add_argument('-use_attn', dest='use_attn',action='store_true', help='To use attention mechanism?')
+	parser.add_argument('-no-attn', dest='use_attn', action='store_false', help='Not to use attention mechanism?')
+	parser.set_defaults(use_attn=True)
+
+	parser.add_argument('-attn_type', type=str, default='general', help='Attention mechanism: (general, concat), default: general')
+	parser.add_argument('-hidden_size', type=int, default=256, help='Number of hidden units in each layer')
+	parser.add_argument('-depth', type=int, default=1, help='Number of layers in each encoder and decoder')
+	parser.add_argument('-dropout', type=float, default=0.1, help= 'Dropout probability for input/output/state units (0.0: no dropout)')
+	parser.add_argument('-max_length', type=int, default=100, help='Specify max decode steps: Max length string to output')
+	parser.add_argument('-init_range', type=float, default=0.08, help='Initialization range for seq2seq model')
+	parser.add_argument('-bidirectional', dest='bidirectional', action='store_true', help='Bidirectionality in LSTMs')
+	parser.add_argument('-no-bidirectional', dest='bidirectional', action='store_false', help='Bidirectionality in LSTMs')
+	parser.set_defaults(bidirectional=True)
