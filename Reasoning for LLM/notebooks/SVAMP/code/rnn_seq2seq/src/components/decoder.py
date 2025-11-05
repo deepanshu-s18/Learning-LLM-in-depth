@@ -13,3 +13,18 @@ class DecoderRNN(nn.Module):
 	Args:
 			hidden_size: Hidden size of the RNN cell
 			embedding: Embeddings matrix [vocab_size, embedding_dim]
+			cell_type: Type of RNN cell to be used : LSTM, GRU
+			nlayers: Number of layers of LSTM (default = 1)
+			dropout: Dropout Rate (default = 0.1)
+			bidirectional: Bidirectional model to be formed (default: False)
+	'''
+	def __init__(self, embedding, cell_type, hidden_size, output_size, nlayers=1, dropout=0.2):
+		super(DecoderRNN, self).__init__()
+		self.hidden_size        = hidden_size
+		self.cell_type          = cell_type
+		self.embedding          = embedding
+		self.embedding_size     = self.embedding.embedding_dim
+		self.embedding_dropout = nn.Dropout(dropout)
+		self.nlayers            = nlayers
+		self.output_size        = output_size
+
