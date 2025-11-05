@@ -43,3 +43,18 @@ class DecoderRNN(nn.Module):
 				input_seqs (tensor) : input tensor | size : [Seq_len X Batch_size]
 				input_lengths (list/tensor) : length of each input sentence | size : [Batch_size] 
 				device (gpu) : Used for sorting the sentences and putting it to device
+
+			Returns:
+				output (tensor) : Last State representations of RNN [Seq_len X Batch_size X hidden_size]
+				hidden (tuple)	: Hidden states and (cell states) of recurrent networks
+		'''
+		output              = self.embedding(input_step)
+		output              = self.embedding_dropout(output)
+		output              = output.view(1, input_step.size(0), self.embedding_size)
+		output              = F.relu(output)
+		output, last_hidden = self.rnn(output, last_hidden)
+		output              = output.squeeze(0)
+		output              = self.out(output)
+		output              = F.log_softmax(output, dim=1)
+
+		return output, last_hidden
