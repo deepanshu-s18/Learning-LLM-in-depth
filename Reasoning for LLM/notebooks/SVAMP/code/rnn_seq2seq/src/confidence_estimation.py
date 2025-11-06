@@ -36,3 +36,22 @@ def similarity_based_conf(test_ques, train_ques,model, sim_criteria = 'bert_scor
 
 def bert_sim(queries, keys, model):
     '''
+    Inputs
+        - queries: a batch of sentences whose similarity is to be measured with other sentences. Length: L_Q
+        - keys: those other sentences. Length: L_K
+        - model: bert_seq2exp model
+
+    Outputs: A numpy array containing similarites between each test sentence with all training examples. Shape: [L_Q, L_K]
+    '''
+
+    #Feed queries and keys to bert and obtain contextualized representation, using embeddings of [CLS]
+    #  (TODO: try pooling instead of [CLS])
+    with torch.no_grad():
+        queries_rep     = model.bert(queries)[0][:,0].detach().cpu().numpy()
+        keys_rep        = torch.cat([model.bert(keys[i:min(i+16, len(keys)),])[0][:,0] for i in range(0, len(keys), 16)], dim = 0)
+        keys_rep        = keys_rep.detach().cpu().numpy()
+
+    sims = np.dot(queries_rep / np.linalg.norm(queries_rep, axis = -1, keepdims = True),
+                 (keys_rep / np.linalg.norm(keys_rep, axis = -1, keepdims = True)).T)
+    return sims
+
