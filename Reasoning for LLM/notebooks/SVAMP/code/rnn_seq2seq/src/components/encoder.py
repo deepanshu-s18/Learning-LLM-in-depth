@@ -35,3 +35,22 @@ class Encoder(nn.Module):
 							   bidirectional=bidirectional)
 		elif self.cell_type == 'gru':
 			self.rnn = nn.GRU(self.embedding_size, self.hidden_size,
+							  num_layers=self.nlayers,
+							  dropout=(0 if self.nlayers == 1 else dropout),
+							  bidirectional=bidirectional)
+		else:
+			self.rnn = nn.RNN(self.embedding_size, self.hidden_size,
+							  num_layers=self.nlayers,
+							  nonlinearity='tanh',							# ['relu', 'tanh']
+							  dropout=(0 if self.nlayers == 1 else dropout),
+							  bidirectional=bidirectional)
+
+	def forward(self, sorted_seqs, sorted_len, orig_idx, device=None, hidden=None):
+		'''
+			Args:
+				input_seqs (tensor) : input tensor | size : [Seq_len X Batch_size]
+				input_lengths (list/tensor) : length of each input sentence | size : [Batch_size] 
+				device (gpu) : Used for sorting the sentences and putting it to device
+
+			Returns:
+				output (tensor) : Last State representations of RNN [Seq_len X Batch_size X hidden_size]
