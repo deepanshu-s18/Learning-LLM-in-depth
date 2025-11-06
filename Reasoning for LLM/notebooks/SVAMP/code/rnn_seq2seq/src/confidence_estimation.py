@@ -17,3 +17,22 @@ def similarity_based_conf(test_ques, train_ques,model, sim_criteria = 'bert_scor
         model: bert_seq2exp model
         sim_criteria: Criteria used to evaluate similarity between test questions and training questions
 
+    Returns a numpy array containing closest similarity of each test input in the batch size. Shape: [Batch Size,]
+    '''
+
+    decoded_words = model.greedy_decode(test_ques)
+    if sim_criteria == 'bert_score':
+        similarities = bert_sim(test_ques, train_ques, model) #[Batch Size x |Training Data|]
+
+    elif sim_criteria == 'bleu_score':
+        similarities = bleu_sim(test_ques, train_ques)
+    else:
+        raise ValueError("Other similarity methods not implemented yet!")
+
+    max_sims = np.max(similarities, axis = 1)
+    return decoded_words, max_sims
+
+
+
+def bert_sim(queries, keys, model):
+    '''
