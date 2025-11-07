@@ -84,3 +84,25 @@ def load_data(config, logger):
 	else:
 		logger.critical('Invalid Mode Specified')
 		raise Exception('{} is not a valid mode'.format(config.mode))
+
+def main():
+	'''read arguments'''
+	parser = build_parser()
+	args = parser.parse_args()
+	config = args
+	mode = config.mode
+	if mode == 'train':
+		is_train = True
+	else:
+		is_train = False
+
+	''' Set seed for reproducibility'''
+	np.random.seed(config.seed)
+	torch.manual_seed(config.seed)
+	random.seed(config.seed)
+
+	'''GPU initialization'''
+	device = gpu_init_pytorch(config.gpu)
+
+	if config.full_cv:
+		global data_path 
