@@ -55,3 +55,22 @@ def bert_sim(queries, keys, model):
                  (keys_rep / np.linalg.norm(keys_rep, axis = -1, keepdims = True)).T)
     return sims
 
+
+def bleu_sim(queries, keys):
+    '''
+    Inputs:
+        - queries: a batch of sentences whose similarity is to be measured with other sentences. Length: L_Q
+        - keys: those other sentences. Length: L_K
+
+    Outputs: A numpy array containing bleu scores between each test sentence with all training examples. Shape: [L_Q, L_K]
+    '''
+    bleus = [[] for i in range(len(queries))]
+    for i in range(len(queries)):
+        for j in range(len(keys)):
+            refs = [[keys[j].split()]]
+            hyps = [queries[i].split()]
+            bleu = compute_bleu(refs, hyps)[0]
+            bleus[i].append(bleu)
+
+    sims = np.array(bleus)
+    return sims
