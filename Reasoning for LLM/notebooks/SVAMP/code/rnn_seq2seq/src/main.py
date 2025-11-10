@@ -279,3 +279,25 @@ def main():
 			voc1 = Voc1()
 			voc1.create_vocab_dict(config, train_dataloader)
 
+			# To Do : Remove Later
+			voc1.add_to_vocab_dict(config, val_dataloader)
+
+			voc2 = Voc2(config)
+			voc2.create_vocab_dict(config, train_dataloader)
+
+			# To Do : Remove Later
+			voc2.add_to_vocab_dict(config, val_dataloader)
+
+			logger.info(
+				'Vocab Created with number of words : {}'.format(voc1.nwords))
+
+			with open(vocab1_path, 'wb') as f:
+				pickle.dump(voc1, f, protocol=pickle.HIGHEST_PROTOCOL)
+			with open(vocab2_path, 'wb') as f:
+				pickle.dump(voc2, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+			logger.info('Vocab saved at {}'.format(vocab1_path))
+
+		else:
+			test_dataloader = load_data(config, logger)
+			logger.info('Loading Vocab File...')
