@@ -366,3 +366,25 @@ def main():
 			od['max_train_acc'] = max_train_acc
 			od['max_val_acc'] = max_val_acc
 			od['max_val_bleu'] = max_val_bleu
+			od['best_epoch'] = best_epoch
+			print_log(logger, od)
+
+			if config.mode == 'test':
+				test_acc_epoch = run_validation(config, model, test_dataloader, voc1, voc2, device, logger, 0)
+				logger.info('Accuracy: {}'.format(test_acc_epoch))
+			else:
+				estimate_confidence(config, model, test_dataloader, logger)
+
+
+if __name__ == '__main__':
+	main()
+
+
+''' Just docstring format '''
+# class Vehicles(object):
+# 	'''
+# 	The Vehicle object contains a lot of vehicles
+
+# 	Args:
+# 		arg (str): The arg is used for...
+# 		*args: The variable arguments are used for...
