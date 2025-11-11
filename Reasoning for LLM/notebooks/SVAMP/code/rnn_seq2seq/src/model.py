@@ -40,3 +40,24 @@ class Seq2SeqModel(nn.Module):
 		self.SOS_tag = SOS_tag
 		self.EOS_token = voc2.get_id(EOS_tag)
 		self.SOS_token = voc2.get_id(SOS_tag)
+		self.logger = logger
+		self.num_iters = num_iters
+
+		# To Do: Embeddings from pretrained models like BERT
+		# if self.config.use_word2vec:
+		# 	config.emb1_size = 300
+		# 	self.embedding1  = nn.Embedding.from_pretrained(torch.FloatTensor(self._form_embeddings(self.config.word2vec_bin)), freeze=not self.config.train_word2vec)
+		# else:
+		# 	self.embedding1  = nn.Embedding(self.voc1.nwords, self.config.emb1_size)
+		# 	nn.init.uniform_(self.embedding1.weight, -1 * self.config.init_range, self.config.init_range)
+		# # self.embedding = nn.Embedding(self.voc.nwords, self.config.emb_size)
+
+		self.embedding2  = nn.Embedding(self.voc2.nwords, self.config.emb2_size)
+		nn.init.uniform_(self.embedding2.weight, -1 * self.config.init_range, self.config.init_range)
+
+		self.bert = BertEncoder(config.bert_name, self.device)
+		# To Do: Vary initialization methods
+
+		self.logger.debug('Building Encoders...')
+		self.encoder = Encoder(
+			self.config.hidden_size,
