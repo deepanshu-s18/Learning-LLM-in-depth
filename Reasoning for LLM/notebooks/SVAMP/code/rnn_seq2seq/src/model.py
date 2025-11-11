@@ -61,3 +61,25 @@ class Seq2SeqModel(nn.Module):
 		self.logger.debug('Building Encoders...')
 		self.encoder = Encoder(
 			self.config.hidden_size,
+			self.config.bert_size,
+			self.config.cell_type,
+			self.config.depth,
+			self.config.dropout,
+			self.config.bidirectional
+		)
+		
+
+		self.logger.debug('Encoders Built...')
+
+		if self.config.use_attn:
+			self.decoder    = LuongAttnDecoderRNN(self.config.attn_type,
+												  self.embedding2,
+												  self.config.cell_type,
+												  self.config.hidden_size,
+												  self.voc2.nwords,
+												  self.config.depth,
+												  self.config.dropout).to(device)
+		else:
+			self.decoder    = DecoderRNN(self.embedding2,
+										 self.config.cell_type,
+										 self.config.hidden_size,
