@@ -104,3 +104,24 @@ class Seq2SeqModel(nn.Module):
 		weights_all = models.KeyedVectors.load_word2vec_format(file_path, limit=200000, binary=True)
 		weight_req  = torch.randn(self.voc1.nwords, self.config.emb1_size)
 		for key, value in self.voc1.id2w.items():
+			if value in weights_all:
+				weight_req[key] = torch.FloatTensor(weights_all[value])
+
+		return weight_req	
+
+	def _initialize_optimizer(self):
+		self.params = list(self.encoder.parameters()) + \
+			list(self.decoder.parameters())
+
+		param_optimizer = list(self.bert.get_model().named_parameters())
+		no_decay = ['bias', 'gamma', 'beta']
+
+		optimizer_grouped_parameters = [
+		{'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.01},
+		{'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.0}
+		]
+
+		self.bertoptimizer = BertAdam(optimizer_grouped_parameters,
+						 lr=self.config.bert_lr,
+						 warmup=self.config.warmup,
+						 t_total=self.num_iters*self.config.epochs) 
