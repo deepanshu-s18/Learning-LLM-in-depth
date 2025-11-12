@@ -125,3 +125,25 @@ class Seq2SeqModel(nn.Module):
 						 lr=self.config.bert_lr,
 						 warmup=self.config.warmup,
 						 t_total=self.num_iters*self.config.epochs) 
+
+		if self.config.opt == 'adam':
+			self.optimizer = optim.Adam(self.params, lr=self.config.lr)
+		elif self.config.opt == 'adadelta':
+			self.optimizer = optim.Adadelta(self.params, lr=self.config.lr)
+		elif self.config.opt == 'asgd':
+			self.optimizer = optim.ASGD(self.params, lr=self.config.lr)
+		else:
+			self.optimizer = optim.SGD(self.params, lr=self.config.lr)
+
+	# def encode(self, input_seqs, input_len, encoder):
+	# 	pdb.set_trace()
+	# 	output, hidden = encoder(input_seqs, input_len)
+	# 	return output
+
+	# def clf(self, hidden):
+	# 	return self.soft_clf(hidden)
+
+	def forward(self, input_seq1, input_seq2, input_len1, input_len2):
+		'''
+			Args:
+				input_seq1 (tensor): values are word indexes | size : [max_len x batch_size]
