@@ -147,3 +147,24 @@ class Seq2SeqModel(nn.Module):
 		'''
 			Args:
 				input_seq1 (tensor): values are word indexes | size : [max_len x batch_size]
+				input_len1 (tensor): Length of each sequence in input_len1 | size : [batch_size]
+				input_seq2 (tensor): values are word indexes | size : [max_len x batch_size]
+				input_len2 (tensor): Length of each sequence in input_len2 | size : [batch_size]
+			Returns:
+				out (tensor) : Probabilities of each output label for each point | size : [batch_size x num_labels]
+		'''
+
+
+	def trainer(self, ques, input_seq2, input_len2, config, device=None ,logger=None):
+
+		self.optimizer.zero_grad()
+		self.bertoptimizer.zero_grad()
+
+		input_seq1, input_len1 = self.bert(ques)
+		input_seq1 = input_seq1.transpose(0,1)
+
+		encoder_outputs, encoder_hidden = self.encoder(input_seq1, input_len1, self.device)
+		
+		self.loss =0
+
+		decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device = self.device)
