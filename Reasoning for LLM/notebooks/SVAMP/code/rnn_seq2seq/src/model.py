@@ -360,3 +360,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 			sent2s = sents_to_idx(voc2, data['eqn'], config.max_length)
 			sent1_var, sent2_var, input_len1, input_len2  = process_batch(sent1s, sent2s, voc1, voc2, device)
 
+			loss = model.trainer(ques, sent2_var, input_len2, config, device, logger)
+			train_loss_epoch += loss
+			batch_num+=1
+			print("Completed {} / {}...".format(batch_num, total_batches), end = '\r', flush = True)
+
+		train_loss_epoch = train_loss_epoch / len(train_dataloader)
+
+		time_taken = (time() - start_time)/60.0
+
+		if writer:
+			writer.add_scalar('loss/train_loss', train_loss_epoch, epoch + epoch_offset)
+
+		logger.debug('Training for epoch {} completed...\nTime Taken: {}'.format(epoch, time_taken))
+		logger.debug('Starting Validation')
+		# pdb.set_trace()
+
+		val_score_epoch, val_loss_epoch, acc_score = run_validation(config=config, model=model, val_dataloader=val_dataloader, voc1=voc1, voc2=voc2, device=device, logger=logger, epoch_num = epoch)
+
+		if acc_score > max_acc_score:
+			max_acc_score = acc_score
+
