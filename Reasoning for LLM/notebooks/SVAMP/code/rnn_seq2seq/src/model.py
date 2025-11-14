@@ -381,3 +381,25 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 		if acc_score > max_acc_score:
 			max_acc_score = acc_score
 
+		# bleu_score = val_score_epoch[0]
+
+		if val_score_epoch[0] > max_val_score:
+			min_val_loss = val_loss_epoch
+			max_val_score = val_score_epoch[0]
+
+			state = {
+				'epoch' : epoch + epoch_offset,
+				'model_state_dict': model.state_dict(),
+				'voc1': model.voc1,
+				'voc2': model.voc2,
+				'optimizer_state_dict': model.optimizer.state_dict(),
+				'train_loss' : train_loss_epoch,
+				'val_loss' : min_val_loss,
+				'val_bleu_score': max_val_score,
+				'val_acc_score': acc_score
+			}
+			logger.debug('Validation Bleu: {}'.format(val_score_epoch[0]))
+
+			save_checkpoint(state, epoch + epoch_offset, logger, config.model_path, config.ckpt)
+			estop_count =0
+		else:
