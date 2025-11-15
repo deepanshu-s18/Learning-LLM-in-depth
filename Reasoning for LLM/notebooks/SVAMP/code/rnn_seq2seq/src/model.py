@@ -488,3 +488,24 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 					f_out.write('Source: ' + stack_to_string(sent1s[i]) + '\n')
 					f_out.write('Target: ' + stack_to_string(sent2s[i]) + '\n')
 					f_out.write('Generated: ' + stack_to_string(decoder_output[i]) + '\n' + '\n')
+				except:
+					logger.warning('Exception: Failed to generate')
+					pdb.set_trace()
+					break
+			f_out.write('---------------------------------------\n')
+			f_out.close()
+
+		if batch_num % config.display_freq ==0:
+			for i in range(len(sent1s[:display_n])):
+				try:
+					od = OrderedDict()
+					logger.info('-------------------------------------')
+					od['Source'] = ' '.join(sent1s[i])
+
+					od['Target'] = ' '.join(sent2s[i])
+
+					od['Generated'] = ' '.join(decoder_output[i])
+					print_log(logger, od)
+					logger.info('-------------------------------------')
+				except:
+					logger.warning('Exception: Failed to generate')
