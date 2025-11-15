@@ -467,3 +467,24 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 
 		ques = data['ques']
 
+		sent1_var, sent2_var, input_len1, input_len2 = process_batch(sent1s, sent2s, voc1, voc2, device)
+
+		val_loss, decoder_output, decoder_attn = model.greedy_decode(ques, sent2_var, input_len2, validation=True)
+
+		acc_score += cal_score(decoder_output, nums, ans)
+
+		sent1s = idx_to_sents(voc1, sent1_var, no_eos= True)
+		sent2s = idx_to_sents(voc2, sent2_var, no_eos= True)
+
+		refs += [[' '.join(sent2s[i])] for i in range(sent2_var.size(1))]
+		hyps += [' '.join(decoder_output[i]) for i in range(sent1_var.size(1))]
+
+		with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+			f_out.write('Batch: ' + str(batch_num) + '\n')
+			f_out.write('---------------------------------------\n')
+			for i in range(len(sent1s[:display_n])):
+				try:
+					f_out.write('Example: ' + str(i) + '\n')
+					f_out.write('Source: ' + stack_to_string(sent1s[i]) + '\n')
+					f_out.write('Target: ' + stack_to_string(sent2s[i]) + '\n')
+					f_out.write('Generated: ' + stack_to_string(decoder_output[i]) + '\n' + '\n')
