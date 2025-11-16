@@ -40,3 +40,24 @@ class Seq2SeqModel(nn.Module):
 		self.SOS_token = voc2.get_id(SOS_tag)
 		self.logger = logger
 		self.num_iters = num_iters
+
+		self.embedding2 = nn.Embedding(self.voc2.nwords, self.config.emb2_size)
+		nn.init.uniform_(self.embedding2.weight, -1 * self.config.init_range, self.config.init_range)
+
+		if self.config.embedding == 'bert':
+			self.embedding1 = BertEncoder(self.config.emb_name, self.device, self.config.freeze_emb)
+		elif self.config.embedding == 'roberta':
+			self.embedding1 = RobertaEncoder(self.config.emb_name, self.device, self.config.freeze_emb)
+		elif self.config.embedding == 'word2vec':
+			self.config.emb1_size = 300
+			self.embedding1 = nn.Embedding.from_pretrained(torch.FloatTensor(self._form_embeddings(self.config.word2vec_bin)), freeze = self.config.freeze_emb)
+		else:
+			self.embedding1  = nn.Embedding(self.voc1.nwords, self.config.emb1_size)
+			nn.init.uniform_(self.embedding1.weight, -1 * self.config.init_range, self.config.init_range)
+
+		self.logger.debug('Building Encoders...')
+		self.encoder = Encoder(
+			self.config.hidden_size,
+			self.config.emb1_size,
+			self.config.cell_type,
+			self.config.depth,
