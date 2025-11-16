@@ -552,3 +552,24 @@ def get_hiddens(config, model, val_dataloader, voc1, voc2, device):
 
 			type_rep = []
 			operand_types = []
+
+			for w in range(len(words)):
+				if words[w] == '/':
+					if words[w-1][0] == 'n':
+						operand_types.append(['dividend', words[w-1]])
+					if words[w+1][0] == 'n':
+						operand_types.append(['divisor', words[w+1]])
+				elif words[w] == '-':
+					if words[w-1][0] == 'n':
+						operand_types.append(['minuend', words[w-1]])
+					if words[w+1][0] == 'n':
+						operand_types.append(['subtrahend', words[w+1]])
+
+			for z in range(len(operand_types)):
+				entity = operand_types[z][1]
+				for y in range(len(hidden)):
+					if hidden[y][0] == entity:
+						type_rep.append([operand_types[z][0], hidden[y][1]])
+
+			hiddens = hiddens + hidden
+			operands = operands + type_rep
