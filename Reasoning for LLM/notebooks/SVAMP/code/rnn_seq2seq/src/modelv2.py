@@ -82,3 +82,24 @@ class Seq2SeqModel(nn.Module):
 										 self.voc2.nwords,
 										 self.config.depth,
 										 self.config.dropout).to(device)
+
+		self.logger.debug('Decoder RNN Built...')
+
+		self.logger.debug('Initalizing Optimizer and Criterion...')
+		self._initialize_optimizer()
+
+		# nn.CrossEntropyLoss() does both F.log_softmax() and nn.NLLLoss() 
+		self.criterion = nn.NLLLoss() 
+
+		self.logger.info('All Model Components Initialized...')
+
+	def _form_embeddings(self, file_path):
+		weights_all = models.KeyedVectors.load_word2vec_format(file_path, limit=200000, binary=True)
+		weight_req  = torch.randn(self.voc1.nwords, self.config.emb1_size)
+		for key, value in self.voc1.id2w.items():
+			if value in weights_all:
+				weight_req[key] = torch.FloatTensor(weights_all[value])
+
+		return weight_req	
+
+	def _initialize_optimizer(self):
