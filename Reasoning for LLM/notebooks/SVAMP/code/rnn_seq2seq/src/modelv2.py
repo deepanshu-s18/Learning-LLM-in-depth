@@ -103,3 +103,24 @@ class Seq2SeqModel(nn.Module):
 		return weight_req	
 
 	def _initialize_optimizer(self):
+		self.params =   list(self.embedding1.parameters()) + \
+						list(self.encoder.parameters()) + \
+						list(self.decoder.parameters())
+
+		if self.config.separate_opt:
+			self.emb_optimizer = AdamW(self.embedding1.parameters(), lr = self.config.emb_lr, correct_bias = True)
+			self.optimizer = optim.Adam(
+				[{"params": self.encoder.parameters()},
+				{"params": self.decoder.parameters()}],
+				lr = self.config.lr,
+			)
+		else:
+			if self.config.opt == 'adam':
+				self.optimizer = optim.Adam(
+					[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+					{"params": self.encoder.parameters()},
+					{"params": self.decoder.parameters()}],
+					lr = self.config.lr
+				)
+			elif self.config.opt == 'adadelta':
+				self.optimizer = optim.Adadelta(
