@@ -146,3 +146,24 @@ class Seq2SeqModel(nn.Module):
 
 	def forward(self, input_seq1, input_seq2, input_len1, input_len2):
 		'''
+			Args:
+				input_seq1 (tensor): values are word indexes | size : [max_len x batch_size]
+				input_len1 (tensor): Length of each sequence in input_len1 | size : [batch_size]
+				input_seq2 (tensor): values are word indexes | size : [max_len x batch_size]
+				input_len2 (tensor): Length of each sequence in input_len2 | size : [batch_size]
+			Returns:
+				out (tensor) : Probabilities of each output label for each point | size : [batch_size x num_labels]
+		'''
+
+	def trainer(self, ques, input_seq1, input_seq2, input_len1, input_len2, config, device=None ,logger=None):
+		'''
+			Args:
+				ques (list): input examples as is (i.e. not indexed) | size : [batch_size]
+			Returns:
+				
+		'''
+		self.optimizer.zero_grad()
+		if self.config.separate_opt:
+			self.emb_optimizer.zero_grad()
+
+		if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
