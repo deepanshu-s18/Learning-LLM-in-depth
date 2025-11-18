@@ -167,3 +167,24 @@ class Seq2SeqModel(nn.Module):
 			self.emb_optimizer.zero_grad()
 
 		if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+			input_seq1, input_len1 = self.embedding1(ques)
+			input_seq1 = input_seq1.transpose(0,1)
+			# input_seq1: Tensor [max_len x BS x emb1_size]
+			# input_len1: List [BS]
+			sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+			# sorted_seqs: Tensor [max_len x BS x emb1_size]
+			# input_len1: List [BS]
+			# orig_idx: Tensor [BS]
+		else:
+			sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+			sorted_seqs = self.embedding1(sorted_seqs)
+
+		encoder_outputs, encoder_hidden = self.encoder(sorted_seqs, sorted_len, orig_idx, self.device)
+		
+		self.loss =0
+
+		decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device = self.device)
+
+		if config.cell_type == 'lstm':
+			decoder_hidden = (encoder_hidden[0][:self.decoder.nlayers], encoder_hidden[1][:self.decoder.nlayers])
+		else:
