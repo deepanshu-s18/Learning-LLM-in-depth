@@ -230,3 +230,24 @@ class Seq2SeqModel(nn.Module):
 			else:
 				sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
 				sorted_seqs = self.embedding1(sorted_seqs)
+
+			encoder_outputs, encoder_hidden = self.encoder(sorted_seqs, sorted_len, orig_idx, self.device)
+
+			loss = 0.0
+			decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device=self.device)
+
+			if self.config.cell_type == 'lstm':
+				decoder_hidden = (encoder_hidden[0][:self.decoder.nlayers], encoder_hidden[1][:self.decoder.nlayers])
+			else:
+				decoder_hidden = encoder_hidden[:self.decoder.nlayers]
+
+			decoded_words = [[] for i in range(input_seq1.size(1))]
+			decoded_probs = [[] for i in range(input_seq1.size(1))]
+			decoder_attentions = []
+
+			if validation:
+				target_len = max(input_len2)
+			else:
+				target_len = self.config.max_length
+
+			for step in range(target_len):
