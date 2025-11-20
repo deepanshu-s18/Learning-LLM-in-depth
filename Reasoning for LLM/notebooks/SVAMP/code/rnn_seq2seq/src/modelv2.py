@@ -399,3 +399,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 
 		val_bleu_epoch, val_loss_epoch, val_acc_epoch = run_validation(config=config, model=model, dataloader=val_dataloader, voc1=voc1, voc2=voc2, device=device, logger=logger, epoch_num = epoch)
 
+		if train_loss_epoch < min_train_loss:
+			min_train_loss = train_loss_epoch
+
+		if train_acc_epoch > max_train_acc:
+			max_train_acc = train_acc_epoch
+
+		if val_bleu_epoch[0] > max_val_bleu:
+			max_val_bleu = val_bleu_epoch[0]
+
+		if val_loss_epoch < min_val_loss:
+			min_val_loss = val_loss_epoch
+
+		if val_acc_epoch > max_val_acc:
+			max_val_acc = val_acc_epoch
+			best_epoch = epoch + epoch_offset
+
+			if config.separate_opt:
+				state = {
+					'epoch' : epoch + epoch_offset,
+					'best_epoch': best_epoch,
+					'model_state_dict': model.state_dict(),
