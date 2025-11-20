@@ -272,3 +272,25 @@ class Seq2SeqModel(nn.Module):
 					return loss/target_len, decoded_words, decoder_attentions[:step + 1]
 				else:
 					return loss/target_len, decoded_words, None
+			else:
+				if return_probs:
+					return decoded_words, decoded_probs
+
+				return decoded_words
+
+	def obtain_hidden(self, config, ques, input_seq1=None, input_seq2=None, input_len1=None, input_len2=None):
+		with torch.no_grad():
+			if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+				input_seq1, input_len1 = self.embedding1(ques)
+				input_seq1 = input_seq1.transpose(0,1)
+				sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+			else:
+				sorted_seqs, sorted_len, orig_idx = sort_by_len(input_seq1, input_len1, self.device)
+				sorted_seqs = self.embedding1(sorted_seqs)
+
+			encoder_outputs, encoder_hidden = self.encoder(sorted_seqs, sorted_len, orig_idx, self.device)
+
+			loss =0.0
+			decoder_input = torch.tensor([self.SOS_token for i in range(input_seq1.size(1))], device=self.device)
+
+			if self.config.cell_type == 'lstm':
