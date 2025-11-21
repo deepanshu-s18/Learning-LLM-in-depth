@@ -505,3 +505,24 @@ def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_
 	batch_num = 1
 	val_loss_epoch = 0.0
 	val_bleu_epoch = 0.0
+	val_acc_epoch = 0.0
+	val_acc_epoch_cnt = 0.0
+	val_acc_epoch_tot = 0.0
+
+	model.eval()
+
+	refs= []
+	hyps= []
+
+	if config.mode == 'test':
+		questions, gen_eqns, act_eqns, scores = [], [], [], []
+
+	display_n = config.batch_size
+
+	with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+		f_out.write('---------------------------------------\n')
+		f_out.write('Epoch: ' + str(epoch_num) + '\n')
+		f_out.write('---------------------------------------\n')
+	total_batches = len(dataloader)
+	for data in dataloader:
+		sent1s = sents_to_idx(voc1, data['ques'], config.max_length)
