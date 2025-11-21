@@ -484,3 +484,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 		if config.histogram and config.save_writer and writer:
 			for name, param in model.named_parameters():
 				writer.add_histogram(name, param, epoch + epoch_offset)
+
+		if estop_count > config.early_stopping:
+			logger.debug('Early Stopping at Epoch: {} after no improvement in {} epochs'.format(epoch, estop_count))
+			break
+
+	if config.save_writer:
+		writer.export_scalars_to_json(os.path.join(config.board_path, 'all_scalars.json'))
+		writer.close()
+
+	logger.info('Training Completed for {} epochs'.format(config.epochs))
+
+	if config.results:
+		store_results(config, max_val_bleu, max_val_acc, min_val_loss, max_train_acc, min_train_loss, best_epoch)
+		logger.info('Scores saved at {}'.format(config.result_path))
+
+	return max_val_acc
+
+def run_validation(config, model, dataloader, voc1, voc2, device, logger, epoch_num):
+	batch_num = 1
+	val_loss_epoch = 0.0
+	val_bleu_epoch = 0.0
