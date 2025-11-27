@@ -32,3 +32,15 @@ def expr2tree(string):
     node.left  = expr2tree(' '.join(tokens[:i]))
     node.right = expr2tree(' '.join(tokens[i+1:])) 
     return node
+
+def infix2prefix(equation):
+    tree_root = expr2tree(equation)
+    prefix = preorder(tree_root, '')
+    return prefix
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-eqn', required=True, type = str)
+    args = parser.parse_args()
+
+    print(infix2prefix(args.eqn))
