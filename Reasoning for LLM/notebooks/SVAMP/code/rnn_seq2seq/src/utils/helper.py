@@ -235,3 +235,25 @@ class Voc2:
 
 		assert len(self.w2id) == self.nwords
 		assert len(self.id2w) == self.nwords
+ 
+def bleu_scorer(ref, hyp, script='default'):
+	'''
+		Bleu Scorer (Send list of list of references, and a list of hypothesis)
+	'''
+	refsend = []
+	for i in range(len(ref)):
+		refsi = []
+		for j in range(len(ref[i])):
+			refsi.append(ref[i][j].split())
+		refsend.append(refsi)
+
+	gensend = []
+	for i in range(len(hyp)):
+		gensend.append(hyp[i].split())
+
+	if script == 'nltk':
+		 metrics = corpus_bleu(refsend, gensend)
+		 return [metrics]
+
+	metrics = compute_bleu(refsend, gensend)
+	return metrics
