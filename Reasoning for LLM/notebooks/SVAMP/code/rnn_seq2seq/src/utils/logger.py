@@ -67,3 +67,26 @@ def store_results(config, max_val_bleu, max_val_acc, min_val_loss, max_train_acc
 		, 'lr' : config.lr
 		, 'batch_size' : config.batch_size
 		, 'dropout' : config.dropout
+		, 'separate optimizers' : config.separate_opt
+		, 'opt' : config.opt
+		}
+		res_data[str(config.run_name)] = data
+
+		with open(config.result_path, 'w', encoding='utf-8') as f:
+			json.dump(res_data, f, ensure_ascii= False, indent= 4)
+	except:
+		pdb.set_trace()
+
+def store_val_results(config, acc_score, folds_scores):
+	try:
+		with open(config.val_result_path) as f:
+			res_data = json.load(f)
+	except:
+		res_data = {}
+
+	try:
+		data= {'run_name' : str(config.run_name)
+		, '5-fold avg acc score' : str(acc_score)
+		, 'Fold0 acc' : folds_scores[0]
+		, 'Fold1 acc' : folds_scores[1]
+		, 'Fold2 acc' : folds_scores[2]
