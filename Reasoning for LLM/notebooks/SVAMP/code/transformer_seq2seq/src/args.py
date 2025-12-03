@@ -47,3 +47,27 @@ def build_parser():
 	parser.add_argument('-encoder_layers', type=int, default=6, help='Number of layers in encoder')
 	parser.add_argument('-decoder_layers', type=int, default=6, help='Number of layers in decoder')
 	parser.add_argument('-d_model', type=int, default=300, help='the number of expected features in the encoder inputs') #768? features of BERT? HAS TO BE 300 if using word2Vec
+	parser.add_argument('-d_ff', type=int, default=1200, help='Embedding dimensions of intermediate FFN Layer (refer Vaswani et. al)')
+	parser.add_argument('-lr', type=float, default=0.001, help='Learning rate')
+	parser.add_argument('-dropout', type=float, default=0.1, help= 'Dropout probability for input/output/state units (0.0: no dropout)')
+	parser.add_argument('-warmup', type=float, default=0.1, help='Proportion of training to perform linear learning rate warmup for')
+	parser.add_argument('-max_grad_norm', type=float, default=0.25, help='Clip gradients to this norm')
+	parser.add_argument('-batch_size', type=int, default=16, help='Batch size')
+
+	parser.add_argument('-max_length', type=int, default=80, help='Specify max decode steps: Max length string to output')
+	parser.add_argument('-init_range', type=float, default=0.08, help='Initialization range for seq2seq model')
+	
+	parser.add_argument('-embedding', type=str, default='word2vec', choices=['bert', 'roberta', 'word2vec', 'random'], help='Embeddings')
+	parser.add_argument('-word2vec_bin', type=str, default='/datadrive/satwik/global_data/GoogleNews-vectors-negative300.bin', help='Binary file of word2vec')
+	parser.add_argument('-emb_name', type=str, default='roberta-base', choices=['bert-base-uncased', 'roberta-base'], help='Which pre-trained model')
+	parser.add_argument('-emb_lr', type=float, default=1e-5, help='Larning rate to train embeddings')
+	parser.add_argument('-freeze_emb', dest='freeze_emb', action='store_true', help='Freeze embedding weights')
+	parser.add_argument('-no-freeze_emb', dest='freeze_emb', action='store_false', help='Train embedding weights')
+	parser.set_defaults(freeze_emb=False)
+
+	parser.add_argument('-epochs', type=int, default=10, help='Maximum # of training epochs')
+	parser.add_argument('-opt', type=str, default='adamw', choices=['adam', 'adamw', 'adadelta', 'sgd', 'asgd'], help='Optimizer for training')
+
+	parser.add_argument('-grade_disp', dest='grade_disp', action='store_true', help='Display grade information in validation outputs')
+	parser.add_argument('-no-grade_disp', dest='grade_disp', action='store_false', help='Don\'t display grade information')
+	parser.set_defaults(grade_disp=False)
