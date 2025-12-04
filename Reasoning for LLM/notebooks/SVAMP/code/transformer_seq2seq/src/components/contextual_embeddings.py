@@ -71,3 +71,27 @@ class RobertaEncoder(nn.Module):
 		
 		if freeze_roberta:
 			for p in self.roberta_layer.parameters():
+				p.requires_grad = False
+		
+	def robertify_input(self, sentences):
+		'''
+		Preprocess the input sentences using roberta tokenizer and converts them to a torch tensor containing token ids
+		
+		Args:
+			sentences (list): source sentences
+		Returns:
+			token_ids (tensor): tokenized sentences | size: [BS x S]
+			attn_masks (tensor): masks padded indices | size: [BS x S]
+			input_lengths (list): lengths of sentences | size: [BS]
+		'''
+
+		# Tokenize the input sentences for feeding into RoBERTa
+		all_tokens  = [['<s>'] + self.roberta_tokenizer.tokenize(sentence) + ['</s>'] for sentence in sentences]
+		
+		# Pad all the sentences to a maximum length
+		input_lengths = [len(tokens) for tokens in all_tokens]
+		max_length    = max(input_lengths)
+		padded_tokens = [tokens + ['<pad>' for _ in range(max_length - len(tokens))] for tokens in all_tokens]
+
+		# Convert tokens to token ids
+		token_ids = torch.tensor([self.roberta_tokenizer.convert_tokens_to_ids(tokens) for tokens in padded_tokens]).to(self.device)
