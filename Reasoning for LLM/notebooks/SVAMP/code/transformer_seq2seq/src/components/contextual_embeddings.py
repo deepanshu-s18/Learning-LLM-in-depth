@@ -46,3 +46,28 @@ class BertEncoder(nn.Module):
 	def forward(self, sentences):
 		'''
 		Feed the batch of sentences to a BERT encoder to obtain contextualized representations of each token
+		
+		Args:
+			sentences (list): source sentences
+		Returns:
+			cont_reps (tensor): BERT Embeddings | size: [BS x S x d_model]
+			token_ids (tensor): tokenized sentences | size: [BS x S]
+		'''
+
+		# Preprocess sentences
+		token_ids, attn_masks, input_lengths = self.bertify_input(sentences)
+
+		# Feed through bert
+		cont_reps, _ = self.bert_layer(token_ids, attention_mask = attn_masks)
+
+		return cont_reps, token_ids
+
+class RobertaEncoder(nn.Module):
+	def __init__(self, roberta_model = 'roberta-base', device = 'cuda:0 ', freeze_roberta = False):
+		super(RobertaEncoder, self).__init__()
+		self.roberta_layer = RobertaModel.from_pretrained(roberta_model)
+		self.roberta_tokenizer = RobertaTokenizer.from_pretrained(roberta_model)
+		self.device = device
+		
+		if freeze_roberta:
+			for p in self.roberta_layer.parameters():
