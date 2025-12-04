@@ -95,3 +95,28 @@ class RobertaEncoder(nn.Module):
 
 		# Convert tokens to token ids
 		token_ids = torch.tensor([self.roberta_tokenizer.convert_tokens_to_ids(tokens) for tokens in padded_tokens]).to(self.device)
+
+		# Obtain attention masks
+		pad_token = self.roberta_tokenizer.convert_tokens_to_ids('<pad>')
+		attn_masks = (token_ids != pad_token).long()
+
+		return token_ids, attn_masks, input_lengths
+
+	def forward(self, sentences):
+		'''
+		Feed the batch of sentences to a RoBERTa encoder to obtain contextualized representations of each token
+		
+		Args:
+			sentences (list): source sentences
+		Returns:
+			cont_reps (tensor): RoBERTa Embeddings | size: [BS x S x d_model]
+			token_ids (tensor): tokenized sentences | size: [BS x S]
+		'''
+		
+		# Preprocess sentences
+		token_ids, attn_masks, input_lengths = self.robertify_input(sentences)
+
+		# Feed through RoBERTa
+		cont_reps, _ = self.roberta_layer(token_ids, attention_mask = attn_masks)
+
+		return cont_reps, token_ids
