@@ -108,3 +108,25 @@ def main():
 		global data_path 
 		data_name = config.dataset
 		data_path = data_path + data_name + '/'
+		config.val_result_path = os.path.join(result_folder, 'CV_results_{}.json'.format(data_name))
+		fold_acc_score = 0.0
+		folds_scores = []
+		for z in range(5):
+			run_name = config.run_name + '_fold' + str(z)
+			config.dataset = 'fold' + str(z)
+			config.log_path = os.path.join(log_folder, run_name)
+			config.model_path = os.path.join(model_folder, run_name)
+			config.board_path = os.path.join(board_path, run_name)
+			config.outputs_path = os.path.join(outputs_folder, run_name)
+
+			vocab1_path = os.path.join(config.model_path, 'vocab1.p')
+			vocab2_path = os.path.join(config.model_path, 'vocab2.p')
+			config_file = os.path.join(config.model_path, 'config.p')
+			log_file = os.path.join(config.log_path, 'log.txt')
+
+			if config.results:
+				config.result_path = os.path.join(result_folder, 'val_results_{}_{}.json'.format(data_name, config.dataset))
+
+			if is_train:
+				create_save_directories(config.log_path)
+				create_save_directories(config.model_path)
