@@ -64,3 +64,25 @@ def load_data(config, logger):
 		train_size = len(train_dataloader) * config.batch_size
 		val_size = len(val_dataloader)* config.batch_size
 		
+		msg = 'Training and Validation Data Loaded:\nTrain Size: {}\nVal Size: {}'.format(train_size, val_size)
+		logger.info(msg)
+
+		return train_dataloader, val_dataloader
+
+	elif config.mode == 'test':
+		logger.debug('Loading Test Data...')
+
+		test_set = TextDataset(data_path=data_path, dataset=config.dataset,
+							   datatype='test', max_length=config.max_length, is_debug=config.debug)
+		test_dataloader = DataLoader(
+			test_set, batch_size=config.batch_size, shuffle=True, num_workers=5)
+
+		logger.info('Test Data Loaded...')
+		return test_dataloader
+
+	else:
+		logger.critical('Invalid Mode Specified')
+		raise Exception('{} is not a valid mode'.format(config.mode))
+
+
+def main():
