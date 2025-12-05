@@ -130,3 +130,25 @@ def main():
 			if is_train:
 				create_save_directories(config.log_path)
 				create_save_directories(config.model_path)
+				create_save_directories(config.outputs_path)
+			else:
+				create_save_directories(config.log_path)
+				create_save_directories(config.result_path)
+
+			logger = get_logger(run_name, log_file, logging.DEBUG)
+			writer = SummaryWriter(config.board_path)
+
+			logger.debug('Created Relevant Directories')
+			logger.info('Experiment Name: {}'.format(config.run_name))
+
+			'''Read Files and create/load Vocab'''
+			if is_train:
+				train_dataloader, val_dataloader = load_data(config, logger)
+
+				logger.debug('Creating Vocab...')
+
+				voc1 = Voc1()
+				voc1.create_vocab_dict(config, train_dataloader)
+
+				# Removed
+				# voc1.add_to_vocab_dict(config, val_dataloader)
