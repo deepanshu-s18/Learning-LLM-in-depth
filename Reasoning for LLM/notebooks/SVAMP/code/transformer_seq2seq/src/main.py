@@ -174,3 +174,25 @@ def main():
 
 				with open(vocab1_path, 'rb') as f:
 					voc1 = pickle.load(f)
+				with open(vocab2_path, 'rb') as f:
+					voc2 = pickle.load(f)
+
+				logger.info('Vocab Files loaded from {}\nNumber of Words: {}'.format(vocab1_path, voc1.nwords))
+
+			# TO DO : Load Existing Checkpoints here
+			checkpoint = get_latest_checkpoint(config.model_path, logger)
+
+			if is_train:
+				model = build_model(config=config, voc1=voc1, voc2=voc2, device=device, logger=logger)
+
+				logger.info('Initialized Model')
+
+				if checkpoint == None:
+					min_val_loss = torch.tensor(float('inf')).item()
+					min_train_loss = torch.tensor(float('inf')).item()
+					max_val_bleu = 0.0
+					max_val_acc = 0.0
+					max_train_acc = 0.0
+					best_epoch = 0
+					epoch_offset = 0
+				else:
