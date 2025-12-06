@@ -262,3 +262,25 @@ def main():
 		vocab2_path = os.path.join(config.model_path, 'vocab2.p')
 		config_file = os.path.join(config.model_path, 'config.p')
 		log_file = os.path.join(config.log_path, 'log.txt')
+
+		if config.results:
+			config.result_path = os.path.join(result_folder, 'val_results_{}.json'.format(config.dataset))
+
+		if is_train:
+			create_save_directories(config.log_path)
+			create_save_directories(config.model_path)
+			create_save_directories(config.outputs_path)
+		else:
+			create_save_directories(config.log_path)
+			create_save_directories(config.result_path)
+
+		logger = get_logger(run_name, log_file, logging.DEBUG)
+		writer = SummaryWriter(config.board_path)
+
+		logger.debug('Created Relevant Directories')
+		logger.info('Experiment Name: {}'.format(config.run_name))
+
+		'''Read Files and create/load Vocab'''
+		if is_train:
+			train_dataloader, val_dataloader = load_data(config, logger)
+
