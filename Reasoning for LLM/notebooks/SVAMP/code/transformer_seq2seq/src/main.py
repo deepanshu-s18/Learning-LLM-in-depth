@@ -328,3 +328,25 @@ def main():
 
 			if checkpoint == None:
 				min_val_loss = torch.tensor(float('inf')).item()
+				min_train_loss = torch.tensor(float('inf')).item()
+				max_val_bleu = 0.0
+				max_val_acc = 0.0
+				max_train_acc = 0.0
+				best_epoch = 0
+				epoch_offset = 0
+			else:
+				epoch_offset, min_train_loss, min_val_loss, max_train_acc, max_val_acc, max_val_bleu, best_epoch, voc1, voc2 = \
+																	load_checkpoint(model, config.mode, checkpoint, logger, device)
+
+			with open(config_file, 'wb') as f:
+				pickle.dump(vars(config), f, protocol=pickle.HIGHEST_PROTOCOL)
+
+			logger.debug('Config File Saved')
+
+			logger.info('Starting Training Procedure')
+			train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, config, logger, 
+						epoch_offset, min_val_loss, max_val_bleu, max_val_acc, min_train_loss, max_train_acc, best_epoch, writer)
+
+		else:
+			gpu = config.gpu
+			mode = config.mode
