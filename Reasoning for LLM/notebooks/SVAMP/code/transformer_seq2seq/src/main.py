@@ -284,3 +284,25 @@ def main():
 		if is_train:
 			train_dataloader, val_dataloader = load_data(config, logger)
 
+			logger.debug('Creating Vocab...')
+
+			voc1 = Voc1()
+			voc1.create_vocab_dict(config, train_dataloader)
+
+			# Removed
+			# voc1.add_to_vocab_dict(config, val_dataloader)
+
+			voc2 = Voc2(config)
+			voc2.create_vocab_dict(config, train_dataloader)
+
+			# Removed
+			# voc2.add_to_vocab_dict(config, val_dataloader)
+
+			logger.info('Vocab Created with number of words : {}'.format(voc1.nwords))
+
+			with open(vocab1_path, 'wb') as f:
+				pickle.dump(voc1, f, protocol=pickle.HIGHEST_PROTOCOL)
+			with open(vocab2_path, 'wb') as f:
+				pickle.dump(voc2, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+			logger.info('Vocab saved at {}'.format(vocab1_path))
