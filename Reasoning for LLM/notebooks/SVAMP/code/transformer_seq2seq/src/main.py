@@ -306,3 +306,25 @@ def main():
 				pickle.dump(voc2, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 			logger.info('Vocab saved at {}'.format(vocab1_path))
+
+		else:
+			test_dataloader = load_data(config, logger)
+			logger.info('Loading Vocab File...')
+
+			with open(vocab1_path, 'rb') as f:
+				voc1 = pickle.load(f)
+			with open(vocab2_path, 'rb') as f:
+				voc2 = pickle.load(f)
+
+			logger.info('Vocab Files loaded from {}\nNumber of Words: {}'.format(vocab1_path, voc1.nwords))
+
+		# Load Existing Checkpoints here
+		checkpoint = get_latest_checkpoint(config.model_path, logger)
+
+		if is_train:
+			model = build_model(config=config, voc1=voc1, voc2=voc2, device=device, logger=logger)
+
+			logger.info('Initialized Model')
+
+			if checkpoint == None:
+				min_val_loss = torch.tensor(float('inf')).item()
