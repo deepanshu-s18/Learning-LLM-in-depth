@@ -218,3 +218,25 @@ def main():
 					config.gpu = gpu
 					config.mode = mode
 					config.dataset = dataset
+					config.batch_size = batch_size
+
+				with open(config_file, 'rb') as f:
+					config = AttrDict(pickle.load(f))
+					config.gpu = gpu
+
+				model = build_model(config=config, voc1=voc1, voc2=voc2, device=device, logger=logger)
+
+				epoch_offset, min_train_loss, min_val_loss, max_train_acc, max_val_acc, max_val_bleu, best_epoch, voc1, voc2 = \
+																		load_checkpoint(model, config.mode, checkpoint, logger, device)
+
+				logger.info('Prediction from')
+				od = OrderedDict()
+				od['epoch'] = ep_offset
+				od['min_train_loss'] = min_train_loss
+				od['min_val_loss'] = min_val_loss
+				od['max_train_acc'] = max_train_acc
+				od['max_val_acc'] = max_val_acc
+				od['max_val_bleu'] = max_val_bleu
+				od['best_epoch'] = best_epoch
+				print_log(logger, od)
+
