@@ -39,3 +39,24 @@ class PositionalEncoding(nn.Module):
 
 	def forward(self, x):
 		'''
+			Args:
+				x (tensor): embeddings | size : [max_len x batch_size x d_model]
+			Returns:
+				z (tensor) : embeddings with positional encoding | size : [max_len x batch_size x d_model]
+		'''
+		
+		x = x + self.scale * self.pe[:x.size(0), :]
+		z = self.dropout(x)
+		return z
+
+class TransformerModel(nn.Module):
+	def __init__(self, config, voc1, voc2, device, logger, EOS_tag = '</s>', SOS_tag = '<s>'):
+		super(TransformerModel, self).__init__()
+		self.config = config
+		self.device = device
+		self.voc1 = voc1
+		self.voc2 = voc2
+		self.EOS_tag = EOS_tag
+		self.SOS_tag = SOS_tag
+		self.EOS_token = voc2.get_id(EOS_tag)
+		self.SOS_token = voc2.get_id(SOS_tag)
