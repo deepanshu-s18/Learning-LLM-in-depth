@@ -372,3 +372,25 @@ def main():
 			od = OrderedDict()
 			od['epoch'] = ep_offset
 			od['min_train_loss'] = min_train_loss
+			od['min_val_loss'] = min_val_loss
+			od['max_train_acc'] = max_train_acc
+			od['max_val_acc'] = max_val_acc
+			od['max_val_bleu'] = max_val_bleu
+			od['best_epoch'] = best_epoch
+			print_log(logger, od)
+
+			test_acc_epoch = run_validation(config, model, test_dataloader, voc1, voc2, device, logger, 0)
+			logger.info('Accuracy: {}'.format(test_acc_epoch))
+
+
+if __name__ == '__main__':
+	main()
+
+
+''' Just docstring format '''
+# class Vehicles(object):
+# 	'''
+# 	The Vehicle object contains a lot of vehicles
+
+# 	Args:
+# 		arg (str): The arg is used for...
