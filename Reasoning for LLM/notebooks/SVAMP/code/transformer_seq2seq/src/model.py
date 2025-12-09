@@ -123,3 +123,24 @@ class TransformerModel(nn.Module):
 				weight_req[key] = torch.FloatTensor(weights_all[value])
 
 		return weight_req
+
+	def _initialize_optimizer(self):
+		self.params = list(self.embedding1.parameters()) + list(self.transformer.parameters()) + list(self.fc_out.parameters()) + \
+						list(self.embedding2.parameters()) + list(self.pos_embedding1.parameters()) + list(self.pos_embedding2.parameters())
+		self.non_emb_params = list(self.transformer.parameters()) + list(self.fc_out.parameters()) + list(self.embedding2.parameters()) + \
+								list(self.pos_embedding1.parameters()) + list(self.pos_embedding2.parameters())
+
+		if self.config.opt == 'adam':
+			self.optimizer = optim.Adam(
+				[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+				{"params": self.non_emb_params, "lr": self.config.lr}]
+			)
+		elif self.config.opt == 'adamw':
+			self.optimizer = optim.AdamW(
+				[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+				{"params": self.non_emb_params, "lr": self.config.lr}]
+			)
+		elif self.config.opt == 'adadelta':
+			self.optimizer = optim.Adadelta(
+				[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+				{"params": self.non_emb_params, "lr": self.config.lr}]
