@@ -144,3 +144,24 @@ class TransformerModel(nn.Module):
 			self.optimizer = optim.Adadelta(
 				[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
 				{"params": self.non_emb_params, "lr": self.config.lr}]
+			)
+		elif self.config.opt == 'asgd':
+			self.optimizer = optim.ASGD(
+				[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+				{"params": self.non_emb_params, "lr": self.config.lr}]
+			)
+		else:
+			self.optimizer = optim.SGD(
+				[{"params": self.embedding1.parameters(), "lr": self.config.emb_lr},
+				{"params": self.non_emb_params, "lr": self.config.lr}]
+			)
+
+	def generate_square_subsequent_mask(self, sz):
+		'''
+			Args:
+				sz (integer): max_len of sequence in target without EOS i.e. (T-1)
+			Returns:
+				mask (tensor) : square mask | size : [T-1 x T-1]
+		'''
+
+		mask = torch.triu(torch.ones(sz, sz), 1)
