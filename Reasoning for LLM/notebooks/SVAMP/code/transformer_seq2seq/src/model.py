@@ -81,3 +81,24 @@ class TransformerModel(nn.Module):
 		self.pos_embedding1 = PositionalEncoding(self.config.d_model, self.config.dropout)
 
 		self.embedding2  = nn.Embedding(self.voc2.nwords, self.config.d_model)
+		nn.init.uniform_(self.embedding2.weight, -1 * self.config.init_range, self.config.init_range)
+		
+		self.pos_embedding2 = PositionalEncoding(self.config.d_model, self.config.dropout)
+
+		self.logger.debug('Embeddings initialised.....')
+		self.logger.debug('Building Transformer Model.....')
+
+		self.transformer = nn.Transformer(d_model=self.config.d_model, nhead=self.config.heads, 
+											num_encoder_layers=self.config.encoder_layers, num_decoder_layers=self.config.decoder_layers, 
+											dim_feedforward=self.config.d_ff, dropout=self.config.dropout)
+		
+		self.fc_out = nn.Linear(self.config.d_model, self.voc2.nwords)
+
+		self.logger.debug('Transformer Model Built.....')
+
+		self.src_mask = None
+		self.trg_mask = None
+		self.memory_mask = None
+
+		self.logger.debug('Initalizing Optimizer and Criterion...')
+
