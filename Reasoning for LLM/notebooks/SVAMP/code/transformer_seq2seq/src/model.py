@@ -165,3 +165,24 @@ class TransformerModel(nn.Module):
 		'''
 
 		mask = torch.triu(torch.ones(sz, sz), 1)
+		mask = mask.masked_fill(mask==1, float('-inf'))
+		return mask
+
+	def make_len_mask(self, inp):
+		'''
+			Args:
+				inp (tensor): input indices | size : [S x BS]
+			Returns:
+				mask (tensor) : pad mask | size : [BS x S]
+		'''
+
+		mask = (inp == -1).transpose(0, 1)
+		return mask
+		# return (inp == self.EOS_token).transpose(0, 1)
+
+	def forward(self, ques, src, trg):
+		'''
+			Args:
+				ques (list): raw source input | size : [BS]
+				src (tensor): source indices | size : [S x BS]
+				trg (tensor): target indices | size : [T x BS]
