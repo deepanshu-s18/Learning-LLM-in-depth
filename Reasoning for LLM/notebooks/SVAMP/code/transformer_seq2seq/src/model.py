@@ -186,3 +186,24 @@ class TransformerModel(nn.Module):
 				ques (list): raw source input | size : [BS]
 				src (tensor): source indices | size : [S x BS]
 				trg (tensor): target indices | size : [T x BS]
+			Returns:
+				output (tensor) : Network output | size : [T-1 x BS x voc2.nwords]
+		'''
+
+		if self.trg_mask is None or self.trg_mask.size(0) != len(trg):
+			self.trg_mask = self.generate_square_subsequent_mask(len(trg)).to(trg.device)
+
+		# trg_mask when T-1 = 4: [When decoding for position i, only indexes with 0 in the ith row are attended over]
+		# tensor([[0., -inf, -inf, -inf],
+		# 		[0., 0., -inf, -inf],
+		# 		[0., 0., 0., -inf],
+		# 		[0., 0., 0., 0.],
+
+		if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+			src, src_tokens = self.embedding1(ques)
+			src = src.transpose(0,1)
+			# src: Tensor [S x BS x d_model]
+			src_pad_mask = self.make_len_mask(src_tokens.transpose(0,1))
+			src = self.pos_embedding1(src)
+		else:
+			src_pad_mask = self.make_len_mask(src)
