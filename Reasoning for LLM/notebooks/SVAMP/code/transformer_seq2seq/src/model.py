@@ -102,3 +102,24 @@ class TransformerModel(nn.Module):
 
 		self.logger.debug('Initalizing Optimizer and Criterion...')
 
+		self._initialize_optimizer()
+
+		self.criterion = nn.CrossEntropyLoss() # nn.CrossEntropyLoss() does both F.log_softmax() and nn.NLLLoss() 
+
+		self.logger.info('All Model Components Initialized...')
+
+	def _form_embeddings(self, file_path):
+		'''
+			Args:
+				file_path (string): path of file with word2vec weights
+			Returns:
+				weight_req (tensor) : embedding matrix | size : [voc1.nwords x d_model]
+		'''
+
+		weights_all = models.KeyedVectors.load_word2vec_format(file_path, limit=200000, binary=True)
+		weight_req  = torch.randn(self.voc1.nwords, self.config.d_model)
+		for key, value in self.voc1.id2w.items():
+			if value in weights_all:
+				weight_req[key] = torch.FloatTensor(weights_all[value])
+
+		return weight_req
