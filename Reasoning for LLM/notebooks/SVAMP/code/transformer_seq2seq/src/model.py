@@ -270,3 +270,24 @@ class TransformerModel(nn.Module):
 
 			if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
 				src, _ = self.embedding1(ques)
+				src = src.transpose(0,1)
+				# src: Tensor [S x BS x emb1_size]
+				memory = self.transformer.encoder(self.pos_embedding1(src))
+			else: 
+				memory = self.transformer.encoder(self.pos_embedding1(self.embedding1(input_seq1)))
+			# memory: S x BS x d_model
+
+			input_list = [[self.SOS_token for i in range(input_seq1.size(1))]]
+
+			decoded_words = [[] for i in range(input_seq1.size(1))]
+
+			if validation:
+				target_len = max(input_len2)
+			else:
+				target_len = self.config.max_length
+
+			for step in range(target_len):
+				decoder_input = torch.LongTensor(input_list).to(self.device) # seq_len x bs
+
+				decoder_output = self.fc_out(self.transformer.decoder(self.pos_embedding2(self.embedding2(decoder_input)), memory)) # seq_len x bs x voc2.nwords
+
