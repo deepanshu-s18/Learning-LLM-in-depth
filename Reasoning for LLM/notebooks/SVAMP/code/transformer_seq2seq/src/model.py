@@ -249,3 +249,24 @@ class TransformerModel(nn.Module):
 
 		return fin_loss
 
+	def greedy_decode(self, ques=None, input_seq1=None, input_seq2=None, input_len2 = None, validation=False):
+		'''
+			Args:
+				ques (list): raw source input | size : [BS]
+				input_seq1 (tensor): source indices | size : [S x BS]
+				input_seq2 (tensor): target indices | size : [T x BS]
+				input_len2 (list): lengths of targets | size: [BS]
+				validation (bool): whether validate
+			Returns:
+				if validation:
+					validation loss (float): Validation loss
+					decoded_words (list): predicted equations | size : [BS x target_len]
+				else:
+					decoded_words (list): predicted equations | size : [BS x target_len]
+		'''
+
+		with torch.no_grad():
+			loss = 0.0
+
+			if self.config.embedding == 'bert' or self.config.embedding == 'roberta':
+				src, _ = self.embedding1(ques)
