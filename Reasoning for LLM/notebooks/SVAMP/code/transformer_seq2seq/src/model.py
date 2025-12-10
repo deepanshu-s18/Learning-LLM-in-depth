@@ -228,3 +228,24 @@ class TransformerModel(nn.Module):
 				input_seq1 (tensor): source indices | size : [S x BS]
 				input_seq2 (tensor): target indices | size : [T x BS]
 			Returns:
+				fin_loss (float) : Train Loss
+		'''
+
+		self.optimizer.zero_grad() # zero out gradients from previous backprop computations
+
+		output = self.forward(ques, input_seq1, input_seq2[:-1,:])
+		# output: (T-1) x BS x voc2.nwords [T-1 because it predicts after start symbol]
+
+		output_dim = output.shape[-1]
+		
+		self.loss = self.criterion(output.view(-1, output_dim), input_seq2[1:,:].view(-1))
+
+		self.loss.backward()
+		if self.config.max_grad_norm > 0:
+			torch.nn.utils.clip_grad_norm_(self.params, self.config.max_grad_norm)
+		self.optimizer.step()
+
+		fin_loss = self.loss.item()
+
+		return fin_loss
+
