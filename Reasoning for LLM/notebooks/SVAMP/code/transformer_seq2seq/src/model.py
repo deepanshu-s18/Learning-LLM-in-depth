@@ -207,3 +207,24 @@ class TransformerModel(nn.Module):
 			src = self.pos_embedding1(src)
 		else:
 			src_pad_mask = self.make_len_mask(src)
+			src = self.embedding1(src)
+			src = self.pos_embedding1(src)
+
+		trg_pad_mask = self.make_len_mask(trg)
+		trg = self.embedding2(trg)
+		trg = self.pos_embedding2(trg)
+
+		output = self.transformer(src, trg, src_mask=self.src_mask, tgt_mask=self.trg_mask, memory_mask=self.memory_mask,
+								  src_key_padding_mask=src_pad_mask, tgt_key_padding_mask=trg_pad_mask, memory_key_padding_mask=src_pad_mask)
+		
+		output = self.fc_out(output)
+
+		return output
+
+	def trainer(self, ques, input_seq1, input_seq2, config, device=None ,logger=None):
+		'''
+			Args:
+				ques (list): raw source input | size : [BS]
+				input_seq1 (tensor): source indices | size : [S x BS]
+				input_seq2 (tensor): target indices | size : [T x BS]
+			Returns:
