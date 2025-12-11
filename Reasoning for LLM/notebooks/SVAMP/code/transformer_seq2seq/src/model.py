@@ -396,3 +396,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 			print("Completed {} / {}...".format(batch_num, total_batches), end = '\r', flush = True)
 			batch_num+=1
 
+		train_loss_epoch = train_loss_epoch / len(train_dataloader)
+		if config.show_train_acc:
+			train_acc_epoch = train_acc_epoch_cnt/train_acc_epoch_tot
+		else:
+			train_acc_epoch = 0.0
+
+		time_taken = (time() - start_time)/60.0
+
+		if config.save_writer and writer:
+			writer.add_scalar('loss/train_loss', train_loss_epoch, epoch + epoch_offset)
+
+		logger.debug('Training for epoch {} completed...\nTime Taken: {}'.format(epoch, time_taken))
+		logger.debug('Starting Validation')
+
+		val_bleu_epoch, val_loss_epoch, val_acc_epoch = run_validation(config=config, model=model, val_dataloader=val_dataloader, 
+																	voc1=voc1, voc2=voc2, device=device, logger=logger, epoch_num = epoch)
+
+		if train_loss_epoch < min_train_loss:
+			min_train_loss = train_loss_epoch
+
+		if train_acc_epoch > max_train_acc:
