@@ -333,3 +333,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 			train_dataloader (object of class Dataloader): dataloader for train set
 			val_dataloader (object of class Dataloader): dataloader for dev set
 			voc1 (object of class Voc1): vocabulary of source
+			voc2 (object of class Voc2): vocabulary of target
+			device (torch.device): GPU device
+			config (dict): command line arguments
+			logger (logger): logger variable to log messages
+			epoch_offset (int): How many epochs of training already done
+			min_val_loss (float): minimum validation loss
+			max_val_bleu (float): maximum valiadtion bleu score
+			max_val_acc (float): maximum validation accuracy score
+			min_train_loss (float): minimum train loss
+			max_train_acc (float): maximum train accuracy
+			best_epoch (int): epoch with highest validation accuracy
+			writer (object of class SummaryWriter): writer for Tensorboard
+		Returns:
+			max_val_acc (float): maximum validation accuracy score
+	'''
+
+	if config.histogram and config.save_writer and writer:
+		for name, param in model.named_parameters():
+			writer.add_histogram(name, param, epoch_offset)
+	
+	estop_count=0
