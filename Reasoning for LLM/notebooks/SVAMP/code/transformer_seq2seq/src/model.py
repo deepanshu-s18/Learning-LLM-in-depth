@@ -291,3 +291,24 @@ class TransformerModel(nn.Module):
 
 				decoder_output = self.fc_out(self.transformer.decoder(self.pos_embedding2(self.embedding2(decoder_input)), memory)) # seq_len x bs x voc2.nwords
 
+				if validation:
+					loss += self.criterion(decoder_output[-1,:,:], input_seq2[step])
+
+				out_tokens = decoder_output.argmax(2)[-1,:] # bs
+
+				for i in range(input_seq1.size(1)):
+					if out_tokens[i].item() == self.EOS_token:
+						continue
+					decoded_words[i].append(self.voc2.get_word(out_tokens[i].item()))
+				
+				input_list.append(out_tokens.detach().tolist())
+
+			if validation:
+					return loss/target_len, decoded_words
+			else:
+				return decoded_words
+
+def build_model(config, voc1, voc2, device, logger):
+	'''
+		Args:
+			config (dict): command line arguments
