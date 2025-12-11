@@ -354,3 +354,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 			writer.add_histogram(name, param, epoch_offset)
 	
 	estop_count=0
+	
+	for epoch in range(1, config.epochs + 1):
+		od = OrderedDict()
+		od['Epoch'] = epoch + epoch_offset
+		print_log(logger, od)
+
+		batch_num = 1
+		train_loss_epoch = 0.0
+		train_acc_epoch = 0.0
+		train_acc_epoch_cnt = 0.0
+		train_acc_epoch_tot = 0.0
+		val_loss_epoch = 0.0
+
+		start_time= time()
+		total_batches = len(train_dataloader)
+
+		for data in train_dataloader:
+			ques = data['ques']
+
+			sent1s = sents_to_idx(voc1, data['ques'], config.max_length, flag=0)
+			sent2s = sents_to_idx(voc2, data['eqn'], config.max_length, flag=1)
