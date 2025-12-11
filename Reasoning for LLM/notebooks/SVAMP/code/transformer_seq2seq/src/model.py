@@ -375,3 +375,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 
 			sent1s = sents_to_idx(voc1, data['ques'], config.max_length, flag=0)
 			sent2s = sents_to_idx(voc2, data['eqn'], config.max_length, flag=1)
+			sent1_var, sent2_var, input_len1, input_len2  = process_batch(sent1s, sent2s, voc1, voc2, device)
+
+			nums = data['nums']
+			ans = data['ans']
+
+			model.train()
+
+			loss = model.trainer(ques, sent1_var, sent2_var, config, device, logger)
+			train_loss_epoch += loss
+
+			if config.show_train_acc:
+				model.eval()
+
+				_, decoder_output = model.greedy_decode(ques, sent1_var, sent2_var, input_len2, validation=True)
+				temp_acc_cnt, temp_acc_tot, _ = cal_score(decoder_output, nums, ans)
+				train_acc_epoch_cnt += temp_acc_cnt
+				train_acc_epoch_tot += temp_acc_tot
+
+			print("Completed {} / {}...".format(batch_num, total_batches), end = '\r', flush = True)
+			batch_num+=1
+
