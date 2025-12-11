@@ -312,3 +312,24 @@ def build_model(config, voc1, voc2, device, logger):
 	'''
 		Args:
 			config (dict): command line arguments
+			voc1 (object of class Voc1): vocabulary of source
+			voc2 (object of class Voc2): vocabulary of target
+			device (torch.device): GPU device
+			logger (logger): logger variable to log messages
+		Returns:
+			model (object of class TransformerModel): model 
+	'''
+
+	model = TransformerModel(config, voc1, voc2, device, logger)
+	model = model.to(device)
+
+	return model
+
+def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, config, logger, epoch_offset= 0, min_val_loss=float('inf'), 
+				max_val_bleu=0.0, max_val_acc = 0.0, min_train_loss=float('inf'), max_train_acc = 0.0, best_epoch = 0, writer= None):
+	'''
+		Args:
+			model (object of class TransformerModel): model
+			train_dataloader (object of class Dataloader): dataloader for train set
+			val_dataloader (object of class Dataloader): dataloader for dev set
+			voc1 (object of class Voc1): vocabulary of source
