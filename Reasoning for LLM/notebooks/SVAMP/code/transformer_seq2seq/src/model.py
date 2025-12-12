@@ -564,3 +564,24 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 
 		sent1s = idx_to_sents(voc1, sent1_var, no_eos= True)
 		sent2s = idx_to_sents(voc2, sent2_var, no_eos= True)
+
+		refs += [[' '.join(sent2s[i])] for i in range(sent2_var.size(1))]
+		hyps += [' '.join(decoder_output[i]) for i in range(sent1_var.size(1))]
+
+		if config.mode == 'test':
+			questions+= data['ques']
+			gen_eqns += [' '.join(decoder_output[i]) for i in range(sent1_var.size(1))]
+			act_eqns += [' '.join(sent2s[i]) for i in range(sent2_var.size(1))]
+			scores   += [cal_score([decoder_output[i]], [nums[i]], [ans[i]], [data['eqn'][i]])[0] for i in range(sent1_var.size(1))]
+
+		with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+			f_out.write('Batch: ' + str(batch_num) + '\n')
+			f_out.write('---------------------------------------\n')
+			for i in range(len(sent1s[:display_n])):
+				try:
+					f_out.write('Example: ' + str(i) + '\n')
+					if config.grade_disp:
+						f_out.write('Grade: ' + str(grade[i].item()) + '\n')
+					if config.type_disp:
+						f_out.write('Type: ' + str(type1[i]) + '\n')
+					f_out.write('Source: ' + stack_to_string(sent1s[i]) + '\n')
