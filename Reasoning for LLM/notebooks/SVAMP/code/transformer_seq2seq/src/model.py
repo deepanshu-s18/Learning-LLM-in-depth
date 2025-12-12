@@ -501,3 +501,24 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 			model (object of class TransformerModel): model
 			val_dataloader (object of class Dataloader): dataloader for dev set
 			voc1 (object of class Voc1): vocabulary of source
+			voc2 (object of class Voc2): vocabulary of target
+			device (torch.device): GPU device
+			logger (logger): logger variable to log messages
+			epoch_num (int): Ongoing epoch number
+			validation (bool): whether validating
+		Returns:
+			if config.mode == 'test':
+				max_test_acc (float): maximum test accuracy obtained
+			else:
+				val_bleu_epoch (float): validation bleu score for this epoch
+				val_loss_epoch (float): va;iadtion loss for this epoch
+				val_acc (float): validation accuracy score for this epoch
+	'''
+
+	batch_num = 1
+	val_loss_epoch = 0.0
+	val_bleu_epoch = 0.0
+	val_acc_epoch = 0.0
+	val_acc_epoch_cnt = 0.0
+	val_acc_epoch_tot = 0.0
+
