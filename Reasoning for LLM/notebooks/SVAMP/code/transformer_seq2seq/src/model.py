@@ -522,3 +522,24 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 	val_acc_epoch_cnt = 0.0
 	val_acc_epoch_tot = 0.0
 
+	model.eval() # Set specific layers such as dropout to evaluation mode
+
+	refs= []
+	hyps= []
+
+	if config.mode == 'test':
+		questions, gen_eqns, act_eqns, scores = [], [], [], []
+
+	display_n = config.batch_size
+
+	with open(config.outputs_path + '/outputs.txt', 'a') as f_out:
+		f_out.write('---------------------------------------\n')
+		f_out.write('Epoch: ' + str(epoch_num) + '\n')
+		f_out.write('---------------------------------------\n')
+	total_batches = len(val_dataloader)
+	for data in val_dataloader:
+		sent1s = sents_to_idx(voc1, data['ques'], config.max_length, flag = 0)
+		sent2s = sents_to_idx(voc2, data['eqn'], config.max_length, flag = 0)
+		nums = data['nums']
+		ans = data['ans']
+		if config.grade_disp:
