@@ -480,3 +480,24 @@ def train_model(model, train_dataloader, val_dataloader, voc1, voc2, device, con
 
 		if estop_count >config.early_stopping:
 			logger.debug('Early Stopping at Epoch: {} after no improvement in {} epochs'.format(epoch, estop_count))
+			break
+
+	if config.save_writer:
+		writer.export_scalars_to_json(os.path.join(config.board_path, 'all_scalars.json'))
+		writer.close()
+
+	logger.info('Training Completed for {} epochs'.format(config.epochs))
+
+	if config.results:
+		store_results(config, max_val_bleu, max_val_acc, min_val_loss, max_train_acc, min_train_loss, best_epoch)
+		logger.info('Scores saved at {}'.format(config.result_path))
+
+	return max_val_acc
+
+def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, epoch_num, validation = True):
+	'''
+		Args:
+			config (dict): command line arguments
+			model (object of class TransformerModel): model
+			val_dataloader (object of class Dataloader): dataloader for dev set
+			voc1 (object of class Voc1): vocabulary of source
