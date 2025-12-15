@@ -627,3 +627,24 @@ def run_validation(config, model, val_dataloader, voc1, voc2, device, logger, ep
 
 					od['Generated'] = ' '.join(decoder_output[i])
 					print_log(logger, od)
+					logger.info('-------------------------------------')
+				except:
+					logger.warning('Exception: Failed to generate')
+					pdb.set_trace()
+					break
+
+		val_loss_epoch += val_loss
+		print("Completed {} / {}...".format(batch_num, total_batches), end = '\r', flush = True)
+		batch_num += 1
+
+	val_bleu_epoch = bleu_scorer(refs, hyps)
+	if config.mode == 'test':
+		results_df = pd.DataFrame([questions, act_eqns, gen_eqns, scores]).transpose()
+		results_df.columns = ['Question', 'Actual Equation', 'Generated Equation', 'Score']
+		csv_file_path = os.path.join(config.outputs_path, config.dataset+'.csv')
+		results_df.to_csv(csv_file_path, index = False)
+		return sum(scores)/len(scores)
+
+	val_acc_epoch = val_acc_epoch_cnt/val_acc_epoch_tot
+
+	return val_bleu_epoch, val_loss_epoch/len(val_dataloader), val_acc_epoch
