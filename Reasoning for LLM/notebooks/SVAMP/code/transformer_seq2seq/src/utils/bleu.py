@@ -86,3 +86,25 @@ def compute_bleu(reference_corpus, translation_corpus, max_order=4,
       if possible_matches_by_order[i] > 0:
         precisions[i] = (float(matches_by_order[i]) /
                          possible_matches_by_order[i])
+      else:
+        precisions[i] = 0.0
+
+  if min(precisions) > 0:
+    p_log_sum = sum((1. / max_order) * math.log(p) for p in precisions)
+    geo_mean = math.exp(p_log_sum)
+  else:
+    geo_mean = 0
+
+  ratio = float(translation_length) / reference_length
+
+  if ratio > 1.0:
+    bp = 1.
+  else:
+    if ratio > 1E-1:
+        bp = math.exp(1 - 1. / ratio)
+    else:
+        bp = 1E-2
+
+  bleu = geo_mean * bp
+
+  return (bleu, precisions, bp, ratio, translation_length, reference_length)
