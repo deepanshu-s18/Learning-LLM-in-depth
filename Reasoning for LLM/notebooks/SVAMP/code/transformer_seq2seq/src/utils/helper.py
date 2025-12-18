@@ -148,3 +148,25 @@ class Voc1:
 		# self.frequented = True
 
 		keep_words = []
+		count = 3
+		sort_by_value = sorted(
+			self.w2c.items(), key=lambda kv: kv[1], reverse=True)
+		for word, freq in sort_by_value:
+			keep_words += [word]*freq
+			count += 1
+			if count == topk:
+				break
+
+		self.w2id = {'<s>': 0, '</s>': 1, 'unk': 2}
+		self.id2w = {0: '<s>', 1: '</s>', 2: 'unk'}
+		self.w2c = {}
+		self.nwords = 3
+
+		for word in keep_words:
+			self.add_word(word)
+
+	def trim(self, mincount):
+		if self.trimmed == True:
+			return
+		self.trimmed = True
+
