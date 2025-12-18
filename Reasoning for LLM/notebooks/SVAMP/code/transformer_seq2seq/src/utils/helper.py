@@ -84,3 +84,24 @@ def load_checkpoint(model, mode, ckpt_path, logger, device):
 			ckpt_path: checkpoint path to the latest checkpoint 
 			logger (logger): logger variable to log messages
 			device (torch.device): GPU device
+		Returns:
+			start_epoch (int): epoch from which to start
+			min_train_loss (float): minimum train loss
+			min_val_loss (float): minimum validation loss
+			max_train_acc (float): maximum train accuracy
+			max_val_acc (float): maximum validation accuracy score
+			max_val_bleu (float): maximum valiadtion bleu score
+			best_epoch (int): epoch with highest validation accuracy
+			voc1 (object of class Voc1): vocabulary of source
+			voc2 (object of class Voc2): vocabulary of target
+	'''
+
+	checkpoint = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
+	model.load_state_dict(checkpoint['model_state_dict'])
+	model.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+	start_epoch = checkpoint['epoch']
+	min_train_loss  =checkpoint['min_train_loss']
+	min_val_loss = checkpoint['min_val_loss']
+	voc1 = checkpoint['voc1']
+	voc2 = checkpoint['voc2']
+	max_train_acc = checkpoint['max_train_acc']
