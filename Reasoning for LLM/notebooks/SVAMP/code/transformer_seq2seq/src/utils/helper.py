@@ -105,3 +105,25 @@ def load_checkpoint(model, mode, ckpt_path, logger, device):
 	voc1 = checkpoint['voc1']
 	voc2 = checkpoint['voc2']
 	max_train_acc = checkpoint['max_train_acc']
+	max_val_acc = checkpoint['max_val_acc']
+	max_val_bleu = checkpoint['max_val_bleu']
+	best_epoch = checkpoint['best_epoch']
+
+	model.to(device)
+
+	if mode == 'train':
+		model.train()
+	else:
+		model.eval()
+
+	logger.info('Successfully Loaded Checkpoint from {}, with epoch number: {} for {}'.format(ckpt_path, start_epoch, mode))
+
+	return start_epoch, min_train_loss, min_val_loss, max_train_acc, max_val_acc, max_val_bleu, best_epoch, voc1, voc2
+
+class Voc1:
+	def __init__(self):
+		self.trimmed = False
+		self.frequented = False
+		self.w2id = {'<s>': 0, '</s>': 1, 'unk': 2}
+		self.id2w = {0: '<s>', 1: '</s>', 2: 'unk'}
+		self.w2c = {}
