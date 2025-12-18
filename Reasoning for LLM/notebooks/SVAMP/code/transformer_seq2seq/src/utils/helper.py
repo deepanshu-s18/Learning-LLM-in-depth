@@ -62,3 +62,25 @@ def get_latest_checkpoint(model_path, logger):
 	ckpts = sorted(ckpts)
 
 	if len(ckpts) == 0:
+		logger.warning('No Checkpoints Found')
+
+		return None
+	else:
+		latest_epoch = max([int(x.split('_')[-1].split('.')[0]) for x in ckpts])
+		ckpts = sorted(ckpts, key= lambda x: int(x.split('_')[-1].split('.')[0]) , reverse=True )
+		ckpt_path = ckpts[0]
+		logger.info('Checkpoint found with epoch number : {}'.format(latest_epoch))
+		logger.debug('Checkpoint found at : {}'.format(ckpt_path))
+
+		return ckpt_path
+
+def load_checkpoint(model, mode, ckpt_path, logger, device):
+	'''
+		Load the model at checkpoint
+
+		Args:
+			model (object of class TransformerModel): model
+			mode (string): train or test mode
+			ckpt_path: checkpoint path to the latest checkpoint 
+			logger (logger): logger variable to log messages
+			device (torch.device): GPU device
