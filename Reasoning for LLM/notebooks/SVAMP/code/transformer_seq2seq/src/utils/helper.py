@@ -127,3 +127,24 @@ class Voc1:
 		self.w2id = {'<s>': 0, '</s>': 1, 'unk': 2}
 		self.id2w = {0: '<s>', 1: '</s>', 2: 'unk'}
 		self.w2c = {}
+		self.nwords = 3
+
+	def add_word(self, word):
+		if word not in self.w2id:
+			self.w2id[word] = self.nwords
+			self.id2w[self.nwords] = word
+			self.w2c[word] = 1
+			self.nwords += 1
+		else:
+			self.w2c[word] += 1
+
+	def add_sent(self, sent):
+		for word in sent.split():
+			self.add_word(word)
+
+	def most_frequent(self, topk):
+		# if self.frequented == True:
+		# 	return
+		# self.frequented = True
+
+		keep_words = []
