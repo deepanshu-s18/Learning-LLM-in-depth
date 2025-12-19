@@ -191,3 +191,25 @@ class Voc1:
 	def create_vocab_dict(self, args, train_dataloader):
 		for data in train_dataloader:
 			for sent in data['ques']:
+				self.add_sent(sent)
+
+		self.most_frequent(args.vocab_size)
+		assert len(self.w2id) == self.nwords
+		assert len(self.id2w) == self.nwords
+
+	def add_to_vocab_dict(self, args, dataloader):
+		for data in dataloader:
+			for sent in data['ques']:
+				self.add_sent(sent)
+
+		self.most_frequent(args.vocab_size)
+		assert len(self.w2id) == self.nwords
+		assert len(self.id2w) == self.nwords
+
+class Voc2:
+	def __init__(self, config):
+		self.frequented = False
+		if config.mawps_vocab:
+			# '0.25', '8.0', '0.05', '60.0', '7.0', '5.0', '2.0', '4.0', '1.0', '12.0', '100.0', '25.0', '0.1', '3.0', '0.01', '0.5', '10.0'
+			self.w2id = {'<s>': 11, '</s>': 1, '+': 2, '-': 3, '*': 4, '/': 5, 'number0': 6, 'number1': 7, 'number2': 8, 'number3': 9, 'number4': 10, '0.25': 0, '8.0': 12, '0.05': 13, '60.0': 14, '7.0': 15, '5.0': 16, '2.0': 17, '4.0': 18, '1.0': 19, '12.0': 20, '100.0': 21, '25.0': 22, '0.1': 23, '3.0': 24, '0.01': 25, '0.5': 26, '10.0': 27, 'unk': 28}
+			self.id2w = {11: '<s>', 1: '</s>', 2: '+', 3: '-', 4: '*', 5: '/', 6: 'number0', 7: 'number1', 8: 'number2', 9: 'number3', 10: 'number4', 0: '0.25', 12: '8.0', 13: '0.05', 14: '60.0', 15: '7.0', 16: '5.0', 17: '2.0', 18: '4.0', 19: '1.0', 20: '12.0', 21: '100.0', 22: '25.0', 23: '0.1', 24: '3.0', 25: '0.01', 26: '0.5', 27: '10.0', 28: 'unk'}
