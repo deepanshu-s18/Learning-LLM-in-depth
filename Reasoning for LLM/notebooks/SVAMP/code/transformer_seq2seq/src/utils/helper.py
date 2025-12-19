@@ -213,3 +213,24 @@ class Voc2:
 			# '0.25', '8.0', '0.05', '60.0', '7.0', '5.0', '2.0', '4.0', '1.0', '12.0', '100.0', '25.0', '0.1', '3.0', '0.01', '0.5', '10.0'
 			self.w2id = {'<s>': 11, '</s>': 1, '+': 2, '-': 3, '*': 4, '/': 5, 'number0': 6, 'number1': 7, 'number2': 8, 'number3': 9, 'number4': 10, '0.25': 0, '8.0': 12, '0.05': 13, '60.0': 14, '7.0': 15, '5.0': 16, '2.0': 17, '4.0': 18, '1.0': 19, '12.0': 20, '100.0': 21, '25.0': 22, '0.1': 23, '3.0': 24, '0.01': 25, '0.5': 26, '10.0': 27, 'unk': 28}
 			self.id2w = {11: '<s>', 1: '</s>', 2: '+', 3: '-', 4: '*', 5: '/', 6: 'number0', 7: 'number1', 8: 'number2', 9: 'number3', 10: 'number4', 0: '0.25', 12: '8.0', 13: '0.05', 14: '60.0', 15: '7.0', 16: '5.0', 17: '2.0', 18: '4.0', 19: '1.0', 20: '12.0', 21: '100.0', 22: '25.0', 23: '0.1', 24: '3.0', 25: '0.01', 26: '0.5', 27: '10.0', 28: 'unk'}
+			self.w2c = {'+': 0, '-': 0, '*': 0, '/': 0, 'number0': 0, 'number1': 0, 'number2': 0, 'number3': 0, 'number4': 0, '0.25': 0, '8.0': 0, '0.05': 0, '60.0': 0, '7.0': 0, '5.0': 0, '2.0': 0, '4.0': 0, '1.0': 0, '12.0': 0, '100.0': 0, '25.0': 0, '0.1': 0, '3.0': 0, '0.01': 0, '0.5': 0, '10.0': 0, 'unk': 0}
+			self.nwords = 29
+		else:
+			self.w2id = {'<s>': 11, '</s>': 1, '+': 2, '-': 3, '*': 4, '/': 5, 'number0': 6, 'number1': 7, 'number2': 8, 'number3': 9, 'number4': 10, 'number5': 0, 'unk': 12}
+			self.id2w = {11: '<s>', 1: '</s>', 2: '+', 3: '-', 4: '*', 5: '/', 6: 'number0', 7: 'number1', 8: 'number2', 9: 'number3', 10: 'number4', 0: 'number5', 12: 'unk'}
+			self.w2c = {'+': 0, '-': 0, '*': 0, '/': 0, 'number0': 0, 'number1': 0, 'number2': 0, 'number3': 0, 'number4': 0, 'number5': 0, 'unk': 0}
+			self.nwords = 13 # For some reason, model outputs NANs if I keep <s> as token 0 - That's because it was masking out the <s> token in make_len_mask in model
+
+	def add_word(self, word):
+		if word not in self.w2id: # IT SHOULD NEVER GO HERE!!
+			self.w2id[word] = self.nwords
+			self.id2w[self.nwords] = word
+			self.w2c[word] = 1
+			self.nwords += 1
+		else:
+			self.w2c[word] += 1
+
+	def add_sent(self, sent):
+		for word in sent.split():
+			self.add_word(word)
+
