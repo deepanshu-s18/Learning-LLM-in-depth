@@ -234,3 +234,25 @@ class Voc2:
 		for word in sent.split():
 			self.add_word(word)
 
+	def get_id(self, idx):
+		return self.w2id[idx]
+
+	def get_word(self, idx):
+		return self.id2w[idx]
+
+	def create_vocab_dict(self, args, train_dataloader):
+		for data in train_dataloader:
+			for sent in data['eqn']:
+				self.add_sent(sent)
+
+		assert len(self.w2id) == self.nwords
+		assert len(self.id2w) == self.nwords
+
+	def add_to_vocab_dict(self, args, dataloader):
+		for data in dataloader:
+			for sent in data['eqn']:
+				self.add_sent(sent)
+
+		assert len(self.w2id) == self.nwords
+		assert len(self.id2w) == self.nwords
+ 
