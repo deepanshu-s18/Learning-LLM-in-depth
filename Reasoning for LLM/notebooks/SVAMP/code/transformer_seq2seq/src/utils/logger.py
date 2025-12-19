@@ -46,3 +46,28 @@ def store_results(config, max_val_bleu, max_val_acc, min_val_loss, max_train_acc
 			res_data =json.load(f)
 	except:
 		res_data = {}
+	try:
+		min_train_loss = min_train_loss.item()
+	except:
+		pass
+	try:
+		min_val_loss = min_val_loss.item()
+	except:
+		pass
+	try:
+
+		data= {'run_name' : str(config.run_name)
+		, 'max val acc': str(max_val_acc)
+		, 'max train acc': str(max_train_acc)
+		, 'max val bleu' : str(max_val_bleu)
+		, 'min val loss' : str(min_val_loss)
+		, 'min train loss': str(min_train_loss)
+		, 'best epoch': str(best_epoch)
+		, 'epochs' : config.epochs
+		, 'dataset' : config.dataset
+		, 'embedding': config.embedding
+		, 'embedding_lr': config.emb_lr
+		, 'freeze_emb': config.freeze_emb
+		, 'i/p and o/p embedding size' : config.d_model
+		, 'encoder_layers' : config.encoder_layers
+		, 'decoder_layers' : config.decoder_layers
