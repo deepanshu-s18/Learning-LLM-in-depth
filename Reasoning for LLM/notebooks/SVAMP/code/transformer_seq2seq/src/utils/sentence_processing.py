@@ -86,3 +86,25 @@ def sort_by_len(seqs, input_len, device=None, dim=1):
 		orig_idx = orig_idx.to(device)
 	return sorted_seqs, sorted_lens, orig_idx
 
+def restore_order(seqs, input_len, orig_idx):
+	orig_seqs= [seqs[i] for i in orig_idx]
+	orig_lens= [input_len[i] for i in orig_idx]
+	return orig_seqs, orig_lens
+
+def process_batch(sent1s, sent2s, voc1, voc2, device):
+	input_len1 = [len(s) for s in sent1s]
+	input_len2 = [len(s) for s in sent2s]
+	max_length_1 = max(input_len1)
+	max_length_2 = max(input_len2)
+
+	sent1s_padded = [pad_seq(s, max_length_1, voc1) for s in sent1s]
+	sent2s_padded = [pad_seq(s, max_length_2, voc2) for s in sent2s]
+
+	# Convert to [Max_len X Batch]
+	sent1_var = Variable(torch.LongTensor(sent1s_padded)).transpose(0, 1)
+	sent2_var = Variable(torch.LongTensor(sent2s_padded)).transpose(0, 1)
+
+	sent1_var = sent1_var.to(device)
+	sent2_var = sent2_var.to(device)
+
+	return sent1_var, sent2_var, input_len1, input_len2
