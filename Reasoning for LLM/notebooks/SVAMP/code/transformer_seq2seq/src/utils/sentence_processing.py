@@ -42,3 +42,25 @@ def batch_to_tensor(voc, sents, device, max_length):
 
 	return batch_sent
 
+def idx_to_sent(voc, tensor, no_eos=False):
+	sent_word_list = []
+	for idx in tensor:
+		word = voc.get_word(idx.item())
+		if no_eos:
+			if word != '</s>':
+				sent_word_list.append(word)
+			# else:
+			# 	break
+		else:
+			sent_word_list.append(word)
+	return sent_word_list
+
+def idx_to_sents(voc, tensors, no_eos=False):
+	tensors = tensors.transpose(0, 1)
+	batch_word_list = []
+	for tensor in tensors:
+		batch_word_list.append(idx_to_sent(voc, tensor, no_eos))
+
+	return batch_word_list
+
+def pad_seq(seq, max_length, voc):
