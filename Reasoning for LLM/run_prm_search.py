@@ -44,3 +44,27 @@ def main():
     device = get_default_device()
     print("=" * 65, flush=True)
     print("🌳 PRM-Guided Beam Search (Inference-Time Compute Scaling)", flush=True)
+    print(f"Device:          {device}", flush=True)
+    print(f"Reasoning Model: {args.reasoning_model}", flush=True)
+    print(f"Reward Model:    {args.reward_model}", flush=True)
+    print(f"Prompt:          {args.prompt}", flush=True)
+    print(f"Parameters:      N={args.beams}, M={args.beam_width}, steps={args.max_steps}", flush=True)
+    print("=" * 65, flush=True)
+
+    # 1. Load Reasoning Model
+    print(f"\n⏳ Loading reasoning model ({args.reasoning_model})...", flush=True)
+    reasoning_tokenizer = AutoTokenizer.from_pretrained(args.reasoning_model, use_fast=True)
+    if reasoning_tokenizer.pad_token_id is None and reasoning_tokenizer.eos_token_id is not None:
+        reasoning_tokenizer.pad_token = reasoning_tokenizer.eos_token
+
+    is_seq2seq = "t5" in args.reasoning_model.lower() or "bart" in args.reasoning_model.lower()
+
+    if is_seq2seq:
+        reasoning_model = AutoModelForSeq2SeqLM.from_pretrained(
+            args.reasoning_model,
+            torch_dtype=torch.float32,
+        ).to(device)
+    else:
+        dtype = torch.float16 if device.type in ["cuda", "mps"] else torch.float32
+        reasoning_model = AutoModelForCausalLM.from_pretrained(
+            args.reasoning_model,
