@@ -91,3 +91,27 @@ def main():
         reward_model=reward_model,
         reward_tokenizer=reward_tokenizer,
         is_seq2seq=is_seq2seq,
+        N=args.beams,
+        M=args.beam_width,
+        max_steps=args.max_steps,
+        device=device,
+    )
+
+    # 4. Display Ranked Candidates
+    print("\n" + "=" * 65, flush=True)
+    print("🏆 Top Reasoning Trajectories (Ranked by PRM Score)", flush=True)
+    print("=" * 65, flush=True)
+    for rank, (text, score, node_id) in enumerate(beams[:3], 1):
+        print(f"\n[Rank {rank}] (Node: {node_id} | PRM Score: {score:.4f})", flush=True)
+        print("-" * 50, flush=True)
+        cleaned = text.replace("<|system|>", "").replace("<|user|>", "").replace("<|assistant|>", "").strip()
+        print(cleaned, flush=True)
+
+    # 5. Plot and Save Search Tree
+    os.makedirs(os.path.dirname(os.path.abspath(args.output_plot)), exist_ok=True)
+    plot_trace_graph_tree_clean(graph, title="PRM-Guided Beam Search Tree", save_path=args.output_plot)
+    print(f"\n✅ Search tree graph generated and saved to: {args.output_plot}", flush=True)
+
+
+if __name__ == "__main__":
+    main()
