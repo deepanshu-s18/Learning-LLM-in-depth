@@ -68,3 +68,26 @@ def main():
         dtype = torch.float16 if device.type in ["cuda", "mps"] else torch.float32
         reasoning_model = AutoModelForCausalLM.from_pretrained(
             args.reasoning_model,
+            torch_dtype=dtype,
+            low_cpu_mem_usage=True,
+        ).to(device)
+    reasoning_model.eval()
+
+    # 2. Load Reward Model
+    print(f"⏳ Loading reward model ({args.reward_model})...", flush=True)
+    reward_tokenizer = AutoTokenizer.from_pretrained(args.reward_model)
+    reward_model = AutoModelForSequenceClassification.from_pretrained(
+        args.reward_model,
+        torch_dtype=torch.float32,
+    ).to(device)
+    reward_model.eval()
+
+    # 3. Run Beam Search
+    print("\n🔍 Executing PRM-guided tree expansion...", flush=True)
+    beams, graph = beam_search_with_prm(
+        prompt=args.prompt,
+        reasoning_model=reasoning_model,
+        reasoning_tokenizer=reasoning_tokenizer,
+        reward_model=reward_model,
+        reward_tokenizer=reward_tokenizer,
+        is_seq2seq=is_seq2seq,
