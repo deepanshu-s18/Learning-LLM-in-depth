@@ -155,3 +155,26 @@ def beam_search_with_prm(
             for i in range(branches_per_parent):
                 child_text = reasoning_tokenizer.decode(children[i], skip_special_tokens=True)
                 if is_seq2seq:
+                    continuation = child_text.strip()
+                    full_trace = f"{parent_text} {continuation}"
+                else:
+                    continuation = child_text.replace(parent_text, "").strip()
+                    full_trace = child_text
+
+                score = stepwise_prm_score(prompt, full_trace, reward_model, reward_tokenizer, device=device)
+                node_id = f"step{step}-p{parent_idx}-b{i}"
+                label = continuation[:40] + "..." if len(continuation) > 40 else (continuation or "Step")
+                graph.add_node(node_id, label=label, score=score, full_text=continuation, step=step)
+                graph.add_edge(parent_id, node_id)
+                candidates.append((full_trace, score, node_id))
+
+        beams = sorted(candidates, key=lambda x: x[1], reverse=True)[:N]
+
+    return beams, graph
+
+
+def plot_trace_graph_tree_clean(graph: nx.DiGraph, figsize=(14, 8), title="Beam Search Tree (PRM-Guided)", save_path=None):
+    """
+    Visualizes the reasoning beam search tree with node color coding based on PRM score.
+    """
+    if len(graph.nodes) == 0:
