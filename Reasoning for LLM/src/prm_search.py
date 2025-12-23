@@ -133,3 +133,25 @@ def beam_search_with_prm(
         branches_per_parent = N // M
 
         for parent_idx, (parent_text, _, parent_id) in enumerate(beams):
+            if is_seq2seq:
+                current_input = f"Question: {prompt}\nPartial Answer: {parent_text}\nNext reasoning step:"
+            else:
+                current_input = parent_text
+
+            parent_inputs = reasoning_tokenizer(current_input, return_tensors="pt").input_ids.to(device)
+            gen_step_kwargs = {
+                "input_ids": parent_inputs,
+                "max_new_tokens": max_new_tokens,
+                "do_sample": True,
+                "temperature": 0.8,
+                "top_k": 50,
+                "num_return_sequences": branches_per_parent,
+            }
+            if pad_token_id is not None:
+                gen_step_kwargs["pad_token_id"] = pad_token_id
+
+            children = reasoning_model.generate(**gen_step_kwargs)
+
+            for i in range(branches_per_parent):
+                child_text = reasoning_tokenizer.decode(children[i], skip_special_tokens=True)
+                if is_seq2seq:
