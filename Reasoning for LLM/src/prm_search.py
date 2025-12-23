@@ -110,3 +110,26 @@ def beam_search_with_prm(
         "do_sample": True,
         "temperature": 0.8,
         "top_k": 50,
+        "num_return_sequences": N,
+    }
+    if pad_token_id is not None:
+        gen_kwargs["pad_token_id"] = pad_token_id
+
+    outputs = reasoning_model.generate(**gen_kwargs)
+
+    for i in range(N):
+        gen_text = reasoning_tokenizer.decode(outputs[i], skip_special_tokens=True)
+        completion = gen_text.replace(formatted_prompt, "").strip() if not is_seq2seq else gen_text.strip()
+        score = stepwise_prm_score(prompt, completion, reward_model, reward_tokenizer, device=device)
+        node_id = f"step0-b{i}"
+        label = completion[:40] + "..." if len(completion) > 40 else (completion or "Initial")
+        graph.add_node(node_id, label=label, score=score, full_text=completion, step=0)
+        beams.append((completion if is_seq2seq else gen_text, score, node_id))
+
+    # Steps 1 to max_steps: Expand top M beams with (N // M) branches each
+    for step in range(1, max_steps + 1):
+        beams = sorted(beams, key=lambda x: x[1], reverse=True)[:M]
+        candidates = []
+        branches_per_parent = N // M
+
+        for parent_idx, (parent_text, _, parent_id) in enumerate(beams):
