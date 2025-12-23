@@ -43,3 +43,25 @@ def stepwise_prm_score(prompt: str, trace: str, reward_model, tokenizer, device=
     cumulative_score = 0.0
     for i in range(1, len(steps) + 1):
         partial = prompt + "\n" + ". ".join(steps[:i])
+        inputs = tokenizer(partial, return_tensors="pt", truncation=True, max_length=512).to(device)
+        with torch.no_grad():
+            outputs = reward_model(**inputs)
+            if hasattr(outputs, "logits"):
+                if outputs.logits.numel() == 1:
+                    score = outputs.logits[0].item()
+                else:
+                    score = outputs.logits[0][0].item()
+            else:
+                score = float(outputs[0])
+        cumulative_score += score
+
+    return cumulative_score / len(steps) if steps else 0.0
+
+
+def beam_search_with_prm(
+    prompt: str,
+    reasoning_model,
+    reasoning_tokenizer,
+    reward_model,
+    reward_tokenizer,
+    is_seq2seq: bool = False,
