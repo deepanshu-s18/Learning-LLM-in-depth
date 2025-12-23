@@ -65,3 +65,26 @@ def beam_search_with_prm(
     reward_model,
     reward_tokenizer,
     is_seq2seq: bool = False,
+    N: int = 4,
+    M: int = 2,
+    max_steps: int = 3,
+    max_new_tokens: int = 64,
+    device=None,
+):
+    """
+    Performs PRM-guided Beam Search over multi-step reasoning generation.
+    Supports both Seq2Seq (Flan-T5) and Causal LMs (Zephyr, TinyLlama).
+    """
+    assert N % M == 0, f"N ({N}) must be divisible by M ({M})"
+    if device is None:
+        device = next(reasoning_model.parameters()).device
+
+    # Format prompt
+    if is_seq2seq:
+        formatted_prompt = (
+            f"Question: {prompt}\n"
+            f"Answer: Let's think step by step."
+        )
+    elif hasattr(reasoning_tokenizer, "chat_template") and reasoning_tokenizer.chat_template:
+        messages = [
+            {"role": "system", "content": "You are a helpful reasoning assistant that solves problems step-by-step."},
