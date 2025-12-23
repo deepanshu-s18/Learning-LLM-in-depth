@@ -88,3 +88,25 @@ def beam_search_with_prm(
     elif hasattr(reasoning_tokenizer, "chat_template") and reasoning_tokenizer.chat_template:
         messages = [
             {"role": "system", "content": "You are a helpful reasoning assistant that solves problems step-by-step."},
+            {"role": "user", "content": prompt},
+        ]
+        try:
+            formatted_prompt = reasoning_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        except Exception:
+            formatted_prompt = f"<|user|>\n{prompt}\n<|assistant|>\n"
+    else:
+        formatted_prompt = f"Question: {prompt}\nAnswer: Let's think step by step.\n"
+
+    graph = nx.DiGraph()
+    beams = []
+
+    # Step 0: Initial N completions
+    input_ids = reasoning_tokenizer(formatted_prompt, return_tensors="pt").input_ids.to(device)
+    pad_token_id = reasoning_tokenizer.eos_token_id or reasoning_tokenizer.pad_token_id
+
+    gen_kwargs = {
+        "input_ids": input_ids,
+        "max_new_tokens": max_new_tokens,
+        "do_sample": True,
+        "temperature": 0.8,
+        "top_k": 50,
