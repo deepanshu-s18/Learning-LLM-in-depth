@@ -223,3 +223,26 @@ def plot_trace_graph_tree_clean(graph: nx.DiGraph, figsize=(14, 8), title="Beam 
             x,
             y - 0.35,
             f"{text}\nPRM: {score:.3f}",
+            ha="center",
+            va="top",
+            fontsize=8,
+            bbox=dict(boxstyle="round,pad=0.3", fc="#f8fafc", ec="#94a3b8", lw=0.6, alpha=0.9),
+            zorder=10,
+        )
+
+    # Colorbar
+    sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis, norm=plt.Normalize(vmin=min_val, vmax=max_val))
+    sm.set_array(node_colors)
+    cbar = fig.colorbar(sm, ax=ax, shrink=0.7)
+    cbar.set_label("PRM Step Score", fontsize=11, fontweight="bold")
+
+    plt.title(title, fontsize=14, fontweight="bold", pad=15)
+    plt.axis("off")
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(os.path.abspath(save_path)), exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        print(f"Tree visualization saved to: {save_path}", flush=True)
+
+    plt.close()
