@@ -200,3 +200,26 @@ def plot_trace_graph_tree_clean(graph: nx.DiGraph, figsize=(14, 8), title="Beam 
     node_order = list(graph.nodes())
 
     min_val = min(node_colors) if node_colors else 0.0
+    max_val = max(node_colors) if node_colors else 1.0
+    val_range = max_val - min_val if max_val != min_val else 1.0
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Draw edges
+    nx.draw_networkx_edges(graph, pos, ax=ax, alpha=0.5, edge_color="#64748b", arrows=True, arrowsize=15)
+
+    # Draw nodes
+    for node in node_order:
+        x, y = pos[node]
+        score = scores.get(node, 0.0)
+        norm_score = (score - min_val) / val_range
+        fill_color = plt.cm.viridis(norm_score)
+
+        ax.scatter(x, y, s=900, color=[fill_color], edgecolors="#1e293b", linewidths=1.5, zorder=5)
+
+        # Label below node
+        text = textwrap.shorten(labels.get(node, ""), width=35, placeholder="...")
+        ax.text(
+            x,
+            y - 0.35,
+            f"{text}\nPRM: {score:.3f}",
