@@ -178,3 +178,25 @@ def plot_trace_graph_tree_clean(graph: nx.DiGraph, figsize=(14, 8), title="Beam 
     Visualizes the reasoning beam search tree with node color coding based on PRM score.
     """
     if len(graph.nodes) == 0:
+        print("Graph is empty, skipping plot.")
+        return
+
+    try:
+        pos = nx.nx_agraph.graphviz_layout(graph, prog="dot")
+    except Exception:
+        # Hierarchical layout fallback based on node step attribute
+        pos = {}
+        steps = {}
+        for n, data in graph.nodes(data=True):
+            s = data.get("step", 0)
+            steps.setdefault(s, []).append(n)
+        for s, nodes in steps.items():
+            for idx, n in enumerate(nodes):
+                pos[n] = (idx - (len(nodes) - 1) / 2.0, -float(s) * 2.0)
+
+    scores = nx.get_node_attributes(graph, "score")
+    labels = nx.get_node_attributes(graph, "label")
+    node_colors = [scores.get(n, 0.0) for n in graph.nodes()]
+    node_order = list(graph.nodes())
+
+    min_val = min(node_colors) if node_colors else 0.0
