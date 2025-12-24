@@ -21,3 +21,11 @@ A: Shawn started with 5 toys. If he got 2 toys each from his mom and dad, then t
 """
 
 
+def format_cot_prompt(question: str, prefix: str = FEW_SHOT_COT_PREFIX) -> str:
+    """Format a target question with few-shot CoT reasoning examples."""
+    return f"{prefix.strip()}\n\nQ: {question}\nA:"
+
+
+def format_zero_shot_cot_prompt(question: str) -> str:
+    """Format a target question for zero-shot Chain of Thought reasoning."""
+    return f"Q: {question}\nA: Let's think step by step.\n"
