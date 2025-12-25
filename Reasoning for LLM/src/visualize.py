@@ -52,3 +52,21 @@ def plot_model_comparison(
             yval + 0.015,
             f"{score * 100:.1f}%",
             ha="center",
+            va="bottom",
+            fontsize=10,
+            fontweight="bold"
+        )
+
+    plt.xticks(x, labels, rotation=25, ha="right", fontsize=10)
+    plt.ylabel("Accuracy", fontsize=12, fontweight="bold")
+    plt.title(f"Few-Shot Chain of Thought Reasoning vs Model Size ({dataset_name})", fontsize=14, fontweight="bold", pad=15)
+    plt.ylim(0, 1.0)
+    plt.grid(True, axis="y", linestyle="--", alpha=0.6)
+    plt.tight_layout()
+
+    plt.savefig(save_path, dpi=300)
+    print(f"Comparison plot saved to {save_path}")
+
+    if show:
+        plt.show()
+    plt.close()
