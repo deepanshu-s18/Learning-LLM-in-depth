@@ -34,3 +34,21 @@ def plot_model_comparison(
     scores = []
 
     for name, score in results:
+        size_str = model_sizes.get(name, "") if model_sizes else ""
+        label = f"{name}\n({size_str})" if size_str else name
+        labels.append(label)
+        scores.append(score)
+
+    x = range(len(labels))
+
+    plt.figure(figsize=(11, 6), dpi=150)
+    bars = plt.bar(x, scores, color="#2E7D32", alpha=0.85, edgecolor="#1B5E20", width=0.55)
+
+    # Add score annotations above bars
+    for bar, score in zip(bars, scores):
+        yval = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            yval + 0.015,
+            f"{score * 100:.1f}%",
+            ha="center",
