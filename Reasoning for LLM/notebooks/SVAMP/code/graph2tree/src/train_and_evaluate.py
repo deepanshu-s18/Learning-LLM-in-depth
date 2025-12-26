@@ -260,3 +260,36 @@ def mask_num(encoder_outputs, decoder_input, embedding_size, nums_start, copy_nu
 	if USE_CUDA:
 		batch_num = batch_num.cuda()
 	indices = batch_num + indices
+	num_encoder = all_embedding.index_select(0, indices)
+	return num_mask, num_encoder, num_mask_encoder
+
+
+def out_equation(test, output_lang, num_list, num_stack=None):
+	test = test[:-1]
+	max_index = len(output_lang.index2word) - 1
+	test_str = ""
+	for i in test:
+		if i < max_index:
+			c = output_lang.index2word[i]
+			if c == "^":
+				test_str += "**"
+			elif c == "[":
+				test_str += "("
+			elif c == "]":
+				test_str += ")"
+			elif c[0] == "N":
+				if int(c[1:]) >= len(num_list):
+					return None
+				x = num_list[int(c[1:])]
+				if x[-1] == "%":
+					test_str += "(" + x[:-1] + "/100" + ")"
+				else:
+					test_str += x
+			else:
+				test_str += c
+		else:
+			if len(num_stack) == 0:
+				print(test_str, num_list)
+				return ""
+			n_pos = num_stack.pop()
+			test_str += num_list[n_pos[0]]
