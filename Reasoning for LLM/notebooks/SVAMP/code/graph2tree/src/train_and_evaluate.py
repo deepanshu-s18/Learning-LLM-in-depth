@@ -391,3 +391,36 @@ def train_attn(input_batch, input_length, target_batch, target_length, num_batch
 	seq_mask = torch.BoolTensor(seq_mask)
 
 	num_start = output_lang.n_words - copy_nums - 2
+	unk = output_lang.word2index["UNK"]
+	# Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
+	input_var = torch.LongTensor(input_batch).transpose(0, 1)
+	target = torch.LongTensor(target_batch).transpose(0, 1)
+
+	batch_size = len(input_length)
+
+	encoder.train()
+	decoder.train()
+
+	if USE_CUDA:
+		input_var = input_var.cuda()
+		seq_mask = seq_mask.cuda()
+
+	# Zero gradients of both optimizers
+	encoder_optimizer.zero_grad()
+	decoder_optimizer.zero_grad()
+	# Run words through encoder
+	encoder_outputs, encoder_hidden = encoder(input_var, input_length, None)
+
+	# Prepare input and output variables
+	decoder_input = torch.LongTensor([output_lang.word2index["SOS"]] * batch_size)
+
+	decoder_hidden = encoder_hidden[:decoder.n_layers]  # Use last (forward) hidden state from encoder
+
+	max_target_length = max(target_length)
+	all_decoder_outputs = torch.zeros(max_target_length, batch_size, decoder.output_size)
+
+	# Move new Variables to CUDA
+	if USE_CUDA:
+		all_decoder_outputs = all_decoder_outputs.cuda()
+
+	if random.random() < use_teacher_forcing:
