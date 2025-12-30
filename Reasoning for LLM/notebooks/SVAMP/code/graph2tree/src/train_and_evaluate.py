@@ -522,3 +522,36 @@ def train_attn(input_batch, input_length, target_batch, target_length, num_batch
 		torch.nn.utils.clip_grad_norm_(encoder.parameters(), clip)
 		torch.nn.utils.clip_grad_norm_(decoder.parameters(), clip)
 
+	# Update parameters with optimizers
+	encoder_optimizer.step()
+	decoder_optimizer.step()
+
+	return return_loss
+
+
+def evaluate_attn(input_seq, input_length, num_list, copy_nums, generate_nums, encoder, decoder, output_lang,
+				  beam_size=1, english=False, max_length=MAX_OUTPUT_LENGTH):
+	seq_mask = torch.BoolTensor(1, input_length).fill_(0)
+	num_start = output_lang.n_words - copy_nums - 2
+
+	# Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
+	input_var = torch.LongTensor(input_seq).unsqueeze(1)
+	if USE_CUDA:
+		input_var = input_var.cuda()
+		seq_mask = seq_mask.cuda()
+
+	# Set to not-training mode to disable dropout
+	encoder.eval()
+	decoder.eval()
+
+	# Run through encoder
+	encoder_outputs, encoder_hidden = encoder(input_var, [input_length], None)
+
+	# Create starting vectors for decoder
+	decoder_input = torch.LongTensor([output_lang.word2index["SOS"]])  # SOS
+	decoder_hidden = encoder_hidden[:decoder.n_layers]  # Use last (forward) hidden state from encoder
+	beam_list = list()
+	score = 0
+	beam_list.append(Beam(score, decoder_input, decoder_hidden, []))
+
+	# Run through decoder
