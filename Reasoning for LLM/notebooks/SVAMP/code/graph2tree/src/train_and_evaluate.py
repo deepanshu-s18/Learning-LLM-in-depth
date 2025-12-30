@@ -489,3 +489,36 @@ def train_attn(input_batch, input_length, target_batch, target_length, num_batch
 					temp_input = temp_input.cpu()
 				temp_beam_pos = temp_topk / decoder.output_size
 
+				indices = torch.LongTensor(range(batch_size))
+				if USE_CUDA:
+					indices = indices.cuda()
+				indices += temp_beam_pos * batch_size
+
+				temp_hidden = all_hidden.index_select(1, indices)
+				temp_output = all_outputs.index_select(1, indices)
+
+				beam_list.append(Beam(topv[:, k], temp_input, temp_hidden, temp_output))
+		all_decoder_outputs = beam_list[0].all_output
+
+		for t in range(max_target_length):
+			target[t] = generate_decoder_input(
+				target[t], all_decoder_outputs[t], nums_stack_batch, num_start, unk)
+	# Loss calculation and backpropagation
+
+	if USE_CUDA:
+		target = target.cuda()
+
+	loss = masked_cross_entropy(
+		all_decoder_outputs.transpose(0, 1).contiguous(),  # -> batch x seq
+		target.transpose(0, 1).contiguous(),  # -> batch x seq
+		target_length
+	)
+
+	loss.backward()
+	return_loss = loss.item()
+
+	# Clip gradient norms
+	if clip:
+		torch.nn.utils.clip_grad_norm_(encoder.parameters(), clip)
+		torch.nn.utils.clip_grad_norm_(decoder.parameters(), clip)
+
