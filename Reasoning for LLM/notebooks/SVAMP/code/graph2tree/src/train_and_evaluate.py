@@ -620,3 +620,36 @@ def copy_list(l):
 	r = []
 	if len(l) == 0:
 		return r
+	for i in l:
+		if type(i) is list:
+			r.append(copy_list(i))
+		else:
+			r.append(i)
+	return r
+
+
+class TreeBeam:  # the class save the beam node
+	def __init__(self, score, node_stack, embedding_stack, left_childs, out):
+		self.score = score
+		self.embedding_stack = copy_list(embedding_stack)
+		self.node_stack = copy_list(node_stack)
+		self.left_childs = copy_list(left_childs)
+		self.out = copy.deepcopy(out)
+
+
+class TreeEmbedding:  # the class save the tree
+	def __init__(self, embedding, terminal=False):
+		self.embedding = embedding
+		self.terminal = terminal
+
+
+def train_tree(config, input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, num_value_batch, group_batch, generate_nums,
+			   embedding, encoder, predict, generate, merge, embedding_optimizer, encoder_optimizer, predict_optimizer, generate_optimizer,
+			   merge_optimizer, input_lang, output_lang, num_pos, batch_graph, english=False):
+	num_mask = []
+	max_num_size = max(num_size_batch) + len(generate_nums)
+	for i in num_size_batch:
+		d = i + len(generate_nums)
+		num_mask.append([0] * d + [1] * (max_num_size - d))
+	num_mask = torch.BoolTensor(num_mask)
+
