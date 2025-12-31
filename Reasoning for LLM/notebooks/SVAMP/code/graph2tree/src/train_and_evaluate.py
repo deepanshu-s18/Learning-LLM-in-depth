@@ -653,3 +653,36 @@ def train_tree(config, input_batch, input_length, target_batch, target_length, n
 		num_mask.append([0] * d + [1] * (max_num_size - d))
 	num_mask = torch.BoolTensor(num_mask)
 
+	unk = output_lang.word2index["UNK"]
+
+	# Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
+	input_var = torch.LongTensor(input_batch).transpose(0, 1)
+
+	target = torch.LongTensor(target_batch).transpose(0, 1)
+	batch_graph = torch.LongTensor(batch_graph)
+
+	padding_hidden = torch.FloatTensor([0.0 for _ in range(predict.hidden_size)]).unsqueeze(0)
+	batch_size = len(input_length)
+
+	embedding.train()
+	encoder.train()
+	predict.train()
+	generate.train()
+	merge.train()
+
+	if USE_CUDA:
+		input_var = input_var.cuda()
+		# seq_mask = seq_mask.cuda()
+		padding_hidden = padding_hidden.cuda()
+		num_mask = num_mask.cuda()
+		# batch_graph = batch_graph.cuda()
+
+	# Zero gradients of both optimizers
+	embedding_optimizer.zero_grad()
+	encoder_optimizer.zero_grad()
+	predict_optimizer.zero_grad()
+	generate_optimizer.zero_grad()
+	merge_optimizer.zero_grad()
+	# Run words through encoder
+
+	orig_idx = None
