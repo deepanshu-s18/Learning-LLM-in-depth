@@ -686,3 +686,36 @@ def train_tree(config, input_batch, input_length, target_batch, target_length, n
 	# Run words through encoder
 
 	orig_idx = None
+	embedded = None
+	if config.embedding == 'bert' or config.embedding == 'roberta':
+		contextual_input = index_batch_to_words(input_batch, input_length, input_lang)
+		input_seq1, input_len1, token_ids, index_retrieve = embedding(contextual_input)
+		
+		new_group_batch = []
+		for bat in range(len(group_batch)):
+			try:
+				new_group_batch.append([index_retrieve[bat][index1] for index1 in group_batch[bat] if index1 < len(index_retrieve[bat])])
+			except:
+				pdb.set_trace()
+
+		batch_graph = get_single_batch_graph(token_ids.cpu().tolist(), input_len1, new_group_batch, num_value_batch, num_pos)
+		batch_graph = torch.LongTensor(batch_graph)
+
+		input_seq1 = input_seq1.transpose(0,1)
+		embedded, input_length, orig_idx = sort_by_len(input_seq1, input_len1, gpu_init_pytorch(config.gpu))
+	else:
+		embedded = embedding(input_var)
+
+	if USE_CUDA:
+		batch_graph = batch_graph.cuda()
+
+	encoder_outputs, problem_output = encoder(embedded, input_length, orig_idx, batch_graph)
+
+	# sequence mask for attention
+	seq_mask = []
+	max_len = max(input_length)
+	for i in input_length:
+		seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
+	seq_mask = torch.BoolTensor(seq_mask)
+
+	if USE_CUDA:
