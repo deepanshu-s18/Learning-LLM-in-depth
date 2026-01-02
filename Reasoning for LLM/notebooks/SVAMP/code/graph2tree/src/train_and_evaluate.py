@@ -850,3 +850,36 @@ def evaluate_tree(config, input_batch, input_length, generate_nums, embedding, e
 		input_length = input_length[0]
 	else:
 		embedded = embedding(input_var)
+
+	if USE_CUDA:
+		batch_graph = batch_graph.cuda()
+
+	encoder_outputs, problem_output = encoder(embedded, [input_length], orig_idx, batch_graph)
+	# encoder_outputs, problem_output = encoder(input_var, [input_length], batch_graph)
+
+	seq_mask = torch.BoolTensor(1, input_length).fill_(0)
+
+	if USE_CUDA:
+		seq_mask = seq_mask.cuda()
+
+	# Prepare input and output variables
+	node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
+
+	num_size = len(num_pos)
+	all_nums_encoder_outputs = get_all_number_encoder_outputs(encoder_outputs, [num_pos], batch_size, num_size,
+															  encoder.hidden_size)
+	num_start = output_lang.num_start
+	# B x P x N
+	embeddings_stacks = [[] for _ in range(batch_size)]
+	left_childs = [None for _ in range(batch_size)]
+
+	beams = [TreeBeam(0.0, node_stacks, embeddings_stacks, left_childs, [])]
+
+	for t in range(max_length):
+		current_beams = []
+		while len(beams) > 0:
+			b = beams.pop()
+			if len(b.node_stack[0]) == 0:
+				current_beams.append(b)
+				continue
+			# left_childs = torch.stack(b.left_childs)
