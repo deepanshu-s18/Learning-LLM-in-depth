@@ -1014,3 +1014,35 @@ def topdown_train_tree(input_batch, input_length, target_batch, target_length, n
 	# all_leafs = []
 
 	copy_num_len = [len(_) for _ in num_pos]
+	num_size = max(copy_num_len)
+	all_nums_encoder_outputs = get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
+															  encoder.hidden_size)
+
+	num_start = output_lang.num_start
+	left_childs = [None for _ in range(batch_size)]
+	for t in range(max_target_length):
+		num_score, op, current_embeddings, current_context, current_nums_embeddings = predict(
+			node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
+
+		# all_leafs.append(p_leaf)
+		outputs = torch.cat((op, num_score), 1)
+		all_node_outputs.append(outputs)
+
+		target_t, generate_input = generate_tree_input(target[t].tolist(), outputs, nums_stack_batch, num_start, unk)
+		target[t] = target_t
+		if USE_CUDA:
+			generate_input = generate_input.cuda()
+		left_child, right_child, node_label = generate(current_embeddings, generate_input, current_context)
+		for idx, l, r, node_stack, i in zip(range(batch_size), left_child.split(1), right_child.split(1),
+											node_stacks, target[t].tolist()):
+			if len(node_stack) != 0:
+				node = node_stack.pop()
+			else:
+				continue
+
+			if i < num_start:
+				node_stack.append(TreeNode(r))
+				node_stack.append(TreeNode(l, left_flag=True))
+
+	# all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
+	all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
