@@ -1079,3 +1079,36 @@ def topdown_evaluate_tree(input_batch, input_length, generate_nums, encoder, pre
 
 	num_mask = torch.BoolTensor(1, len(num_pos) + len(generate_nums)).fill_(0)
 
+	# Set to not-training mode to disable dropout
+	encoder.eval()
+	predict.eval()
+	generate.eval()
+
+	padding_hidden = torch.FloatTensor([0.0 for _ in range(predict.hidden_size)]).unsqueeze(0)
+
+	batch_size = 1
+
+	if USE_CUDA:
+		input_var = input_var.cuda()
+		seq_mask = seq_mask.cuda()
+		padding_hidden = padding_hidden.cuda()
+		num_mask = num_mask.cuda()
+	# Run words through encoder
+
+	encoder_outputs, problem_output = encoder(input_var, [input_length])
+
+	# Prepare input and output variables
+	node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
+
+	num_size = len(num_pos)
+	all_nums_encoder_outputs = get_all_number_encoder_outputs(encoder_outputs, [num_pos], batch_size, num_size,
+															  encoder.hidden_size)
+	num_start = output_lang.num_start
+	# B x P x N
+	embeddings_stacks = [[] for _ in range(batch_size)]
+	left_childs = [None for _ in range(batch_size)]
+
+	beams = [TreeBeam(0.0, node_stacks, embeddings_stacks, left_childs, [])]
+
+	for t in range(max_length):
+		current_beams = []
