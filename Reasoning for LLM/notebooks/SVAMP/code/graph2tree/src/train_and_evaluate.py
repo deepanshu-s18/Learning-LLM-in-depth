@@ -883,3 +883,35 @@ def evaluate_tree(config, input_batch, input_length, generate_nums, embedding, e
 				current_beams.append(b)
 				continue
 			# left_childs = torch.stack(b.left_childs)
+			left_childs = b.left_childs
+
+			num_score, op, current_embeddings, current_context, current_nums_embeddings = predict(
+				b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+				seq_mask, num_mask)
+
+			# leaf = p_leaf[:, 0].unsqueeze(1)
+			# repeat_dims = [1] * leaf.dim()
+			# repeat_dims[1] = op.size(1)
+			# leaf = leaf.repeat(*repeat_dims)
+			#
+			# non_leaf = p_leaf[:, 1].unsqueeze(1)
+			# repeat_dims = [1] * non_leaf.dim()
+			# repeat_dims[1] = num_score.size(1)
+			# non_leaf = non_leaf.repeat(*repeat_dims)
+			#
+			# p_leaf = torch.cat((leaf, non_leaf), dim=1)
+			out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
+
+			# out_score = p_leaf * out_score
+
+			topv, topi = out_score.topk(min(beam_size, out_score.size()[1]))
+
+			# is_leaf = int(topi[0])
+			# if is_leaf:
+			#     topv, topi = op.topk(1)
+			#     out_token = int(topi[0])
+			# else:
+			#     topv, topi = num_score.topk(1)
+			#     out_token = int(topi[0]) + num_start
+
+			for tv, ti in zip(topv.split(1, dim=1), topi.split(1, dim=1)):
