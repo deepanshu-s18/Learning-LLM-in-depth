@@ -1112,3 +1112,36 @@ def topdown_evaluate_tree(input_batch, input_length, generate_nums, encoder, pre
 
 	for t in range(max_length):
 		current_beams = []
+		while len(beams) > 0:
+			b = beams.pop()
+			if len(b.node_stack[0]) == 0:
+				current_beams.append(b)
+				continue
+			# left_childs = torch.stack(b.left_childs)
+
+			num_score, op, current_embeddings, current_context, current_nums_embeddings = predict(
+				b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+				seq_mask, num_mask)
+
+			# leaf = p_leaf[:, 0].unsqueeze(1)
+			# repeat_dims = [1] * leaf.dim()
+			# repeat_dims[1] = op.size(1)
+			# leaf = leaf.repeat(*repeat_dims)
+			#
+			# non_leaf = p_leaf[:, 1].unsqueeze(1)
+			# repeat_dims = [1] * non_leaf.dim()
+			# repeat_dims[1] = num_score.size(1)
+			# non_leaf = non_leaf.repeat(*repeat_dims)
+			#
+			# p_leaf = torch.cat((leaf, non_leaf), dim=1)
+			out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
+
+			# out_score = p_leaf * out_score
+
+			topv, topi = out_score.topk(beam_size)
+
+			# is_leaf = int(topi[0])
+			# if is_leaf:
+			#     topv, topi = op.topk(1)
+			#     out_token = int(topi[0])
+			# else:
