@@ -93,3 +93,34 @@ def generate_rule_mask(decoder_input, nums_batch, word2index, batch_size, nums_s
 			elif decoder_input[i] in [word2index["+"], word2index["-"], word2index["/"],
 									  word2index["*"], word2index["^"]]:
 				res += [_ for _ in range(nums_start, nums_start + nums_batch[i])] +\
+				  [word2index["["], word2index["("]] + generate_nums
+			for j in res:
+				rule_mask[i, j] = 0
+	return rule_mask
+
+
+def generate_pre_tree_seq_rule_mask(decoder_input, nums_batch, word2index, batch_size, nums_start, copy_nums,
+									generate_nums, english):
+	rule_mask = torch.FloatTensor(batch_size, nums_start + copy_nums).fill_(-float("1e12"))
+	if english:
+		if decoder_input[0] == word2index["SOS"]:
+			for i in range(batch_size):
+				res = [_ for _ in range(nums_start, nums_start + nums_batch[i])] + generate_nums + \
+					  [word2index["+"], word2index["-"], word2index["/"], word2index["*"]]
+				for j in res:
+					rule_mask[i, j] = 0
+			return rule_mask
+		for i in range(batch_size):
+			res = []
+			if decoder_input[i] >= nums_start or decoder_input[i] in generate_nums:
+				res += [_ for _ in range(nums_start, nums_start + nums_batch[i])] + generate_nums + \
+					   [word2index["+"], word2index["-"], word2index["/"], word2index["*"], word2index["EOS"]
+						]
+			elif decoder_input[i] == word2index["EOS"] or decoder_input[i] == PAD_token:
+				res += [PAD_token]
+			elif decoder_input[i] in [word2index["+"], word2index["-"], word2index["/"], word2index["*"]]:
+				res += [_ for _ in range(nums_start, nums_start + nums_batch[i])] + generate_nums + \
+					   [word2index["+"], word2index["-"], word2index["/"], word2index["*"]]
+			for j in res:
+				rule_mask[i, j] = 0
+	else:
