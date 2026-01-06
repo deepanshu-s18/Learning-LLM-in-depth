@@ -220,3 +220,34 @@ def generate_decoder_input(target, decoder_output, nums_stack_batch, num_start, 
 		if target[i] == unk:
 			num_stack = nums_stack_batch[i].pop()
 			max_score = -float("1e12")
+			for num in num_stack:
+				if decoder_output[i, num_start + num] > max_score:
+					target[i] = num + num_start
+					max_score = decoder_output[i, num_start + num]
+	return target
+
+def mask_num(encoder_outputs, decoder_input, embedding_size, nums_start, copy_nums, num_pos):
+	# mask the decoder input number and return the mask tensor and the encoder position Hidden vector
+	up_num_start = decoder_input >= nums_start
+	down_num_end = decoder_input < (nums_start + copy_nums)
+	num_mask = up_num_start == down_num_end
+	num_mask_encoder = num_mask < 1
+	num_mask_encoder = num_mask_encoder.unsqueeze(1)  # ByteTensor size: B x 1
+	repeat_dims = [1] * num_mask_encoder.dim()
+	repeat_dims[1] = embedding_size
+	num_mask_encoder = num_mask_encoder.repeat(*repeat_dims)  # B x 1 -> B x Decoder_embedding_size
+
+	all_embedding = encoder_outputs.transpose(0, 1).contiguous()
+	all_embedding = all_embedding.view(-1, encoder_outputs.size(2))  # S x B x H -> (B x S) x H
+	indices = decoder_input - nums_start
+	indices = indices * num_mask.long()  # 0 or the num pos in sentence
+	indices = indices.tolist()
+	for k in range(len(indices)):
+		indices[k] = num_pos[k][indices[k]]
+	indices = torch.LongTensor(indices)
+	if USE_CUDA:
+		indices = indices.cuda()
+	batch_size = decoder_input.size(0)
+	sen_len = encoder_outputs.size(0)
+	batch_num = torch.LongTensor(range(batch_size))
+	batch_num = batch_num * sen_len
