@@ -188,3 +188,35 @@ def generate_post_tree_seq_rule_mask(decoder_input, nums_batch, word2index, batc
 			elif decoder_input[i] == word2index["EOS"] or decoder_input[i] == PAD_token:
 				res += [PAD_token]
 			elif decoder_input[i] in [word2index["+"], word2index["-"], word2index["/"], word2index["*"],
+									  word2index["^"]]:
+				res += [_ for _ in range(nums_start, nums_start + nums_batch[i])] + generate_nums + \
+					   [word2index["+"], word2index["-"], word2index["/"], word2index["*"], word2index["^"],
+						word2index["EOS"]
+						]
+			for j in res:
+				rule_mask[i, j] = 0
+	return rule_mask
+
+def generate_tree_input(target, decoder_output, nums_stack_batch, num_start, unk):
+	# when the decoder input is copied num but the num has two pos, chose the max
+	target_input = copy.deepcopy(target)
+	for i in range(len(target)):
+		if target[i] == unk:
+			num_stack = nums_stack_batch[i].pop()
+			max_score = -float("1e12")
+			for num in num_stack:
+				if decoder_output[i, num_start + num] > max_score:
+					target[i] = num + num_start
+					max_score = decoder_output[i, num_start + num]
+		if target_input[i] >= num_start:
+			target_input[i] = 0
+	return torch.LongTensor(target), torch.LongTensor(target_input)
+
+def generate_decoder_input(target, decoder_output, nums_stack_batch, num_start, unk):
+	# when the decoder input is copied num but the num has two pos, chose the max
+	if USE_CUDA:
+		decoder_output = decoder_output.cpu()
+	for i in range(target.size(0)):
+		if target[i] == unk:
+			num_stack = nums_stack_batch[i].pop()
+			max_score = -float("1e12")
