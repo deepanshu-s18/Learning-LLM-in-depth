@@ -315,3 +315,34 @@ def compute_postfix_tree_result(test_res, test_tar, output_lang, num_list, num_s
 		return True, True, test_res, test_tar
 	test = out_expression_list(test_res, output_lang, num_list)
 	tar = out_expression_list(test_tar, output_lang, num_list, copy.deepcopy(num_stack))
+	# print(test, tar)
+	if test is None:
+		return False, False, test, tar
+	if test == tar:
+		return True, True, test, tar
+	try:
+		if abs(compute_postfix_expression(test) - compute_postfix_expression(tar)) < 1e-4:
+			return True, False, test, tar
+		else:
+			return False, False, test, tar
+	except:
+		return False, False, test, tar
+
+def compute_result(test_res, test_tar, output_lang, num_list, num_stack):
+	if len(num_stack) == 0 and test_res == test_tar:
+		return True, True
+	test = out_equation(test_res, output_lang, num_list)
+	tar = out_equation(test_tar, output_lang, num_list, copy.deepcopy(num_stack))
+	if test is None:
+		return False, False
+	if test == tar:
+		return True, True
+	try:
+		if abs(eval(test) - eval(tar)) < 1e-4:
+			return True, False
+		else:
+			return False, False
+	except:
+		return False, False
+
+def get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size, hidden_size):
