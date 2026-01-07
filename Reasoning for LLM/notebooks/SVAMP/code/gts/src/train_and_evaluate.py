@@ -537,3 +537,35 @@ def evaluate_attn(input_seq, input_length, num_list, copy_nums, generate_nums, e
 	# Create starting vectors for decoder
 	decoder_input = torch.LongTensor([output_lang.word2index["SOS"]])  # SOS
 	decoder_hidden = encoder_hidden[:decoder.n_layers]  # Use last (forward) hidden state from encoder
+	beam_list = list()
+	score = 0
+	beam_list.append(Beam(score, decoder_input, decoder_hidden, []))
+
+	# Run through decoder
+	for di in range(max_length):
+		temp_list = list()
+		beam_len = len(beam_list)
+		for xb in beam_list:
+			if int(xb.input_var[0]) == output_lang.word2index["EOS"]:
+				temp_list.append(xb)
+				beam_len -= 1
+		if beam_len == 0:
+			return beam_list[0].all_output
+		beam_scores = torch.zeros(decoder.output_size * beam_len)
+		hidden_size_0 = decoder_hidden.size(0)
+		hidden_size_2 = decoder_hidden.size(2)
+		all_hidden = torch.zeros(beam_len, hidden_size_0, 1, hidden_size_2)
+		if USE_CUDA:
+			beam_scores = beam_scores.cuda()
+			all_hidden = all_hidden.cuda()
+		all_outputs = []
+		current_idx = -1
+
+		for b_idx in range(len(beam_list)):
+			decoder_input = beam_list[b_idx].input_var
+			if int(decoder_input[0]) == output_lang.word2index["EOS"]:
+				continue
+			current_idx += 1
+			decoder_hidden = beam_list[b_idx].hidden
+
+			# rule_mask = generate_rule_mask(decoder_input, [num_list], output_lang.word2index,
