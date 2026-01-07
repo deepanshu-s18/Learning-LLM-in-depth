@@ -442,3 +442,34 @@ def train_attn(input_batch, input_length, target_batch, target_length, num_batch
 
 			for b_idx in range(len(beam_list)):
 				decoder_input = beam_list[b_idx].input_var
+				decoder_hidden = beam_list[b_idx].hidden
+
+				rule_mask = generate_rule_mask(decoder_input, num_batch, output_lang.word2index, batch_size,
+											   num_start, copy_nums, generate_nums, english)
+				if USE_CUDA:
+					rule_mask = rule_mask.cuda()
+					decoder_input = decoder_input.cuda()
+
+				decoder_output, decoder_hidden = decoder(
+					decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+
+				score = f.log_softmax(decoder_output, dim=1) + rule_mask
+				beam_score = beam_list[b_idx].score
+				beam_score = beam_score.unsqueeze(1)
+				repeat_dims = [1] * beam_score.dim()
+				repeat_dims[1] = score.size(1)
+				beam_score = beam_score.repeat(*repeat_dims)
+				score += beam_score
+				beam_scores[:, b_idx * decoder.output_size: (b_idx + 1) * decoder.output_size] = score
+				all_hidden[:, b_idx * batch_size:(b_idx + 1) * batch_size, :] = decoder_hidden
+
+				beam_list[b_idx].all_output[t] = decoder_output
+				all_outputs[:, batch_size * b_idx: batch_size * (b_idx + 1), :] = \
+					beam_list[b_idx].all_output
+			topv, topi = beam_scores.topk(beam_size, dim=1)
+			beam_list = list()
+
+			for k in range(beam_size):
+				temp_topk = topi[:, k]
+				temp_input = temp_topk % decoder.output_size
+				temp_input = temp_input.data
