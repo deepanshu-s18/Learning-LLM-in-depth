@@ -410,3 +410,35 @@ def train_attn(input_batch, input_length, target_batch, target_length, num_batch
 	# Move new Variables to CUDA
 	if USE_CUDA:
 		all_decoder_outputs = all_decoder_outputs.cuda()
+
+	if random.random() < use_teacher_forcing:
+		# Run through decoder one time step at a time
+		for t in range(max_target_length):
+			if USE_CUDA:
+				decoder_input = decoder_input.cuda()
+
+			decoder_output, decoder_hidden = decoder(
+				decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+			all_decoder_outputs[t] = decoder_output
+			decoder_input = generate_decoder_input(
+				target[t], decoder_output, nums_stack_batch, num_start, unk)
+			target[t] = decoder_input
+	else:
+		beam_list = list()
+		score = torch.zeros(batch_size)
+		if USE_CUDA:
+			score = score.cuda()
+		beam_list.append(Beam(score, decoder_input, decoder_hidden, all_decoder_outputs))
+		# Run through decoder one time step at a time
+		for t in range(max_target_length):
+			beam_len = len(beam_list)
+			beam_scores = torch.zeros(batch_size, decoder.output_size * beam_len)
+			all_hidden = torch.zeros(decoder_hidden.size(0), batch_size * beam_len, decoder_hidden.size(2))
+			all_outputs = torch.zeros(max_target_length, batch_size * beam_len, decoder.output_size)
+			if USE_CUDA:
+				beam_scores = beam_scores.cuda()
+				all_hidden = all_hidden.cuda()
+				all_outputs = all_outputs.cuda()
+
+			for b_idx in range(len(beam_list)):
+				decoder_input = beam_list[b_idx].input_var
