@@ -600,3 +600,35 @@ def evaluate_attn(input_seq, input_length, num_list, copy_nums, generate_nums, e
 			beam_list = temp_list
 		else:
 			beam_list = temp_list[:beam_size]
+	return beam_list[0].all_output
+
+def copy_list(l):
+	r = []
+	if len(l) == 0:
+		return r
+	for i in l:
+		if type(i) is list:
+			r.append(copy_list(i))
+		else:
+			r.append(i)
+	return r
+
+class TreeBeam:  # the class save the beam node
+	def __init__(self, score, node_stack, embedding_stack, left_childs, out):
+		self.score = score
+		self.embedding_stack = copy_list(embedding_stack)
+		self.node_stack = copy_list(node_stack)
+		self.left_childs = copy_list(left_childs)
+		self.out = copy.deepcopy(out)
+
+
+class TreeEmbedding:  # the class save the tree
+	def __init__(self, embedding, terminal=False):
+		self.embedding = embedding
+		self.terminal = terminal
+
+# def train_tree(input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums,
+# 			   encoder, predict, generate, merge, encoder_optimizer, predict_optimizer, generate_optimizer,
+# 			   merge_optimizer, output_lang, num_pos, english=False):
+def train_tree(config, input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums,
+			   embedding, encoder, predict, generate, merge, embedding_optimizer, encoder_optimizer, predict_optimizer, generate_optimizer,
