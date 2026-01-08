@@ -569,3 +569,34 @@ def evaluate_attn(input_seq, input_length, num_list, copy_nums, generate_nums, e
 			decoder_hidden = beam_list[b_idx].hidden
 
 			# rule_mask = generate_rule_mask(decoder_input, [num_list], output_lang.word2index,
+			#                                1, num_start, copy_nums, generate_nums, english)
+			if USE_CUDA:
+				# rule_mask = rule_mask.cuda()
+				decoder_input = decoder_input.cuda()
+
+			decoder_output, decoder_hidden = decoder(
+				decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+			# score = f.log_softmax(decoder_output, dim=1) + rule_mask.squeeze()
+			score = f.log_softmax(decoder_output, dim=1)
+			score += beam_list[b_idx].score
+			beam_scores[current_idx * decoder.output_size: (current_idx + 1) * decoder.output_size] = score
+			all_hidden[current_idx] = decoder_hidden
+			all_outputs.append(beam_list[b_idx].all_output)
+		topv, topi = beam_scores.topk(beam_size)
+
+		for k in range(beam_size):
+			word_n = int(topi[k])
+			word_input = word_n % decoder.output_size
+			temp_input = torch.LongTensor([word_input])
+			indices = int(word_n / decoder.output_size)
+
+			temp_hidden = all_hidden[indices]
+			temp_output = all_outputs[indices]+[word_input]
+			temp_list.append(Beam(float(topv[k]), temp_input, temp_hidden, temp_output))
+
+		temp_list = sorted(temp_list, key=lambda x: x.score, reverse=True)
+
+		if len(temp_list) < beam_size:
+			beam_list = temp_list
+		else:
+			beam_list = temp_list[:beam_size]
