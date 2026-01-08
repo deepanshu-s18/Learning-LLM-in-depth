@@ -664,3 +664,34 @@ def train_tree(config, input_batch, input_length, target_batch, target_length, n
 		num_mask = num_mask.cuda()
 
 	# Zero gradients of both optimizers
+	embedding_optimizer.zero_grad()
+	encoder_optimizer.zero_grad()
+	predict_optimizer.zero_grad()
+	generate_optimizer.zero_grad()
+	merge_optimizer.zero_grad()
+	# Run words through encoder
+
+	# pdb.set_trace()
+	embedded = None
+	orig_idx = None
+	if config.embedding == 'bert' or config.embedding == 'roberta':
+		contextual_input = index_batch_to_words(input_batch, input_length, input_lang)
+		input_seq1, input_len1 = embedding(contextual_input)
+		input_seq1 = input_seq1.transpose(0,1)
+		embedded, input_length, orig_idx = sort_by_len(input_seq1, input_len1, gpu_init_pytorch(config.gpu))
+	else:
+		embedded = embedding(input_var)
+
+	encoder_outputs, problem_output = encoder(embedded, input_length, orig_idx)
+
+	# encoder_outputs, problem_output = encoder(input_var, input_length)
+
+	# sequence mask for attention
+	seq_mask = []
+	max_len = max(input_length)
+	for i in input_length:
+		seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
+	seq_mask = torch.BoolTensor(seq_mask)
+
+	if USE_CUDA:
+		seq_mask = seq_mask.cuda()
