@@ -727,3 +727,35 @@ def train_tree(config, input_batch, input_length, target_batch, target_length, n
 		left_child, right_child, node_label = generate(current_embeddings, generate_input, current_context)
 		left_childs = []
 		for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
+											   node_stacks, target[t].tolist(), embeddings_stacks):
+			if len(node_stack) != 0:
+				node = node_stack.pop()
+			else:
+				left_childs.append(None)
+				continue
+
+			if i < num_start:
+				node_stack.append(TreeNode(r))
+				node_stack.append(TreeNode(l, left_flag=True))
+				o.append(TreeEmbedding(node_label[idx].unsqueeze(0), False))
+			else:
+				current_num = current_nums_embeddings[idx, i - num_start].unsqueeze(0)
+				while len(o) > 0 and o[-1].terminal:
+					sub_stree = o.pop()
+					op = o.pop()
+					current_num = merge(op.embedding, sub_stree.embedding, current_num)
+				o.append(TreeEmbedding(current_num, True))
+			if len(o) > 0 and o[-1].terminal:
+				left_childs.append(o[-1].embedding)
+			else:
+				left_childs.append(None)
+
+	# all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
+	all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
+
+	target = target.transpose(0, 1).contiguous()
+	if USE_CUDA:
+		# all_leafs = all_leafs.cuda()
+		all_node_outputs = all_node_outputs.cuda()
+		target = target.cuda()
+
