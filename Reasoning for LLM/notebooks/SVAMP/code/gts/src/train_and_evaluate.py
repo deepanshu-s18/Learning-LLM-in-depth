@@ -791,3 +791,34 @@ def evaluate_tree(config, input_batch, input_length, generate_nums, embedding, e
 	embedding.eval()
 	encoder.eval()
 	predict.eval()
+	generate.eval()
+	merge.eval()
+
+	padding_hidden = torch.FloatTensor([0.0 for _ in range(predict.hidden_size)]).unsqueeze(0)
+
+	batch_size = 1
+
+	if USE_CUDA:
+		input_var = input_var.cuda()
+		# seq_mask = seq_mask.cuda()
+		padding_hidden = padding_hidden.cuda()
+		num_mask = num_mask.cuda()
+	# Run words through encoder
+
+	# pdb.set_trace()
+
+	embedded = None
+	orig_idx = None
+	if config.embedding == 'bert' or config.embedding == 'roberta':
+		contextual_input = index_batch_to_words([input_batch], [input_length], input_lang)
+		input_seq1, input_len1 = embedding(contextual_input)
+		input_seq1 = input_seq1.transpose(0,1)
+		embedded, input_length, orig_idx = sort_by_len(input_seq1, input_len1, gpu_init_pytorch(config.gpu))
+		input_length = input_length[0]
+	else:
+		embedded = embedding(input_var)
+
+	encoder_outputs, problem_output = encoder(embedded, [input_length], orig_idx)
+	# encoder_outputs, problem_output = encoder(input_var, [input_length])
+
+	seq_mask = torch.BoolTensor(1, input_length).fill_(0)
