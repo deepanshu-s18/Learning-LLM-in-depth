@@ -917,3 +917,35 @@ def evaluate_tree(config, input_batch, input_length, generate_nums, embedding, e
 		beams = beams[:beam_size]
 		flag = True
 		for b in beams:
+			if len(b.node_stack[0]) != 0:
+				flag = False
+		if flag:
+			break
+
+	return beams[0].out
+
+def topdown_train_tree(input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch,
+					   generate_nums, encoder, predict, generate, encoder_optimizer, predict_optimizer,
+					   generate_optimizer, output_lang, num_pos, english=False):
+	# sequence mask for attention
+	seq_mask = []
+	max_len = max(input_length)
+	for i in input_length:
+		seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
+	seq_mask = torch.BoolTensor(seq_mask)
+
+	num_mask = []
+	max_num_size = max(num_size_batch) + len(generate_nums)
+	for i in num_size_batch:
+		d = i + len(generate_nums)
+		num_mask.append([0] * d + [1] * (max_num_size - d))
+	num_mask = torch.BoolTensor(num_mask)
+
+	unk = output_lang.word2index["UNK"]
+
+	# Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
+	input_var = torch.LongTensor(input_batch).transpose(0, 1)
+
+	target = torch.LongTensor(target_batch).transpose(0, 1)
+
+	padding_hidden = torch.FloatTensor([0.0 for _ in range(predict.hidden_size)]).unsqueeze(0)
