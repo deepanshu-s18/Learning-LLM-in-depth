@@ -1013,3 +1013,34 @@ def topdown_train_tree(input_batch, input_length, target_batch, target_length, n
 	target = target.transpose(0, 1).contiguous()
 	if USE_CUDA:
 		# all_leafs = all_leafs.cuda()
+		all_node_outputs = all_node_outputs.cuda()
+		target = target.cuda()
+
+	# op_target = target < num_start
+	# loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
+	loss = masked_cross_entropy(all_node_outputs, target, target_length)
+	# loss = loss_0 + loss_1
+	loss.backward()
+	# clip the grad
+	# torch.nn.utils.clip_grad_norm_(encoder.parameters(), 5)
+	# torch.nn.utils.clip_grad_norm_(predict.parameters(), 5)
+	# torch.nn.utils.clip_grad_norm_(generate.parameters(), 5)
+
+	# Update parameters with optimizers
+	encoder_optimizer.step()
+	predict_optimizer.step()
+	generate_optimizer.step()
+	return loss.item()  # , loss_0.item(), loss_1.item()
+
+def topdown_evaluate_tree(input_batch, input_length, generate_nums, encoder, predict, generate, output_lang, num_pos,
+						  beam_size=5, english=False, max_length=MAX_OUTPUT_LENGTH):
+
+	seq_mask = torch.BoolTensor(1, input_length).fill_(0)
+	# Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
+	input_var = torch.LongTensor(input_batch).unsqueeze(1)
+
+	num_mask = torch.BoolTensor(1, len(num_pos) + len(generate_nums)).fill_(0)
+
+	# Set to not-training mode to disable dropout
+	encoder.eval()
+	predict.eval()
