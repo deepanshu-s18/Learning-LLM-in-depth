@@ -949,3 +949,35 @@ def topdown_train_tree(input_batch, input_length, target_batch, target_length, n
 	target = torch.LongTensor(target_batch).transpose(0, 1)
 
 	padding_hidden = torch.FloatTensor([0.0 for _ in range(predict.hidden_size)]).unsqueeze(0)
+	batch_size = len(input_length)
+
+	encoder.train()
+	predict.train()
+	generate.train()
+
+	if USE_CUDA:
+		input_var = input_var.cuda()
+		seq_mask = seq_mask.cuda()
+		padding_hidden = padding_hidden.cuda()
+		num_mask = num_mask.cuda()
+
+	# Zero gradients of both optimizers
+	encoder_optimizer.zero_grad()
+	predict_optimizer.zero_grad()
+	generate_optimizer.zero_grad()
+	# Run words through encoder
+
+	encoder_outputs, problem_output = encoder(input_var, input_length)
+	# Prepare input and output variables
+	node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
+
+	max_target_length = max(target_length)
+
+	all_node_outputs = []
+	# all_leafs = []
+
+	copy_num_len = [len(_) for _ in num_pos]
+	num_size = max(copy_num_len)
+	all_nums_encoder_outputs = get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
+															  encoder.hidden_size)
+
