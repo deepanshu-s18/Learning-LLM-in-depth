@@ -886,3 +886,34 @@ def evaluate_tree(config, input_batch, input_length, generate_nums, embedding, e
 
 				out_token = int(ti)
 				current_out.append(out_token)
+
+				node = current_node_stack[0].pop()
+
+				if out_token < num_start:
+					generate_input = torch.LongTensor([out_token])
+					if USE_CUDA:
+						generate_input = generate_input.cuda()
+					left_child, right_child, node_label = generate(current_embeddings, generate_input, current_context)
+
+					current_node_stack[0].append(TreeNode(right_child))
+					current_node_stack[0].append(TreeNode(left_child, left_flag=True))
+
+					current_embeddings_stacks[0].append(TreeEmbedding(node_label[0].unsqueeze(0), False))
+				else:
+					current_num = current_nums_embeddings[0, out_token - num_start].unsqueeze(0)
+
+					while len(current_embeddings_stacks[0]) > 0 and current_embeddings_stacks[0][-1].terminal:
+						sub_stree = current_embeddings_stacks[0].pop()
+						op = current_embeddings_stacks[0].pop()
+						current_num = merge(op.embedding, sub_stree.embedding, current_num)
+					current_embeddings_stacks[0].append(TreeEmbedding(current_num, True))
+				if len(current_embeddings_stacks[0]) > 0 and current_embeddings_stacks[0][-1].terminal:
+					current_left_childs.append(current_embeddings_stacks[0][-1].embedding)
+				else:
+					current_left_childs.append(None)
+				current_beams.append(TreeBeam(b.score+float(tv), current_node_stack, current_embeddings_stacks,
+											  current_left_childs, current_out))
+		beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
+		beams = beams[:beam_size]
+		flag = True
+		for b in beams:
