@@ -1108,3 +1108,35 @@ def topdown_evaluate_tree(input_batch, input_length, generate_nums, encoder, pre
 			#     out_token = int(topi[0])
 			# else:
 			#     topv, topi = num_score.topk(1)
+			#     out_token = int(topi[0]) + num_start
+
+			for tv, ti in zip(topv.split(1, dim=1), topi.split(1, dim=1)):
+				current_node_stack = copy_list(b.node_stack)
+				current_out = copy.deepcopy(b.out)
+
+				out_token = int(ti)
+				current_out.append(out_token)
+
+				node = current_node_stack[0].pop()
+
+				if out_token < num_start:
+					generate_input = torch.LongTensor([out_token])
+					if USE_CUDA:
+						generate_input = generate_input.cuda()
+					left_child, right_child, node_label = generate(current_embeddings, generate_input, current_context)
+
+					current_node_stack[0].append(TreeNode(right_child))
+					current_node_stack[0].append(TreeNode(left_child, left_flag=True))
+
+				current_beams.append(TreeBeam(b.score+float(tv), current_node_stack, embeddings_stacks, left_childs,
+											  current_out))
+		beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
+		beams = beams[:beam_size]
+		flag = True
+		for b in beams:
+			if len(b.node_stack[0]) != 0:
+				flag = False
+		if flag:
+			break
+
+	return beams[0].out
