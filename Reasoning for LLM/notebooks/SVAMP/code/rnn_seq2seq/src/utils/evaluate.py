@@ -46,3 +46,28 @@ def format_eq(eq):
 			else:
 				if temp_num == "":
 					fin_eq = fin_eq + ' ' + i
+				else:
+					fin_eq = fin_eq + ' ' + temp_num + ' ' + i
+			temp_num = ""
+	if temp_num != "":
+		fin_eq = fin_eq + ' ' + temp_num
+	return fin_eq
+
+def prefix_to_infix(prefix):
+	operators = ['+', '-', '*', '/']
+	stack = []
+	elements = format_eq(prefix).split()
+	for i in range(len(elements)-1, -1, -1):
+		if elements[i] in operators and len(stack)>1:
+			op1 = stack.pop(-1)
+			op2 = stack.pop(-1)
+			fin_operand = '(' + ' ' + op1 + ' ' + elements[i] + ' ' + op2 + ' ' + ')'
+			stack.append(fin_operand)
+		else:
+			stack.append(elements[i])
+	try:
+		return stack[0]
+	except:
+		return ""
+
+def stack_to_string(stack):
