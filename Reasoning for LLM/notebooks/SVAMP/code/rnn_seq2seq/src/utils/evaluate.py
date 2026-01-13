@@ -22,3 +22,27 @@ def format_eq(eq):
 			flag = flag-1
 		elif i == 'n':
 			flag = 6
+			if fin_eq == "":
+				fin_eq = fin_eq + i
+			else:
+				fin_eq = fin_eq + ' ' + i
+		elif i in ls:
+			temp_num = temp_num + i
+		elif i == ' ':
+			if temp_num == "":
+				continue
+			else:
+				if fin_eq == "":
+					fin_eq = fin_eq + temp_num
+				else:
+					fin_eq = fin_eq + ' ' + temp_num
+			temp_num = ""
+		else:
+			if fin_eq == "":
+				if temp_num == "":
+					fin_eq = fin_eq + i
+				else:
+					fin_eq = fin_eq + temp_num + ' ' + i
+			else:
+				if temp_num == "":
+					fin_eq = fin_eq + ' ' + i
