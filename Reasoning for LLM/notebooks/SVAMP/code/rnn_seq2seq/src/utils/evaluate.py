@@ -95,3 +95,27 @@ def ans_evaluator(eq, list_num):
 	#pdb.set_trace()
 	infix = prefix_to_infix(eq)
 	aligned = back_align(infix, list_num)
+	try:
+		final_ans = parse_expr(aligned, evaluate = True)
+	except:
+		final_ans = -1000.112
+	return final_ans
+
+def cal_score(outputs, nums, ans, eqns):
+	corr = 0
+	tot = 0
+	disp_corr = []
+	for i in range(len(outputs)):
+		op = stack_to_string(outputs[i])
+		if 'NONE' in op:
+			if op == eqns[i]:
+				corr+=1
+				tot+=1
+				disp_corr.append(1)
+			else:
+				tot+=1
+				disp_corr.append(0)
+		else:
+			num = nums[i].split()
+			num = [float(nu) for nu in num]
+			answer = ans[i].item()
