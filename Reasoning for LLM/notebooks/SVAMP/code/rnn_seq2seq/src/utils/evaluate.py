@@ -119,3 +119,28 @@ def cal_score(outputs, nums, ans, eqns):
 			num = nums[i].split()
 			num = [float(nu) for nu in num]
 			answer = ans[i].item()
+
+			pred = ans_evaluator(op, num)
+
+			if abs(pred - answer) <= 0.1:
+				corr+=1
+				tot+=1
+				disp_corr.append(1)
+			else:
+				tot+=1
+				disp_corr.append(0)
+
+	return corr, tot, disp_corr
+
+def get_infix_eq(outputs, nums):
+	eqs = []
+	for i in range(len(outputs)):
+		op = stack_to_string(outputs[i])
+		num = nums[i].split()
+		num = [float(nu) for nu in num]
+
+		infix = prefix_to_infix(op)
+		eqs.append(infix)
+
+	return eqs
+
