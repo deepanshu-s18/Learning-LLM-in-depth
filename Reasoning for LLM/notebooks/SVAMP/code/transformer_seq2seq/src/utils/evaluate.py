@@ -66,3 +66,26 @@ def prefix_to_infix(prefix):
 		else:
 			stack.append(elements[i])
 	try:
+		return stack[0]
+	except:
+		return ''
+
+def stack_to_string(stack):
+	op = ""
+	for i in stack:
+		if op == "":
+			op = op + i
+		else:
+			op = op + ' ' + i
+	return op
+
+def back_align(eq, list_num):
+	elements = eq.split()
+	for i in range(len(elements)):
+		if elements[i][0] == 'n':
+			index = int(elements[i][6])
+			try:
+				number = str(list_num[index])
+			except:
+				return '-1000.112'
+			elements[i] = number
