@@ -89,3 +89,26 @@ def back_align(eq, list_num):
 			except:
 				return '-1000.112'
 			elements[i] = number
+	return stack_to_string(elements)    
+
+def ans_evaluator(eq, list_num):
+	#pdb.set_trace()
+	infix = prefix_to_infix(eq)
+	aligned = back_align(infix, list_num)
+	try:
+		final_ans = parse_expr(aligned, evaluate = True)
+	except:
+		final_ans = -1000.112
+	return final_ans
+
+def cal_score(outputs, nums, ans):
+	corr = 0
+	tot = 0
+	disp_corr = []
+	for i in range(len(outputs)):
+		op = stack_to_string(outputs[i])
+		num = nums[i].split()
+		num = [float(nu) for nu in num]
+		answer = ans[i].item()
+
+		pred = ans_evaluator(op, num)
