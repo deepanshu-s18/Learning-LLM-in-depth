@@ -72,3 +72,28 @@ class Seq2SeqEvaluator:
 
         for i, sample in enumerate(subset):
             question = sample["question"]
+            gt_answer = extract_ground_truth_answer(sample["answer"])
+
+            prompt = format_cot_prompt(question, prefix=prefix)
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+
+            with torch.no_grad():
+                output_tokens = self.model.generate(
+                    **inputs,
+                    max_new_tokens=128
+                )
+
+            output_text = self.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+            pred = extract_predicted_answer(output_text)
+
+            print(f"\nExample {i + 1}")
+            print(f"Q: {question}")
+            print(f"Ground Truth: {gt_answer}")
+            print(f"Generated CoT Output:\n{output_text}")
+            print(f"Extracted Answer: {pred} | Match: {is_answer_match(pred, gt_answer)}")
+
+
+class DecoderEvaluator:
+    """Evaluator for Causal / Autoregressive models (Zephyr, Phi-2, TinyLlama)."""
+
+    def __init__(self, model_id: str, torch_dtype: Optional[torch.dtype] = None):
