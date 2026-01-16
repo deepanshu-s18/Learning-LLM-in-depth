@@ -22,3 +22,28 @@ class Seq2SeqEvaluator:
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
         if self.device != "cpu":
+            self.model = self.model.to(self.device)
+        self.model.eval()
+
+    def evaluate(
+        self,
+        dataset: Dataset,
+        prefix: str = FEW_SHOT_COT_PREFIX,
+        max_new_tokens: int = 128
+    ) -> float:
+        """Run few-shot CoT evaluation over dataset."""
+        print(f"\nEvaluating Seq2Seq {self.model_id}...")
+        correct = 0
+        total = 0
+
+        for sample in dataset:
+            question = sample["question"]
+            gt_answer = extract_ground_truth_answer(sample["answer"])
+
+            prompt = format_cot_prompt(question, prefix=prefix)
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+
+            with torch.no_grad():
+                output_tokens = self.model.generate(
+                    **inputs,
+                    max_new_tokens=max_new_tokens
