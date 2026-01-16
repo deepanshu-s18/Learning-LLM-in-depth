@@ -47,3 +47,28 @@ class Seq2SeqEvaluator:
                 output_tokens = self.model.generate(
                     **inputs,
                     max_new_tokens=max_new_tokens
+                )
+
+            output_text = self.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+            pred = extract_predicted_answer(output_text)
+
+            if is_answer_match(pred, gt_answer):
+                correct += 1
+            total += 1
+
+        acc = correct / total if total > 0 else 0.0
+        print(f"[{self.model_id}] Accuracy: {acc:.2%} ({correct}/{total})")
+        return acc
+
+    def preview_predictions(
+        self,
+        dataset: Dataset,
+        prefix: str = FEW_SHOT_COT_PREFIX,
+        num_samples: int = 5
+    ) -> None:
+        """Print sample step-by-step reasoning outputs."""
+        print(f"\n--- Predictions from {self.model_id} on {num_samples} Questions ---")
+        subset = dataset.select(range(min(num_samples, len(dataset))))
+
+        for i, sample in enumerate(subset):
+            question = sample["question"]
