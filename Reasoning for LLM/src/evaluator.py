@@ -122,3 +122,28 @@ class DecoderEvaluator:
     def evaluate(
         self,
         dataset: Dataset,
+        prefix: str = FEW_SHOT_COT_PREFIX
+    ) -> float:
+        """Run few-shot CoT evaluation on dataset."""
+        print(f"\nEvaluating Decoder {self.model_id}...")
+        correct = 0
+        total = 0
+
+        for sample in dataset:
+            question = sample["question"]
+            gt_answer = extract_ground_truth_answer(sample["answer"])
+
+            prompt = format_cot_prompt(question, prefix=prefix)
+            outputs = self.pipe(prompt)
+            generated_full = outputs[0]["generated_text"]
+            output_text = generated_full.split("A:")[-1].strip()
+            pred = extract_predicted_answer(output_text)
+
+            if is_answer_match(pred, gt_answer):
+                correct += 1
+            total += 1
+
+        acc = correct / total if total > 0 else 0.0
+        print(f"[{self.model_id}] Accuracy: {acc:.2%} ({correct}/{total})")
+        return acc
+
