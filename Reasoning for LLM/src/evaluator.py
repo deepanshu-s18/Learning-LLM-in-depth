@@ -97,3 +97,28 @@ class DecoderEvaluator:
     """Evaluator for Causal / Autoregressive models (Zephyr, Phi-2, TinyLlama)."""
 
     def __init__(self, model_id: str, torch_dtype: Optional[torch.dtype] = None):
+        self.model_id = model_id
+        print(f"Loading Decoder model '{model_id}'...")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+        dtype = torch_dtype or (torch.float16 if torch.cuda.is_available() else torch.float32)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            device_map="auto" if torch.cuda.is_available() else None,
+            torch_dtype=dtype,
+            trust_remote_code=True
+        )
+        self.pipe = pipeline(
+            "text-generation",
+            model=self.model,
+            tokenizer=self.tokenizer,
+            max_new_tokens=128,
+            temperature=0.3,
+            do_sample=False
+        )
+
+    def evaluate(
+        self,
+        dataset: Dataset,
