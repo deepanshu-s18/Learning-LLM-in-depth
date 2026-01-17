@@ -147,3 +147,28 @@ class DecoderEvaluator:
         print(f"[{self.model_id}] Accuracy: {acc:.2%} ({correct}/{total})")
         return acc
 
+    def preview_predictions(
+        self,
+        dataset: Dataset,
+        prefix: str = FEW_SHOT_COT_PREFIX,
+        num_samples: int = 5
+    ) -> None:
+        """Print detailed reasoning trajectories."""
+        print(f"\n--- Predictions from {self.model_id} on {num_samples} Questions ---")
+        subset = dataset.select(range(min(num_samples, len(dataset))))
+
+        for i, sample in enumerate(subset):
+            question = sample["question"]
+            gt_answer = extract_ground_truth_answer(sample["answer"])
+
+            prompt = format_cot_prompt(question, prefix=prefix)
+            outputs = self.pipe(prompt)
+            generated_full = outputs[0]["generated_text"]
+            output_text = generated_full.split("A:")[-1].strip()
+            pred = extract_predicted_answer(output_text)
+
+            print(f"\nExample {i + 1}")
+            print(f"Q: {question}")
+            print(f"Ground Truth: {gt_answer}")
+            print(f"Generated CoT Output:\n{output_text}")
+            print(f"Extracted Answer: {pred} | Match: {is_answer_match(pred, gt_answer)}")
