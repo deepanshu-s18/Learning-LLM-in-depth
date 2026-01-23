@@ -45,6 +45,7 @@
 - **`llm-lite`**: End-to-end lightweight LLM suite featuring custom tokenizer training, SFT dataset pipelines, DPO alignment, and int8/int4 quantization.
 - **`DeepSeek-From-Scratch-Beginner`**: Foundational implementation of Multi-Head Latent Attention (MLA) with low-rank KV compression and Mixture-of-Experts (MoE) top-2 routing.
 - **`DeepSeek-From-Scratch`**: Full DeepSeek-V3 / DeepSeek-R1 implementation including Multi-Token Prediction (MTP), DualPipe parallelism simulation, and cold-start reasoning dynamics.
+- **`Reasoning for LLM`**: Comprehensive mathematical reasoning benchmark suite (SVAMP, MAWPS) evaluating Chain-of-Thought, Tree-of-Thoughts, Self-Consistency, and RL with Verifiable Rewards.
 ---
 
 ## 📊 Core Benchmarks & Key Findings
