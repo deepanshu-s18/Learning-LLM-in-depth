@@ -27,3 +27,32 @@ This repo implements the **3 core algorithm upgrades** from the Mercor + SkyRL p
 Mercor took an open-source LLM (Qwen3.5-397B), and used **Reinforcement Learning (RL)** to train it to do complex office work:
 - Read PDFs with 50 pages.
 - Search through emails.
+- Write PowerPoint presentations.
+- Do legal research.
+
+They did this using a method called **GRPO** (Group Relative Policy Optimization), which is a variant of the famous **PPO** algorithm that powers ChatGPT.
+
+Their results:
+- **+70% relative improvement** in task success rate on the APEX-Agents benchmark.
+- The model went from solving 16% of knowledge work tasks to solving **27%**.
+
+All of that came from just **3 surgical fixes** to the standard RL algorithm.
+
+---
+
+## The Problem: Why Standard GRPO Breaks for Agents
+
+Imagine you're training an agent on SWE-bench (GitHub bug-fix tasks). Your agent runs 6 different rollouts (attempts) at fixing the same bug, and they look like this:
+
+```
+Rollout 0: Wrote 3 bash commands, patched the file → 200 tokens total, reward = 0.85 ✅
+Rollout 1: Rambled for 15 commands, wandered around, gave up → 3,500 tokens total, reward = 0.0 ❌
+Rollout 2: Wrote 2 bash commands, patched the file → 180 tokens total, reward = 0.72 ✅
+Rollout 3: Ran out of turns, no patch produced → 800 tokens total, reward = 0.0 ❌
+Rollout 4: Explored correctly, patched → 350 tokens total, reward = 0.91 ✅
+Rollout 5: Rambled for 20 commands → 5,000 tokens total, reward = 0.0 ❌
+```
+
+With standard GRPO, the **gradient is dominated by the rambling rollouts** because they have the most tokens. The model "learns" from rollouts 1, 3, and 5 more than from rollouts 0, 2, and 4. That's backwards! The model should learn most from the SHORT, SUCCESSFUL rollouts.
+
+This is the fundamental problem Mercor identified and solved.
