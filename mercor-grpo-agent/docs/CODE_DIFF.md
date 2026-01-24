@@ -24,3 +24,29 @@ for turn_idx in range(max_turns):
 for turn_idx in range(max_turns):
     
     # ─── NEW: Context Nudge ───────────────────────────────────
+    if turn_idx == max_turns - 1:              # ← Is this the last turn?
+        context[-1]["content"] += (
+            "\n\n⚠️ [SYSTEM]: Final turn. Write your complete fix NOW."
+        )
+    # ─────────────────────────────────────────────────────────
+    
+    prompt = tok.apply_chat_template(context, ...)
+    reply  = generate(model, tok, prompt, ...)
+    ...
+```
+**What changed**: One `if` block, 3 lines. That's it.
+
+**Why it gives +3.0 points**: On long complex tasks (Mercor uses 50–100 turn agents for legal/banking tasks), the model regularly runs out of turns without producing output. Injecting the warning saves those rollouts from getting zero reward.
+
+> **Quote from Mercor paper**: *"Fewer rollouts blow the context, so fewer get zeroed across the board, hence more usable signal per batch."*
+
+---
+
+## Change 2: `seq_logprob()` → `seq_logprob_per_token()` [Needed for Fixes #1 and #3]
+
+### Baseline code:
+```python
+def seq_logprob(model, tok, messages, device):
+    ids, labs = build_masked(messages, tok)
+    t = torch.tensor([ids], device=device)
+    msk = ...
