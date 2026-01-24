@@ -143,3 +143,32 @@ This prevents catastrophic divergence during multi-turn agent training.
 
 ```
 mercor-grpo-agent/
+│
+├── README.md                        ← You are here. The full research explanation.
+│
+├── 01_original_grpo.py              ← The original GRPO code (baseline, unchanged)
+│                                       with heavy comments explaining what each line does.
+│
+├── 02_mercor_grpo.py                ← The upgraded code with all 3 Mercor fixes.
+│                                       Every change is annotated with a [MERCOR FIX #N] comment.
+│
+├── 03_comparison_runner.py          ← Run both versions side-by-side and print a comparison table.
+│
+├── docs/
+│   ├── PAPER_BREAKDOWN.md           ← Full plain-English breakdown of the Mercor paper.
+│   ├── CODE_DIFF.md                 ← Line-by-line diff of what changed and WHY.
+│   └── MATH_EXPLAINED.md           ← The math behind GRPO, prompt_mean, and DPPO.
+│
+└── requirements.txt                 ← All dependencies to run this.
+```
+
+---
+
+## How to Run
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Run the original (baseline) GRPO
+python 01_original_grpo.py
