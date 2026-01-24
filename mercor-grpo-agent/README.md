@@ -56,3 +56,32 @@ Rollout 5: Rambled for 20 commands → 5,000 tokens total, reward = 0.0 ❌
 With standard GRPO, the **gradient is dominated by the rambling rollouts** because they have the most tokens. The model "learns" from rollouts 1, 3, and 5 more than from rollouts 0, 2, and 4. That's backwards! The model should learn most from the SHORT, SUCCESSFUL rollouts.
 
 This is the fundamental problem Mercor identified and solved.
+
+---
+
+## The 3 Mercor Fixes (What We Implement)
+
+### Fix 1: `prompt_mean` Token Aggregation (+3.9 points in the paper)
+
+**The problem with the old code (line 165 of `swe_grpo_one_step.py`):**
+```python
+# OLD: "token_mean" — the long rambling rollouts dominate everything
+loss = -(a.to(device) * lp) / len(group)
+```
+
+When `lp` (log probability) is computed in `seq_logprob()`, it's the **sum of all token log probs divided by number of tokens**. A 5,000-token rollout with zero advantage contributes 10x more gradient noise than a 500-token successful rollout.
+
+**The Mercor fix:**
+```python
+# NEW: "prompt_mean" — every rollout counts equally regardless of length
+# Step 1: Compute per-token loss (NOT averaged yet)
+# Step 2: Sum over each rollout's tokens
+# Step 3: Divide by that rollout's OWN token count (normalize within)
+# Step 4: Average across the group
+loss = -sum(advantage_i * (sum_of_token_logprobs_i / n_tokens_i) for each rollout) / group_size
+```
+
+This is called `prompt_mean` because we normalize by prompt group, not global token count.
+
+---
+
