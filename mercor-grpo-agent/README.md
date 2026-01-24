@@ -172,3 +172,32 @@ pip install -r requirements.txt
 
 # 2. Run the original (baseline) GRPO
 python 01_original_grpo.py
+
+# 3. Run the upgraded Mercor-style GRPO
+python 02_mercor_grpo.py
+
+# 4. Run both and compare (shows which is more stable)
+python 03_comparison_runner.py
+```
+
+---
+
+## What You Will See
+
+When you run `03_comparison_runner.py`, you'll see output like:
+
+```
+============================================================
+             GRPO COMPARISON: BASELINE vs MERCOR
+============================================================
+
+Generating 6 rollouts from Qwen2.5-Coder-0.5B-Instruct...
+
+  rollout  reward  tokens  advantage (baseline)  advantage (mercor)
+        0    0.85     200               +1.234              +1.234
+        1    0.00    3500               -0.823              -0.823
+        2    0.72     180               +0.912              +0.912
+        3    0.00     800               -0.823              -0.823
+        4    0.91     350               +1.012              +1.012
+        5    0.00    5000               -0.823              -0.823
+
