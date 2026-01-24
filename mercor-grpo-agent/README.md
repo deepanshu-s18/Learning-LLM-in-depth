@@ -114,3 +114,32 @@ This bought Mercor **+3.0 points** with zero training cost. It's a pure harness 
 **The problem:**
 
 In standard GRPO (and the original `swe_grpo_one_step.py`), we use REINFORCE:
+```python
+loss = -(advantage * log_prob)
+```
+
+When the model is updated across multiple gradient steps or in async training (where rollouts arrive from an older policy version), the current policy might have **drifted far** from the rollout policy. Updating on stale rollouts can destabilize training.
+
+**The Mercor fix (DPPO from paper [8]):**
+
+Calculate the **token-level importance ratio** between current and old policy:
+
+$$r_t = \exp(\log \pi_\theta(x_t) - \log \pi_{\text{old}}(x_t))$$
+
+Then mask out (zero out) tokens where the divergence exceeds a threshold $\delta$:
+
+```python
+# If the current policy has drifted too far from rollout policy, skip this token
+ratio = (current_logprob - rollout_logprob).exp()
+total_variation_mask = (ratio - 1).abs() < delta   # keeps only stable tokens
+loss = -(advantage * token_logprobs * total_variation_mask).sum() / mask.sum()
+```
+
+This prevents catastrophic divergence during multi-turn agent training.
+
+---
+
+## File Structure
+
+```
+mercor-grpo-agent/
