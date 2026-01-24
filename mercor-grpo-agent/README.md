@@ -201,3 +201,32 @@ Generating 6 rollouts from Qwen2.5-Coder-0.5B-Instruct...
         4    0.91     350               +1.012              +1.012
         5    0.00    5000               -0.823              -0.823
 
+GRADIENT CONTRIBUTION ANALYSIS:
+  Baseline: Rollout 5 (5000 tokens, reward=0.0) contributes 25x MORE to gradient than rollout 0 (200 tokens, reward=0.85) ❌
+  Mercor:   Rollout 5 and Rollout 0 contribute EQUALLY. Each counts as 1/6 of the gradient. ✅
+
+STABILITY METRIC (logprob delta std across rollouts):
+  Baseline: 0.0234 (higher = less stable)
+  Mercor:   0.0089 (lower = more stable) ✅
+```
+
+---
+
+## Connection to Your Existing Projects
+
+| Your Project | What it Has | How Mercor Builds On It |
+|---|---|---|
+| `swe_in_prod_vizuara_01` | Basic GRPO loop, `seq_logprob`, REINFORCE | This folder upgrades that loop with `prompt_mean` + DPPO |
+| `llm-lite` | PPO, DPO, custom loss functions | DPPO is a hybrid of PPO clipping + DPO importance weights |
+| `Slack-ClawdBot` | Multi-turn tool-calling agent, MCP | This is the exact harness type Mercor trains — yours could be the environment |
+
+---
+
+## Citations
+
+- **Mercor + SkyRL Paper**: Training Frontier Knowledge Work Agents (2026-09-01)
+- **[1] Tmax**: Simple recipe for terminal agents [arXiv:2606.23321]
+- **[3] APEX-Agents**: Mercor's knowledge work benchmark [arXiv:2601.14242]  
+- **[8] DPPO**: Decoupled Proximal Policy Optimization [arXiv:2602.04879]
+- **[12] DAPO**: Decoupled Advantage Policy Optimization [arXiv:2503.14476]
+- **[15] GRPO**: DeepSeek-Math RL training [arXiv:2402.03300]
