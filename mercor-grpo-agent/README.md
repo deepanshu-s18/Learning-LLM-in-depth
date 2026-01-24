@@ -85,3 +85,32 @@ This is called `prompt_mean` because we normalize by prompt group, not global to
 
 ---
 
+### Fix 2: Context Nudge — Harness Engineering (+3.0 points in the paper)
+
+**The problem:**
+
+In the original `run_agent()` function, the agent just runs until it hits `MAX_TURNS`. If the task is complex, the model might still be in the middle of exploring when it suddenly gets cut off. The trajectory ends, the reward is 0 (no patch produced), and the model gets punished for running out of turns.
+
+This is not a *model failure*. It's a *harness failure*. The model never knew time was running out.
+
+**The Mercor fix:**
+
+Inject a warning message when 80% of the turn budget is consumed:
+```python
+# At turn 3 out of 4 (MAX_TURNS=4), inject this:
+context.append({
+    "role": "user",
+    "content": "[SYSTEM ALERT]: You have 1 turn remaining. "
+               "Stop exploring. Produce your FINAL patch immediately."
+})
+```
+
+This bought Mercor **+3.0 points** with zero training cost. It's a pure harness fix.
+
+---
+
+### Fix 3: DPPO — Decoupled Proximal Policy Optimization
+
+**The problem:**
+
+In standard GRPO (and the original `swe_grpo_one_step.py`), we use REINFORCE:
