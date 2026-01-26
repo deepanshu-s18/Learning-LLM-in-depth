@@ -103,3 +103,29 @@ Rollout B has 5000 tokens with reward 0.0 → `lp_B = sum_of_5000_tokens / 5000`
 When we compute gradients: rollout B's 5000 tokens each push gradients individually. Rollout A's 200 tokens each push individually. So B contributes 25x more raw gradient magnitude to the optimizer.
 
 Even if B has zero advantage (adv=0), it still contributes **gradient noise** to the optimization step.
+
+### Mercor loss (from 02_mercor_grpo.py):
+```python
+for i, (g, a, old_lp_per_tok) in enumerate(zip(group, adv, rollout_logprobs)):
+    
+    curr_lp_per_tok, mask, n_tokens = seq_logprob_per_token(model, tok, g["messages"], device)
+    
+    # ... (DPPO masking) ...
+    combined_mask = mask * dppo_mask
+    n_stable = combined_mask.sum()
+    
+    # ── [FIX #1: prompt_mean] ─────────────────────────────────────────
+    rollout_lp_sum  = (curr_lp_per_tok * combined_mask).sum()
+    rollout_lp_mean = rollout_lp_sum / n_stable    # ← Normalize by THIS rollout's tokens
+    
+    loss = -(a.to(device) * rollout_lp_mean) / group_size   # ← Divide by group size
+    # ─────────────────────────────────────────────────────────────────
+    loss.backward()
+```
+
+**What changes mathematically**:
+
+Rollout A: `loss_A = -adv_A * (sum_200_tokens / 200) / 6`  
+Rollout B: `loss_B = -adv_B * (sum_5000_tokens / 5000) / 6`
+
+Each rollout contributes **exactly 1/6** of the total gradient. Whether it has 200 tokens or 50,000 tokens, it counts the same. **Length is no longer a confound.**
