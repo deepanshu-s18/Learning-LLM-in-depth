@@ -50,3 +50,29 @@ def seq_logprob(model, tok, messages, device):
     ids, labs = build_masked(messages, tok)
     t = torch.tensor([ids], device=device)
     msk = ...
+    logits = model(t).logits[:, :-1]
+    lp = torch.log_softmax(logits.float(), -1).gather(...)
+    
+    return (lp * msk).sum() / msk.sum().clamp(min=1), msk.sum().item()
+    #                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    #                This is the MEAN over ALL tokens (token_mean)
+    #                Returns ONE scalar number
+```
+
+### Mercor code (new function):
+```python
+def seq_logprob_per_token(model, tok, messages, device):
+    ids, labs = build_masked(messages, tok)
+    t = torch.tensor([ids], device=device)
+    msk = ...
+    logits = model(t).logits[:, :-1]
+    lp = torch.log_softmax(logits.float(), -1).gather(...)
+    
+    return lp.squeeze(0), msk.squeeze(0), int(msk.sum().item())
+    #       ^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+    #       TENSOR of logprobs  TENSOR of mask
+    #       (one value per token, NOT averaged yet)
+```
+
+**What changed**: Instead of averaging immediately, we return the raw per-token logprobs and the mask separately.
+
