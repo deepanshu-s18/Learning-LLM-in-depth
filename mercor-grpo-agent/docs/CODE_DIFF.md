@@ -129,3 +129,29 @@ Rollout A: `loss_A = -adv_A * (sum_200_tokens / 200) / 6`
 Rollout B: `loss_B = -adv_B * (sum_5000_tokens / 5000) / 6`
 
 Each rollout contributes **exactly 1/6** of the total gradient. Whether it has 200 tokens or 50,000 tokens, it counts the same. **Length is no longer a confound.**
+
+---
+
+## Change 4: DPPO Token Masking [Fix #3]
+
+This is entirely new code added inside `compute_mercor_loss()`. Nothing from the baseline does this.
+
+### The new block:
+```python
+# Before the training loop: snapshot old logprobs
+with torch.no_grad():
+    for g in group:
+        lp_tok, _, _ = seq_logprob_per_token(model, tok, g["messages"], device)
+        rollout_logprobs.append(lp_tok.detach().cpu())   # freeze old policy snapshot
+
+# During training:
+ratio = (curr_lp_per_tok - old_lp_per_tok).exp()
+#         ^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^
+#         current policy    old policy (from snapshot above)
+#
+# ratio > 1 means current policy became more confident on this token
+# ratio < 1 means current policy became less confident
+# ratio = 1 means no change
+
+tv_divergence = (ratio - 1.0).abs()
+dppo_mask = (tv_divergence < DPPO_DELTA).float()
