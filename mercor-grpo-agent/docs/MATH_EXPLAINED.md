@@ -24,3 +24,30 @@ The standard formula for updating an LLM policy:
 $$\nabla_\theta J(\theta) = \mathbb{E}\left[ A \cdot \nabla_\theta \log \pi_\theta(a | s) \right]$$
 
 In plain English:
+- $\theta$ = the model's parameters (weights)
+- $\pi_\theta(a | s)$ = the model's probability of generating action $a$ given state $s$
+- $\log \pi_\theta$ = the **log probability** of the model's choices (what we compute in `seq_logprob`)
+- $A$ = the **advantage** (how much better or worse than average was this rollout?)
+- $\nabla_\theta$ = the gradient (direction to move weights)
+
+**The key insight**: if $A > 0$, we push the model toward this output. If $A < 0$, we push away.
+
+In code (the REINFORCE loss):
+```python
+loss = -(advantage * log_prob)
+# Negative because we MAXIMIZE reward (gradient descent MINIMIZES loss)
+```
+
+---
+
+## Part 3: GRPO — Group Relative Policy Optimization
+
+**The Problem with Standard RL**: To compute advantage, you need a "value function" that estimates the expected reward from any state. Training a value function is expensive and unstable.
+
+**GRPO's Solution**: Instead of a learned value function, use the group of rollouts themselves as the baseline.
+
+$$A_i = \frac{r_i - \mu_{\text{group}}}{\sigma_{\text{group}}}$$
+
+Where:
+- $r_i$ = reward for rollout $i$
+- $\mu_{\text{group}}$ = mean reward across the group
