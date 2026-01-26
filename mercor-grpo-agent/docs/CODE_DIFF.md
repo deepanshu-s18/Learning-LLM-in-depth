@@ -155,3 +155,30 @@ ratio = (curr_lp_per_tok - old_lp_per_tok).exp()
 
 tv_divergence = (ratio - 1.0).abs()
 dppo_mask = (tv_divergence < DPPO_DELTA).float()
+# ^ 1 where token is stable, 0 where policy drifted too much
+
+combined_mask = mask * dppo_mask   # only stable assistant tokens
+```
+
+**In plain English**:
+
+Imagine you run 6 rollouts, and while you're training on rollout 1, the model's weights change slightly. By the time you train on rollout 6, the model is a little different from the model that generated those rollouts.
+
+Some tokens in rollout 6 might have been generated when the model was very confident (`ratio >> 1`). If the model has since changed (`ratio << 1`), applying gradients from those tokens is **stale** — you're updating based on information that's no longer accurate about the current policy.
+
+DPPO says: "If a token's importance ratio deviates more than 20% from 1.0, don't update the policy on that token." This prevents instability.
+
+---
+
+## Summary of Changes
+
+| File | Lines Changed | What | Gain |
+|---|---|---|---|
+| `run_agent()` | +3 lines | If last turn, append nudge to user message | +3.0 pts |
+| `seq_logprob()` | Full replacement | Return per-token tensors instead of mean scalar | Enables Fix #1 and #3 |
+| `grpo_step()` loss | ~10 lines | Normalize per-rollout, not globally | +3.9 pts |
+| New `compute_mercor_loss()` | ~30 lines | DPPO ratio + mask before loss | Stability |
+
+**Total lines of new code: ~50 lines across both files.**
+
+That's it. 50 lines of code. That's what gave Mercor +3.9 + 3.0 = +6.9 measurable points on a benchmark and the basis for a successful 397B model training run.
