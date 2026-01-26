@@ -77,3 +77,30 @@ In agent RL, trajectories have **wildly different lengths**:
 
 With `token_mean`, the gradient from rollout B is computed as:
 
+$$\nabla_B = A_B \cdot \frac{\sum_{t=1}^{5000} \nabla \log \pi_\theta(x_t)}{5000}$$
+
+Even though $A_B = -0.97$ (negative, we want to push away), the raw magnitude of 5,000 gradient terms still dominates the optimization step.
+
+Meanwhile, rollout A:
+
+$$\nabla_A = A_A \cdot \frac{\sum_{t=1}^{200} \nabla \log \pi_\theta(x_t)}{200}$$
+
+Only 200 terms. 25x smaller raw magnitude.
+
+**The model ends up "learning" more from the bad rollout than the good one.**
+
+---
+
+## Part 5: The prompt_mean Fix [Mercor Fix #1]
+
+The fix: normalize each rollout by its own token count FIRST, then average across the group.
+
+$$\mathcal{L}_{\text{prompt\_mean}} = -\frac{1}{|G|} \sum_{i \in G} A_i \cdot \frac{\sum_{t=1}^{T_i} \log \pi_\theta(x_t^{(i)})}{T_i}$$
+
+Where $T_i$ is the number of assistant tokens in rollout $i$.
+
+**Breaking this down**:
+1. For each rollout $i$: sum its log-probs, divide by **its own** token count $T_i$. This gives a per-rollout score that's independent of length.
+2. Then multiply by advantage $A_i$.
+3. Then average across the group (divide by $|G|$).
+
