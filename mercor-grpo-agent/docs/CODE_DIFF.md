@@ -76,3 +76,30 @@ def seq_logprob_per_token(model, tok, messages, device):
 
 **What changed**: Instead of averaging immediately, we return the raw per-token logprobs and the mask separately.
 
+**Why we need this**:
+- **Fix #1 (prompt_mean)**: To normalize by each rollout's own token count, we need each rollout's tokens separate. If we average globally first, we lose that information.
+- **Fix #3 (DPPO)**: To compute divergence at each token, we need to compare current policy vs. old policy at each token position. We can't do that if we've already averaged everything into one number.
+
+---
+
+## Change 3: The Loss Function [Fix #1 — prompt_mean]
+
+### Baseline loss (line 165 of 01_original_grpo.py):
+```python
+for g, a in zip(group, adv):
+    lp, _ = seq_logprob(model, tok, g["messages"], device)
+    
+    loss = -(a.to(device) * lp) / len(group)
+    #                         ^
+    #                         lp is already token_mean (averaged globally)
+    loss.backward()
+```
+
+**What happens mathematically**:
+
+Rollout A has 200 tokens with reward 0.85 → `lp_A = sum_of_200_tokens / 200`  
+Rollout B has 5000 tokens with reward 0.0 → `lp_B = sum_of_5000_tokens / 5000`
+
+When we compute gradients: rollout B's 5000 tokens each push gradients individually. Rollout A's 200 tokens each push individually. So B contributes 25x more raw gradient magnitude to the optimizer.
+
+Even if B has zero advantage (adv=0), it still contributes **gradient noise** to the optimization step.
