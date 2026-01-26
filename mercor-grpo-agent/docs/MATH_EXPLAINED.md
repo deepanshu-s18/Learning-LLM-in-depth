@@ -51,3 +51,29 @@ $$A_i = \frac{r_i - \mu_{\text{group}}}{\sigma_{\text{group}}}$$
 Where:
 - $r_i$ = reward for rollout $i$
 - $\mu_{\text{group}}$ = mean reward across the group
+- $\sigma_{\text{group}}$ = standard deviation of rewards in the group
+
+**In plain English**: 
+- If rollout $i$ scored **above** the group average → $A_i > 0$ → reinforce it
+- If rollout $i$ scored **below** the group average → $A_i < 0$ → push away from it
+- If all rollouts got the same score → $A_i = 0$ for all → **nothing to learn** (degenerate group)
+
+In code:
+```python
+rewards = torch.tensor([0.85, 0.0, 0.72, 0.0, 0.91, 0.0])
+adv = (rewards - rewards.mean()) / (rewards.std() + 1e-4)
+# adv ≈ [+0.82, -0.97, +0.58, -0.97, +1.12, -0.97]
+```
+
+---
+
+## Part 4: Why token_mean Breaks for Agent RL
+
+In standard NLP training, all your examples have roughly the same length (e.g. "write a haiku" → 17 syllables). So averaging log-prob over all tokens works fine.
+
+In agent RL, trajectories have **wildly different lengths**:
+- Rollout A: 3 commands, 200 tokens, reward = 0.85 (efficient!)
+- Rollout B: 25 commands, 5000 tokens, reward = 0.0 (rambling!)
+
+With `token_mean`, the gradient from rollout B is computed as:
+
