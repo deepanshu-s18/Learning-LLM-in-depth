@@ -104,3 +104,29 @@ Where $T_i$ is the number of assistant tokens in rollout $i$.
 2. Then multiply by advantage $A_i$.
 3. Then average across the group (divide by $|G|$).
 
+**Now rollout A and rollout B contribute equally**, regardless of their lengths.
+
+```python
+# Mercor code:
+rollout_lp_mean = (curr_lp_per_tok * combined_mask).sum() / n_stable_tokens
+loss = -(advantage * rollout_lp_mean) / group_size
+```
+
+---
+
+## Part 6: DPPO — Decoupled Proximal Policy Optimization [Fix #3]
+
+### The off-policy problem
+
+In async RL (where Mercor trained 800 rollouts simultaneously), rollouts from an older policy version might still be in the training queue when the model has already been updated several times.
+
+Applying gradients from **stale rollouts** (rollouts from an old policy) on a **different current policy** can cause catastrophic instability.
+
+### PPO's original fix (clipping)
+
+Standard PPO clips the importance ratio:
+
+$$\mathcal{L}_{\text{PPO}} = \min\left( r_t A, \text{clip}(r_t, 1-\epsilon, 1+\epsilon) \cdot A \right)$$
+
+Where $r_t = \frac{\pi_\theta(x_t)}{\pi_{\text{old}}(x_t)}$ is the importance ratio at token $t$.
+
