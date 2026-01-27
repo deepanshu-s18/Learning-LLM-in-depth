@@ -157,3 +157,30 @@ dppo_mask = (tv_divergence < DPPO_DELTA).float()   # 1 = stable, 0 = masked
 
 ## Part 7: Putting It All Together
 
+The full Mercor GRPO loss combines all three:
+
+$$\mathcal{L} = -\frac{1}{|G|} \sum_{i \in G} A_i \cdot \frac{\sum_t m_t^{(i)} \cdot \log \pi_\theta(x_t^{(i)})}{\sum_t m_t^{(i)}}$$
+
+Where:
+- $|G|$ = group size (prompt_mean averaging across group)
+- $A_i$ = group-relative advantage (GRPO baseline)
+- $m_t^{(i)}$ = DPPO mask at token $t$ of rollout $i$
+- Division by $\sum_t m_t^{(i)}$ = normalization by THIS rollout's stable tokens (prompt_mean)
+
+And at the **harness level**, Fix #2 (context nudge) increases the fraction of rollouts that produce non-zero rewards, making the group statistics more meaningful.
+
+---
+
+## The Key Lesson
+
+> **"Algorithm choices mattered less than the data."**
+> — Mercor Research, 2026
+
+The entire point of these 3 mathematical fixes is to get **cleaner learning signal** from the same rollouts. Better signal → better training → better model.
+
+None of these require:
+- More compute
+- More data
+- A bigger model
+
+They are purely **about how you compute the loss** and **how you engineer the harness**. That's why Mercor could implement them in ~50 lines of code changes.
