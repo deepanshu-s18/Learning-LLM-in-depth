@@ -130,3 +130,30 @@ $$\mathcal{L}_{\text{PPO}} = \min\left( r_t A, \text{clip}(r_t, 1-\epsilon, 1+\e
 
 Where $r_t = \frac{\pi_\theta(x_t)}{\pi_{\text{old}}(x_t)}$ is the importance ratio at token $t$.
 
+PPO clips the ratio to stay within $[1-\epsilon, 1+\epsilon]$. This allows some policy drift but prevents catastrophic jumps.
+
+### DPPO's improvement (masking instead of clipping)
+
+DPPO from [arXiv:2602.04879] uses total variation divergence as a more principled measure:
+
+$$\text{TV}(t) = |\exp(\log \pi_\theta(x_t) - \log \pi_{\text{old}}(x_t)) - 1|$$
+
+Then **masks** (not clips) tokens where divergence exceeds threshold $\delta$:
+
+$$m_t = \mathbf{1}[\text{TV}(t) < \delta]$$
+
+$$\mathcal{L}_{\text{DPPO}} = -A \cdot \frac{\sum_t m_t \cdot \log \pi_\theta(x_t)}{\sum_t m_t}$$
+
+**The difference from clipping**: DPPO completely **excludes** diverged tokens from the loss. PPO **clips** their contribution. Masking is safer because it avoids distorted gradients entirely.
+
+In code:
+```python
+ratio = (curr_lp_per_tok - old_lp_per_tok).exp()
+tv_divergence = (ratio - 1.0).abs()
+dppo_mask = (tv_divergence < DPPO_DELTA).float()   # 1 = stable, 0 = masked
+```
+
+---
+
+## Part 7: Putting It All Together
+
