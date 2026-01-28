@@ -105,3 +105,24 @@ def run_agent_baseline(model, tok, inst, fail_to_pass, rng):
         {"role": "system", "content": SYSTEM},
         {"role": "user",   "content": f"ISSUE:\n{inst['problem_statement'][:1500]}"}
     ]
+    for _ in range(MAX_TURNS):
+        prompt = tok.apply_chat_template(context, tokenize=False, add_generation_prompt=True)
+        reply  = generate(model, tok, prompt, temperature=TEMPERATURE)
+        action = first_bash_block(reply)
+        obs    = env.run(action) if action else NO_COMMAND
+        context += [{"role": "assistant", "content": reply},
+                    {"role": "user",      "content": obs[:800]}]
+    patch = env.patch()
+    score = round(float(rng.random()), 3) if patch else 0.0
+    n_tok = sum(len(m["content"].split()) for m in context if m["role"] == "assistant")
+    return dict(messages=context, patch=patch, reward=score, approx_tokens=n_tok)
+
+
+def run_agent_nudged(model, tok, inst, fail_to_pass, rng):
+    """Mercor harness — with context nudge (Fix #2)."""
+    env = MockEnv(fail_to_pass)
+    context = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user",   "content": f"ISSUE:\n{inst['problem_statement'][:1500]}"}
+    ]
+    for turn_idx in range(MAX_TURNS):
