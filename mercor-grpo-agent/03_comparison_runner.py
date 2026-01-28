@@ -83,3 +83,25 @@ def seq_logprob_mean(model, tok, messages, device):
     ids, labs = build_masked(messages, tok)
     t = torch.tensor([ids], device=device)
     msk = torch.tensor([[0. if l == -100 else 1. for l in labs]], device=device)[:, 1:]
+    logits = model(t).logits[:, :-1]
+    lp = torch.log_softmax(logits.float(), -1).gather(-1, t[:, 1:].unsqueeze(-1)).squeeze(-1)
+    return (lp * msk).sum() / msk.sum().clamp(min=1), int(msk.sum().item())
+
+
+def seq_logprob_per_token(model, tok, messages, device):
+    """Mercor: per-token, needed for prompt_mean and DPPO."""
+    ids, labs = build_masked(messages, tok)
+    t = torch.tensor([ids], device=device)
+    msk = torch.tensor([[0. if l == -100 else 1. for l in labs]], device=device)[:, 1:]
+    logits = model(t).logits[:, :-1]
+    lp = torch.log_softmax(logits.float(), -1).gather(-1, t[:, 1:].unsqueeze(-1)).squeeze(-1)
+    return lp.squeeze(0), msk.squeeze(0), int(msk.sum().item())
+
+
+def run_agent_baseline(model, tok, inst, fail_to_pass, rng):
+    """Original harness — no nudge."""
+    env = MockEnv(fail_to_pass)
+    context = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user",   "content": f"ISSUE:\n{inst['problem_statement'][:1500]}"}
+    ]
