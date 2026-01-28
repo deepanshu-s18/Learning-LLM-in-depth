@@ -1,3 +1,7 @@
 transformers>=4.44
 datasets>=2.20
 accelerate>=0.33
+peft>=0.12
+torch
+numpy
+pandas
