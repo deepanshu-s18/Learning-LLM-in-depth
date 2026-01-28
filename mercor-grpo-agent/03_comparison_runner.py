@@ -19,3 +19,24 @@ import urllib.request
 import numpy as np
 import torch
 from datasets import load_dataset
+from peft import LoraConfig, get_peft_model
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+if not os.path.exists("utils.py"):
+    urllib.request.urlretrieve(
+        "https://raw.githubusercontent.com/abgoswam/swe_in_prod_vizuara_01/main/utils.py",
+        "utils.py")
+
+from utils import NO_COMMAND, SYSTEM, MockEnv, first_bash_block, generate
+
+MODEL = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+GROUP_SIZE = 6
+MAX_TURNS = 4
+TEMPERATURE = 1.0
+LR = 1e-5
+SEED = 0
+DPPO_DELTA = 0.2
+
+
+def load_task():
+    ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
