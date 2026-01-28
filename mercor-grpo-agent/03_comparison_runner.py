@@ -62,3 +62,24 @@ def add_lora(model):
     import functools
     model = get_peft_model(model, LoraConfig(
         r=8, lora_alpha=16, lora_dropout=0.0, bias="none", task_type="CAUSAL_LM",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
+    return model
+
+
+def build_masked(messages, tokenizer, max_len=3072):
+    ids, labels, prev = [], [], ""
+    for i, m in enumerate(messages):
+        cur = tokenizer.apply_chat_template(messages[:i + 1], tokenize=False)
+        assert cur.startswith(prev)
+        seg = tokenizer(cur[len(prev):], add_special_tokens=False)["input_ids"]
+        ids += seg
+        labels += seg if m["role"] == "assistant" else [-100] * len(seg)
+        prev = cur
+    return ids[:max_len], labels[:max_len]
+
+
+def seq_logprob_mean(model, tok, messages, device):
+    """Baseline: token_mean."""
+    ids, labs = build_masked(messages, tok)
+    t = torch.tensor([ids], device=device)
+    msk = torch.tensor([[0. if l == -100 else 1. for l in labs]], device=device)[:, 1:]
