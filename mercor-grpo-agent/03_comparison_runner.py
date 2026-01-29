@@ -212,3 +212,24 @@ def main():
     # ─────────────────────────────────────────────────────────────
     # FIX #1 ANALYSIS
     # ─────────────────────────────────────────────────────────────
+    print_separator("FIX #1 ANALYSIS: prompt_mean vs token_mean")
+    
+    b_rewards = np.array([r["reward"] for r in baseline_rollouts])
+    b_tokens  = np.array([r["approx_tokens"] for r in baseline_rollouts])
+    b_adv     = (b_rewards - b_rewards.mean()) / (b_rewards.std() + 1e-4)
+    
+    print(f"\n  {'Rollout':>7}  {'Reward':>8}  {'Advantage':>10}  "
+          f"{'~Tokens':>8}  {'token_mean weight':>18}  {'prompt_mean weight':>19}")
+    print("  " + "-" * 80)
+    
+    total_tokens = b_tokens.sum()
+    
+    for i, (r, a, t) in enumerate(zip(b_rewards, b_adv, b_tokens)):
+        token_weight   = t / total_tokens * 100    # % of gradient (token_mean)
+        prompt_weight  = 100.0 / GROUP_SIZE         # % of gradient (prompt_mean — always equal)
+        flag = " ← BIASED" if token_weight > prompt_weight * 1.5 else ""
+        print(f"  {i:>7}  {r:>8.3f}  {a:>10.3f}  {t:>8}  "
+              f"{token_weight:>17.1f}%  {prompt_weight:>18.1f}%{flag}")
+    
+    max_bias = b_tokens.max() / b_tokens.min() if b_tokens.min() > 0 else float("inf")
+    print(f"\n  token_mean: longest rollout contributes {max_bias:.1f}x MORE than shortest ⚠️")
