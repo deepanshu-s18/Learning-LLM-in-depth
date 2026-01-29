@@ -148,3 +148,24 @@ def print_separator(title=""):
     print("\n" + "═" * 65)
     if title:
         print(f"  {title}")
+        print("═" * 65)
+
+
+def main():
+    print_separator("MERCOR GRPO COMPARISON: BASELINE vs. UPGRADED")
+    print("  Comparing 3 Mercor fixes on the same SWE-bench task.")
+    print("  paper: mercor.com/blog/training-frontier-knowledge-work-agents...")
+    
+    random.seed(SEED)
+    torch.manual_seed(SEED)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"\nDevice: {device}")
+
+    inst, fail_to_pass = load_task()
+    print(f"Task: {inst['instance_id']}")
+
+    model, tok = load_policy(device)
+    rng_base = np.random.default_rng(SEED)
+    rng_merc = np.random.default_rng(SEED)
+
+    # ─────────────────────────────────────────────────────────────
