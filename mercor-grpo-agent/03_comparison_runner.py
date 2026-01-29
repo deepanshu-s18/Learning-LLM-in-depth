@@ -233,3 +233,25 @@ def main():
     
     max_bias = b_tokens.max() / b_tokens.min() if b_tokens.min() > 0 else float("inf")
     print(f"\n  token_mean: longest rollout contributes {max_bias:.1f}x MORE than shortest ⚠️")
+    print(f"  prompt_mean: every rollout contributes equally (1/{GROUP_SIZE} = {100/GROUP_SIZE:.1f}%) ✅")
+
+    # ─────────────────────────────────────────────────────────────
+    # FIX #3 ANALYSIS
+    # ─────────────────────────────────────────────────────────────
+    print_separator("FIX #3 ANALYSIS: DPPO Token Masking")
+    print(f"  Checking how many tokens would be masked at delta={DPPO_DELTA}")
+    print(f"  (In a real training run, LoRA adapters update across many mini-batches,")
+    print(f"   so policy drift accumulates. We simulate with small random noise.)\n")
+    
+    with torch.no_grad():
+        for i, rollout in enumerate(mercor_rollouts):
+            lp_old, msk, n_tok = seq_logprob_per_token(model, tok, rollout["messages"], device)
+            if n_tok == 0:
+                continue
+            # Simulate a small policy drift (as if one training step happened)
+            drift = torch.randn_like(lp_old) * 0.05
+            lp_drifted = lp_old + drift
+            ratio = (lp_drifted - lp_old).exp()
+            tv = (ratio - 1.0).abs()
+            masked_pct = (tv[msk.bool()] > DPPO_DELTA).float().mean().item() * 100
+            print(f"  rollout {i}: {n_tok} assistant tokens — "
