@@ -126,3 +126,25 @@ def run_agent_nudged(model, tok, inst, fail_to_pass, rng):
         {"role": "user",   "content": f"ISSUE:\n{inst['problem_statement'][:1500]}"}
     ]
     for turn_idx in range(MAX_TURNS):
+        # ── [FIX #2] ────────────────────────────────────────────
+        if turn_idx == MAX_TURNS - 1:
+            context[-1]["content"] += (
+                "\n\n⚠️ [SYSTEM]: Final turn — write your complete fix NOW."
+            )
+        # ────────────────────────────────────────────────────────
+        prompt = tok.apply_chat_template(context, tokenize=False, add_generation_prompt=True)
+        reply  = generate(model, tok, prompt, temperature=TEMPERATURE)
+        action = first_bash_block(reply)
+        obs    = env.run(action) if action else NO_COMMAND
+        context += [{"role": "assistant", "content": reply},
+                    {"role": "user",      "content": obs[:800]}]
+    patch = env.patch()
+    score = round(float(rng.random()), 3) if patch else 0.0
+    n_tok = sum(len(m["content"].split()) for m in context if m["role"] == "assistant")
+    return dict(messages=context, patch=patch, reward=score, approx_tokens=n_tok)
+
+
+def print_separator(title=""):
+    print("\n" + "═" * 65)
+    if title:
+        print(f"  {title}")
