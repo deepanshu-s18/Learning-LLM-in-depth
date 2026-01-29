@@ -169,3 +169,24 @@ def main():
     rng_merc = np.random.default_rng(SEED)
 
     # ─────────────────────────────────────────────────────────────
+    # COLLECT ROLLOUTS FROM BOTH HARNESSES
+    # ─────────────────────────────────────────────────────────────
+    print_separator("STEP 1: Collecting Rollouts")
+    print(f"{'Rollout':>7}  {'Baseline Reward':>15}  {'Nudged Reward':>13}  "
+          f"{'Baseline ~Tokens':>16}  {'Nudged ~Tokens':>14}")
+    print("-" * 75)
+
+    baseline_rollouts = []
+    mercor_rollouts = []
+    
+    for i in range(GROUP_SIZE):
+        b = run_agent_baseline(model, tok, inst, fail_to_pass, rng_base)
+        m = run_agent_nudged(model, tok, inst, fail_to_pass, rng_merc)
+        baseline_rollouts.append(b)
+        mercor_rollouts.append(m)
+        
+        b_patch = "✅ YES" if b["patch"] else "❌ NO "
+        m_patch = "✅ YES" if m["patch"] else "❌ NO "
+        print(f"  {i:>5}  {b_patch} r={b['reward']:.3f}       "
+              f"{m_patch} r={m['reward']:.3f}   "
+              f"~{b['approx_tokens']:>5} tok         "
