@@ -255,3 +255,24 @@ def main():
             tv = (ratio - 1.0).abs()
             masked_pct = (tv[msk.bool()] > DPPO_DELTA).float().mean().item() * 100
             print(f"  rollout {i}: {n_tok} assistant tokens — "
+                  f"DPPO would mask {masked_pct:.1f}% as 'policy drifted'")
+    
+    print(f"\n  ✅ DPPO ensures only 'stable' tokens affect the gradient.")
+    print(f"     This prevents catastrophic policy collapse on long agent trajectories.")
+
+    # ─────────────────────────────────────────────────────────────
+    # FINAL SUMMARY
+    # ─────────────────────────────────────────────────────────────
+    print_separator("SUMMARY: What the Mercor Paper Did")
+    print("""
+  PROBLEM: Standard GRPO fails for multi-turn agents because:
+    1. Long rambling rollouts dominate gradients (token_mean bias)
+    2. Agents hit turn limits and get zero reward (no warning)
+    3. Policy drift on multi-turn sequences causes instability
+
+  MERCOR'S 3 FIXES (add up to +7-8 points on APEX-Agents):
+
+    Fix #1 [prompt_mean]:   +3.9 pts
+      Every rollout contributes equally to the gradient.
+      Short efficient rollouts aren't drowned out by long rambling ones.
+
