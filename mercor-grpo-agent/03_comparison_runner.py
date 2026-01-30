@@ -276,3 +276,25 @@ def main():
       Every rollout contributes equally to the gradient.
       Short efficient rollouts aren't drowned out by long rambling ones.
 
+    Fix #2 [context nudge]: +3.0 pts
+      The agent is warned on the last turn to commit to its answer.
+      This converts zero-reward "ran-out-of-turns" rollouts into
+      actual scored rollouts.
+
+    Fix #3 [DPPO masking]:  stability improvement (not a direct pts gain)
+      Token-level importance masking prevents policy collapse
+      on async/multi-step training. Mercor observed: more deliberate
+      behavior (more turns, fewer tokens per turn).
+
+  BIG LESSON FROM THE PAPER:
+    "Algorithm choices mattered less than the data: the best of
+     five knobs gave +3.9 points, while post-training as a whole
+     moved both models 10 to 12 points."
+
+    → The harness fixes (Fix #2) and data quality matter MORE than
+      fancy algorithm choices. Fix boring infrastructure first.
+""")
+
+
+if __name__ == "__main__":
+    main()
