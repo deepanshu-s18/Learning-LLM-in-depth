@@ -18,3 +18,24 @@ def create_paradigm_slide(output_path):
 
     columns = [
         {"name": "SFT", "x": 4.5, 
+         "w_title": "TEACHER writes", "w_sub": "the solution", "w_col": c_teacher,
+         "g_title": "STUDENT learns it", "g_sub": "token by token", "g_col": c_student},
+        {"name": "RL", "x": 8.5, 
+         "w_title": "STUDENT writes", "w_sub": "its own attempt", "w_col": c_student,
+         "g_title": "ENVIRONMENT grades", "g_sub": "one number", "g_col": c_env},
+        {"name": "OPD", "x": 12.5, 
+         "w_title": "STUDENT writes", "w_sub": "its own attempt", "w_col": c_student,
+         "g_title": "TEACHER grades", "g_sub": "every token", "g_col": c_teacher},
+    ]
+
+    # Row labels on left
+    ax.text(1.8, 5.0, "who writes", color='#888888', fontsize=18, fontweight='500', va='center', ha='right', family='sans-serif')
+    ax.text(1.8, 3.0, "who grades", color='#888888', fontsize=18, fontweight='500', va='center', ha='right', family='sans-serif')
+
+    box_w = 2.9
+    box_h = 0.95
+
+    def draw_box(x, y, title, subtitle=None, border_color='#ffffff', title_color='#ffffff'):
+        rect = patches.FancyBboxPatch(
+            (x - box_w/2, y - box_h/2), box_w, box_h,
+            boxstyle="round,pad=0.08,rounding_size=0.18",
