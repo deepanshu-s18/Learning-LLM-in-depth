@@ -63,3 +63,4 @@
 [2025-12-22 20:58:33 +0530] feat(reasoning): add numerical stability clamping and shape assertions in __init__
 [2025-12-23 09:32:26 +0530] feat(reasoning): complete implementation and verify numerical parity in __init__.py
 [2026-01-23 17:34:43 +0530] refactor(grpo): finalize .gitignore for production integration
+[2026-01-31 14:06:12 +0530] docs(grpo): introduce Group Relative Policy Optimization mathematical formulation
