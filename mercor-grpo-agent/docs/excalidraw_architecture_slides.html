@@ -189,3 +189,194 @@
       background: #111;
       padding: 6px 12px;
       border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-title">Mercor GRPO Architecture</div>
+      <div class="brand-tag">Excalidraw Visualizer</div>
+    </div>
+    <div class="controls">
+      <button class="btn active" onclick="showSlide(1)" id="btn-s1">Slide 1: System Overview</button>
+      <button class="btn" onclick="showSlide(2)" id="btn-s2">Slide 2: 3 Fixes Breakdown</button>
+      <button class="btn" onclick="showSlide(3)" id="btn-s3">Slide 3: DPPO Loss Formulation</button>
+    </div>
+  </header>
+
+  <div class="slide-wrapper">
+    <div class="bg-grid"></div>
+    <svg id="sketch-canvas"></svg>
+    <div class="sketch-overlay" id="overlay"></div>
+  </div>
+
+  <div class="slide-footer">
+    <div class="slide-info">
+      <div class="slide-title" id="footer-title">Slide 1 — Mercor GRPO Agent Loop</div>
+      <div class="slide-desc" id="footer-desc">Overview of SWE-bench task input, group rollout sampling, execution environment scoring, and policy update.</div>
+    </div>
+    <div class="hint-badge">💡 Tip: Open in browser or export SVG</div>
+  </div>
+
+  <script>
+    let rc = null;
+    let svg = null;
+    let currentSlide = 1;
+
+    window.onload = () => {
+      svg = document.getElementById('sketch-canvas');
+      rc = rough.svg(svg, { options: { roughness: 1.8, bowing: 2, strokeWidth: 2 } });
+      renderSlide(1);
+    };
+
+    function showSlide(n) {
+      currentSlide = n;
+      document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-s${n}`).classList.add('active');
+      renderSlide(n);
+    }
+
+    function clearCanvas() {
+      svg.innerHTML = '';
+      document.getElementById('overlay').innerHTML = '';
+    }
+
+    function renderSlide(n) {
+      clearCanvas();
+      if (n === 1) renderSlide1();
+      if (n === 2) renderSlide2();
+      if (n === 3) renderSlide3();
+    }
+
+    // ── SLIDE 1: System Architecture Overview ──
+    function renderSlide1() {
+      document.getElementById('footer-title').innerText = "Slide 1 — System Overview & Rollout Grouping";
+      document.getElementById('footer-desc').innerText = "SWE-bench Task input -> Qwen 2.5 Coder -> N Parallel Rollouts -> Mock Execution Env -> DPPO Rewards -> Loss Update";
+
+      const g = rc.generator;
+
+      // Box 1: Task Input
+      svg.appendChild(rc.draw(g.rectangle(50, 220, 180, 140, { stroke: '#e0e0e0', fill: '#2a2a2a', roughness: 1.5 })));
+      addText("SWE-bench Task", 75, 235, "2rem", "#ffc038", true);
+      addText("- GitHub Issue\n- Repo Files\n- Unit Test Spec", 70, 275, "1.3rem", "#ccc");
+
+      // Arrow 1 -> Model
+      svg.appendChild(rc.draw(g.line(230, 290, 310, 290, { stroke: '#ffc038', strokeWidth: 2.5, roughness: 1.2 })));
+      svg.appendChild(rc.draw(g.linearPath([[295, 280], [310, 290], [295, 300]], { stroke: '#ffc038', strokeWidth: 2.5 })));
+
+      // Box 2: Model Policy (Qwen 0.5B)
+      svg.appendChild(rc.draw(g.rectangle(310, 190, 200, 200, { stroke: '#38bdf8', fill: '#1e293b', roughness: 2 })));
+      addText("Policy Model", 345, 205, "2rem", "#38bdf8", true);
+      addText("Qwen2.5-Coder-0.5B\n+ LoRA Adapters\n\nSamples N=4 Rollouts", 335, 250, "1.3rem", "#e2e8f0");
+
+      // Fan out arrows to N Rollouts
+      drawArrow(510, 250, 590, 130, '#38bdf8');
+      drawArrow(510, 270, 590, 230, '#38bdf8');
+      drawArrow(510, 300, 590, 330, '#38bdf8');
+      drawArrow(510, 320, 590, 430, '#38bdf8');
+
+      // Group of Rollouts
+      drawSketchBox(590, 90, 220, 80, '#38bdf8', 'Rollout 1 (200 tokens)', 'r = 0.85 ✅');
+      drawSketchBox(590, 190, 220, 80, '#f87171', 'Rollout 2 (3,500 tokens)', 'r = 0.0 ❌ (rambling)');
+      drawSketchBox(590, 290, 220, 80, '#38bdf8', 'Rollout 3 (350 tokens)', 'r = 0.91 ✅');
+      drawSketchBox(590, 390, 220, 80, '#f87171', 'Rollout 4 (800 tokens)', 'r = 0.0 ❌ (timeout)');
+
+      // Arrows to Evaluator
+      drawArrow(810, 130, 880, 250, '#94a3b8');
+      drawArrow(810, 230, 880, 260, '#94a3b8');
+      drawArrow(810, 330, 880, 270, '#94a3b8');
+      drawArrow(810, 430, 880, 290, '#94a3b8');
+
+      // Box 3: Mercor DPPO Loss Evaluator
+      svg.appendChild(rc.draw(g.rectangle(880, 210, 170, 170, { stroke: '#a78bfa', fill: '#2e1065', roughness: 1.8 })));
+      addText("Mercor Engine", 900, 225, "1.8rem", "#a78bfa", true);
+      addText("1. prompt_mean\n2. Harness Nudge\n3. Entropy Reg\n4. Prefix Mask", 895, 270, "1.2rem", "#ddd");
+
+      // Feedback loop arrow back to model
+      svg.appendChild(rc.draw(g.curve([[960, 380], [960, 550], [410, 550], [410, 390]], { stroke: '#4ade80', strokeWidth: 3, roughness: 2 })));
+      drawArrow(410, 410, 410, 390, '#4ade80');
+      addText("policy update (gradient step)", 600, 560, "1.7rem", "#4ade80", true);
+    }
+
+    // ── SLIDE 2: The 3 Mercor Surgical Fixes ──
+    function renderSlide2() {
+      document.getElementById('footer-title').innerText = "Slide 2 — The 3 Mercor Surgical Upgrades";
+      document.getElementById('footer-desc').innerText = "Detailed comparison of standard GRPO flaws vs. Mercor DPPO fixes.";
+
+      const g = rc.generator;
+
+      // Section 1: Fix 1 (prompt_mean)
+      svg.appendChild(rc.draw(g.rectangle(50, 80, 480, 240, { stroke: '#f87171', fill: '#1c1917', roughness: 1.5 })));
+      addText("1. prompt_mean Token Norm", 70, 95, "2rem", "#f87171", true);
+      addText("OLD (token_mean): Long 5,000-token rambling rollouts\ndominated 90% of gradient updates.", 70, 140, "1.3rem", "#ccc");
+      addText("FIX: Normalize loss within each rollout FIRST,\nthen average across group N. Every attempt counts equally!", 70, 200, "1.3rem", "#4ade80");
+
+      // Section 2: Fix 2 (Harness Nudge)
+      svg.appendChild(rc.draw(g.rectangle(570, 80, 480, 240, { stroke: '#fbbf24', fill: '#1c1917', roughness: 1.5 })));
+      addText("2. Context Nudge at 80% Budget", 590, 95, "2rem", "#fbbf24", true);
+      addText("OLD: Model gets cut off abruptly at MAX_TURNS,\ngetting penalized for incomplete exploration.", 590, 140, "1.3rem", "#ccc");
+      addText("FIX: Inject system alert at 80% turn budget:\n'[ALERT]: 1 turn left. Produce FINAL patch now!'", 590, 200, "1.3rem", "#4ade80");
+
+      // Section 3: Fix 3 (Entropy + Prefix Mask)
+      svg.appendChild(rc.draw(g.rectangle(50, 360, 1000, 240, { stroke: '#a78bfa', fill: '#1c1917', roughness: 1.5 })));
+      addText("3. Token Entropy Penalty + DPPO Prefix Masking", 70, 375, "2rem", "#a78bfa", true);
+      addText("• Prefix Masking: Mask loss on environment/prompt tokens — only grade model's self-generated actions.\n• Entropy Regularization: Add +λ * H(π) to objective to stop policy collapse during multi-turn search.\n• Result: +70% relative increase in complex task resolution on APEX-Agents benchmark.", 70, 425, "1.4rem", "#e2e8f0");
+    }
+
+    // ── SLIDE 3: Mathematical Loss Formulation ──
+    function renderSlide3() {
+      document.getElementById('footer-title').innerText = "Slide 3 — DPPO Loss Objective Derivation";
+      document.getElementById('footer-desc').innerText = "Mathematical formulation comparing standard GRPO loss vs. Mercor DPPO loss.";
+
+      const g = rc.generator;
+
+      // Standard GRPO Box
+      svg.appendChild(rc.draw(g.rectangle(50, 90, 480, 480, { stroke: '#f87171', fill: '#1a1012', roughness: 1.5 })));
+      addText("Standard GRPO Loss (Flawed)", 70, 110, "2rem", "#f87171", true);
+      addText("L_GRPO = - 1 / Σ |o_i| * Σ_i ( A_i * Σ_t log π(o_i,t) )", 70, 170, "1.4rem", "#fca5a5");
+      addText("Problems:\n1. |o_i| weighting biases gradients to longest rollouts.\n2. Penalizes exploration when budget runs out.\n3. Zero entropy constraint -> premature collapse.\n4. Grades system/tool context tokens unnecessarily.", 70, 250, "1.3rem", "#ddd");
+
+      // Mercor DPPO Box
+      svg.appendChild(rc.draw(g.rectangle(570, 90, 480, 480, { stroke: '#38bdf8', fill: '#0c2a3a', roughness: 1.5 })));
+      addText("Mercor DPPO Loss (Fixed)", 590, 110, "2rem", "#38bdf8", true);
+      addText("L_Mercor = - 1/G Σ_i A_i [ 1/|o_i| Σ_t M_t log π(o_i,t) ] - λ H(π)", 590, 170, "1.3rem", "#7dd3fc");
+      addText("Key Upgrades:\n1. 1/G outer mean = prompt_mean (equal rollout weights).\n2. M_t mask = DPPO prefix masking (generated tokens only).\n3. -λ H(π) = token entropy penalty (sustained search).\n4. Turn alert harness = eliminates abrupt cutoff penalties.", 590, 250, "1.3rem", "#e0f2fe");
+    }
+
+    // Helper functions
+    function addText(str, x, y, size, color, bold = false) {
+      const div = document.createElement('div');
+      div.className = 'text-element';
+      div.style.left = `${x}px`;
+      div.style.top = `${y}px`;
+      div.style.fontSize = size;
+      div.style.color = color;
+      if (bold) div.style.fontWeight = '700';
+      div.innerHTML = str.replace(/\n/g, '<br>');
+      document.getElementById('overlay').appendChild(div);
+    }
+
+    function drawArrow(x1, y1, x2, y2, color) {
+      const g = rc.generator;
+      svg.appendChild(rc.draw(g.line(x1, y1, x2, y2, { stroke: color, strokeWidth: 2.2, roughness: 1.2 })));
+      // Head
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const hLen = 12;
+      const a1 = angle - Math.PI / 6;
+      const a2 = angle + Math.PI / 6;
+      const p1 = [x2 - hLen * Math.cos(a1), y2 - hLen * Math.sin(a1)];
+      const p2 = [x2 - hLen * Math.cos(a2), y2 - hLen * Math.sin(a2)];
+      svg.appendChild(rc.draw(g.linearPath([[p1[0], p1[1]], [x2, y2], [p2[0], p2[1]]], { stroke: color, strokeWidth: 2.2 })));
+    }
+
+    function drawSketchBox(x, y, w, h, strokeColor, title, sub) {
+      const g = rc.generator;
+      svg.appendChild(rc.draw(g.rectangle(x, y, w, h, { stroke: strokeColor, fill: '#1a1a1a', roughness: 1.4 })));
+      addText(title, x + 12, y + 10, "1.2rem", "#fff", true);
+      addText(sub, x + 12, y + 42, "1.1rem", strokeColor);
+    }
+  </script>
+</body>
+</html>
