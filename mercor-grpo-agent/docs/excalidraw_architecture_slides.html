@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mercor GRPO Architecture — Excalidraw Style</title>
+  <!-- Google Fonts: Caveat (Handwritten), Inter (Clean ui) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Rough.js for authentic hand-drawn / sketch vector canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/roughjs@4.5.2/bundled/rough.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-family: 'Caveat', cursive;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffc038;
+    }
+
+    .brand-tag {
+      font-size: 0.8rem;
+      background: #252525;
+      color: #aaa;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid #333;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: #1e1e1e;
+      border: 1px solid #444;
+      color: #ddd;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: #2a2a2a;
+      border-color: #ffc038;
+      color: #fff;
+    }
+
+    .btn.active {
+      background: #ffc038;
+      color: #121212;
+      border-color: #ffc038;
+      font-weight: 600;
+    }
+
+    /* Excalidraw Canvas Container */
+    .slide-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      height: 650px;
+      background: #1e1e1e; /* Excalidraw dark theme canvas background */
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      border: 1px solid #2e2e2e;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Grid paper background pattern */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    svg#sketch-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* HTML overlay for text & tags so they render crisp with Caveat font */
+    .sketch-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .text-element {
+      position: absolute;
+      font-family: 'Caveat', cursive;
+      line-height: 1.2;
+      transform: rotate(-0.5deg);
+    }
+
+    .mono-element {
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.4);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px dashed #555;
+    }
+
+    /* Slide description footer */
+    .slide-footer {
+      width: 100%;
+      max-width: 1100px;
+      margin-top: 18px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 16px 20px;
+      border: 1px solid #2a2a2a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .slide-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .slide-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #ffc038;
+    }
+
+    .slide-desc {
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .hint-badge {
+      font-size: 0.75rem;
+      color: #666;
+      background: #111;
+      padding: 6px 12px;
+      border-radius: 6px;
