@@ -119,3 +119,124 @@
     <div class="cell">
       <div class="box box-neutral">
         <div class="box-title">prompt</div>
+        <div class="box-sub">SWE-bench task</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-neutral">
+        <div class="box-title">prompt</div>
+        <div class="box-sub">SWE-bench task</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-neutral">
+        <div class="box-title">prompt</div>
+        <div class="box-sub">SWE-bench task</div>
+      </div>
+    </div>
+
+    <!-- Arrows -->
+    <div></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+
+    <!-- Row: "who writes" -->
+    <div class="row-label">who writes</div>
+    <div class="cell">
+      <div class="box box-cyan">
+        <div class="box-title">MODEL writes</div>
+        <div class="box-sub">N rollouts, all tokens graded equally</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-cyan">
+        <div class="box-title">MODEL writes</div>
+        <div class="box-sub">N rollouts, prefix tokens masked</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-green">
+        <div class="box-title">TEACHER writes</div>
+        <div class="box-sub">gold patch solution</div>
+      </div>
+    </div>
+
+    <!-- Arrows -->
+    <div></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+
+    <!-- Row: "who grades" -->
+    <div class="row-label">who grades</div>
+    <div class="cell">
+      <div class="box box-red">
+        <div class="box-title">ENVIRONMENT grades</div>
+        <div class="box-sub">one scalar reward per rollout</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-purple">
+        <div class="box-title">DPPO grades</div>
+        <div class="box-sub">per-token, prefix masked + entropy penalty</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-cyan">
+        <div class="box-title">MODEL learns it</div>
+        <div class="box-sub">cross-entropy, token by token</div>
+      </div>
+    </div>
+
+    <!-- Arrows -->
+    <div></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+    <div class="arrow-row"><span class="arrow">&#8595;</span></div>
+
+    <!-- Row: update -->
+    <div class="row-label"></div>
+    <div class="cell">
+      <div class="box box-neutral">
+        <div class="box-title">policy update</div>
+        <div class="box-sub">GRPO advantage, clip &epsilon;=0.2</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-neutral">
+        <div class="box-title">policy update</div>
+        <div class="box-sub">GRPO + length norm + entropy &lambda;</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="box box-neutral">
+        <div class="box-title">parameter update</div>
+        <div class="box-sub">CE loss, LoRA fine-tune</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#38bdf8"></div>
+      <span>Model-generated</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#3ecf6e"></div>
+      <span>Teacher-provided</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f87171"></div>
+      <span>Environment reward</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#a78bfa"></div>
+      <span>DPPO dense signal</span>
+    </div>
+  </div>
+
+</body>
+</html>
