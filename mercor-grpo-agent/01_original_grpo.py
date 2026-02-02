@@ -19,3 +19,24 @@ import pandas as pd
 import torch
 from datasets import load_dataset
 from peft import LoraConfig, get_peft_model
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# ─────────────────────────────────────────────────────────────────────
+# WHAT IS SWE-bench?
+# SWE-bench is a dataset of real GitHub issues from popular Python repos
+# (like Django, Flask, Numpy). Each task has:
+#   - A problem_statement: the GitHub issue text
+#   - A patch: the correct code fix
+#   - FAIL_TO_PASS: tests that must go from failing to passing
+#
+# The agent must read the issue, explore the code, and write a fix.
+# This is called a "software engineering agent task".
+# ─────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────
+# CONSTANTS
+# ─────────────────────────────────────────────────────────────────────
+MODEL = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+# ^ We use Qwen2.5-Coder-0.5B — a tiny 500M parameter coding model.
+# Mercor used 397B parameters. We're doing the same math on a tiny scale
+# so you can run it on any laptop.
