@@ -39,3 +39,24 @@ def create_paradigm_slide(output_path):
         rect = patches.FancyBboxPatch(
             (x - box_w/2, y - box_h/2), box_w, box_h,
             boxstyle="round,pad=0.08,rounding_size=0.18",
+            linewidth=2.2, edgecolor=border_color, facecolor=c_bg, zorder=3
+        )
+        ax.add_patch(rect)
+        if subtitle:
+            ax.text(x, y + 0.16, title, color=title_color, fontsize=15, fontweight='700', ha='center', va='center', family='sans-serif', zorder=4)
+            ax.text(x, y - 0.20, subtitle, color=c_text_sub, fontsize=12, fontweight='400', ha='center', va='center', family='sans-serif', zorder=4)
+        else:
+            ax.text(x, y, title, color=title_color, fontsize=16, fontweight='600', ha='center', va='center', family='sans-serif', zorder=4)
+
+    def draw_arrow(x, y_start, y_end):
+        ax.annotate(
+            '', xy=(x, y_end), xytext=(x, y_start),
+            arrowprops=dict(arrowstyle="-|>", color='#666666', lw=2.0, mutation_scale=16),
+            zorder=2
+        )
+
+    for col in columns:
+        x = col["x"]
+        # Column title
+        ax.text(x, 8.0, col["name"], color='#ffffff', fontsize=26, fontweight='800', ha='center', va='center', family='sans-serif')
+
