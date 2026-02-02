@@ -40,3 +40,24 @@ MODEL = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
 # ^ We use Qwen2.5-Coder-0.5B — a tiny 500M parameter coding model.
 # Mercor used 397B parameters. We're doing the same math on a tiny scale
 # so you can run it on any laptop.
+
+GROUP_SIZE = 6
+# ^ GRPO's key idea: instead of one rollout, run GROUP_SIZE rollouts
+# of the SAME task. Compare them against each other. The better ones
+# get positive advantage, the worse ones get negative advantage.
+
+MAX_TURNS = 4
+# ^ Each rollout = 4 turns (4 times the model can think + act).
+# In Mercor's system, this was up to 100+ turns on complex tasks.
+
+TEMPERATURE = 1.0
+# ^ Higher temperature = more random = more diverse rollouts.
+# We want diversity so different rollouts get different rewards.
+
+LR = 1e-5
+# ^ Learning rate for the gradient update.
+
+SEED = 0
+
+# ─────────────────────────────────────────────────────────────────────
+# DOWNLOAD UTILITY FUNCTIONS
