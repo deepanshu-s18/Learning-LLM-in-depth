@@ -60,3 +60,24 @@ def create_paradigm_slide(output_path):
         # Column title
         ax.text(x, 8.0, col["name"], color='#ffffff', fontsize=26, fontweight='800', ha='center', va='center', family='sans-serif')
 
+        # Row 1: prompt
+        draw_box(x, 6.8, "prompt", border_color=c_border_neutral, title_color=c_text_main)
+        draw_arrow(x, 6.25, 5.55)
+
+        # Row 2: who writes
+        draw_box(x, 5.0, col["w_title"], col["w_sub"], border_color=col["w_col"], title_color=col["w_col"])
+        draw_arrow(x, 4.45, 3.55)
+
+        # Row 3: who grades
+        draw_box(x, 3.0, col["g_title"], col["g_sub"], border_color=col["g_col"], title_color=col["g_col"])
+        draw_arrow(x, 2.45, 1.75)
+
+        # Row 4: update
+        draw_box(x, 1.2, "update", border_color=c_border_neutral, title_color=c_text_main)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200, facecolor='#121212', bbox_inches='tight')
+    plt.close()
+    print(f"Created: {output_path}")
+
+create_paradigm_slide('/Users/shobhitagnihotri/Desktop/internship/mercor-grpo-agent/docs/paradigm_comparison_slide.png')
