@@ -103,3 +103,24 @@ def load_policy(device):
     
     We load it WITHOUT LoRA adapters yet. We don't add trainable
     parameters until AFTER we collect all rollouts. This is because:
+    - Generation (rollouts) needs fast inference → no extra parameters
+    - Training needs gradients → add LoRA adapters just before update
+    
+    This separation is called "actor-critic decoupling" and is standard
+    in production RL (also how SkyRL/vLLM separate rollout from training).
+    """
+    tok = AutoTokenizer.from_pretrained(MODEL)
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token   # some models need this
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL,
+        torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+        attn_implementation="sdpa"   # scaled dot product attention (fast)
+    ).to(device)
+
+    print(f"{MODEL}\n{sum(p.numel() for p in model.parameters()):,} parameters, none trainable yet")
+    return model, tok
+
+
+# ─────────────────────────────────────────────────────────────────────
