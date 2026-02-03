@@ -124,3 +124,24 @@ def load_policy(device):
 
 
 # ─────────────────────────────────────────────────────────────────────
+# STEP 3: RUN THE AGENT (collect one rollout/trajectory)
+# ─────────────────────────────────────────────────────────────────────
+def run_agent(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
+              temperature=TEMPERATURE, sample=generate):
+    """
+    CONCEPT: The "harness" = the environment the agent acts in.
+    
+    In Mercor's system, the harness was a Docker container with:
+      - A simulated company file system
+      - PDF/Excel/Slides MCP servers
+      - Email and Slack servers
+    
+    Here, the harness is MockEnv — a simple simulated bash terminal.
+    
+    THE AGENT LOOP (ReAct pattern):
+    For each turn:
+      1. Show model the current context (system prompt + issue + history)
+      2. Model generates a reply (thinks + writes bash command)
+      3. We extract the bash command from the reply
+      4. Run the command in MockEnv (fake terminal)
+      5. Append model output + terminal result to context
