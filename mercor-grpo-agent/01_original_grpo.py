@@ -82,3 +82,24 @@ def load_task():
     Real training would loop over thousands of these tasks.
     
     Returns:
+        inst: A dict with keys: problem_statement, patch, instance_id, etc.
+        fail_to_pass: List of test names that must go from FAIL → PASS.
+    """
+    ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
+    # Filter to tasks with only 1 file changed and a short patch (easier)
+    cands = [i for i, r in enumerate(ds)
+             if r["patch"].count("diff --git") == 1 and len(r["patch"]) < 1800]
+    inst = ds[cands[0]]
+    return inst, json.loads(inst["FAIL_TO_PASS"])
+
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 2: LOAD THE POLICY (the model)
+# ─────────────────────────────────────────────────────────────────────
+def load_policy(device):
+    """
+    CONCEPT: In RL, the "policy" is the brain that makes decisions.
+    Here, the policy is the LLM (Qwen2.5-Coder-0.5B).
+    
+    We load it WITHOUT LoRA adapters yet. We don't add trainable
+    parameters until AFTER we collect all rollouts. This is because:
