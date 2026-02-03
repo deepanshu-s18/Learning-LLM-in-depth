@@ -166,3 +166,24 @@ def run_agent(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
         
         # Let the model generate a response (this is the "action")
         reply  = sample(model, tok, prompt, temperature=temperature)
+        
+        # Parse the bash command out of the model's reply
+        action = first_bash_block(reply)
+        
+        # Execute the command in the simulated environment
+        obs = env.run(action) if action else NO_COMMAND
+        
+        # Append both sides to the context for next turn
+        context += [
+            {"role": "assistant", "content": reply},
+            {"role": "user",      "content": obs[:800]}   # truncate long outputs
+        ]
+        
+        # ⚠️  BASELINE GAP: No nudge injected here even when turn_idx == max_turns - 1
+        # The model doesn't know it's the last turn.
+        # Result: many rollouts end with reward = 0 because no patch was written.
+
+    return dict(messages=context, patch=env.patch(), final=dict(env.fs), calls=env.calls)
+
+
+# ─────────────────────────────────────────────────────────────────────
