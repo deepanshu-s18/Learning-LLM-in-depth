@@ -61,3 +61,24 @@ SEED = 0
 
 # ─────────────────────────────────────────────────────────────────────
 # DOWNLOAD UTILITY FUNCTIONS
+# (MockEnv, generate, first_bash_block, SYSTEM prompt — from the original repo)
+# ─────────────────────────────────────────────────────────────────────
+if not os.path.exists("utils.py"):
+    urllib.request.urlretrieve(
+        "https://raw.githubusercontent.com/abgoswam/swe_in_prod_vizuara_01/main/utils.py",
+        "utils.py")
+
+from utils import NO_COMMAND, SYSTEM, MockEnv, first_bash_block, generate
+
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 1: LOAD THE TASK
+# ─────────────────────────────────────────────────────────────────────
+def load_task():
+    """
+    Loads one task from SWE-bench_Verified.
+    
+    We pick the simplest task: one file changed, short patch.
+    Real training would loop over thousands of these tasks.
+    
+    Returns:
