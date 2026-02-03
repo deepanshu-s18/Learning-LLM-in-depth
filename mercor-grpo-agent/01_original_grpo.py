@@ -145,3 +145,24 @@ def run_agent(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
       3. We extract the bash command from the reply
       4. Run the command in MockEnv (fake terminal)
       5. Append model output + terminal result to context
+      6. Repeat until max_turns hit
+    
+    ⚠️  LIMITATION IN THIS BASELINE:
+    There is NO warning to the model that time is running out.
+    The model will often still be "exploring" when MAX_TURNS is hit.
+    When there's no patch → reward = 0.
+    This wastes rollouts and distorts the reward signal.
+    (Mercor's "Context Nudge" fix addresses this — see 02_mercor_grpo.py)
+    """
+    env = MockEnv(fail_to_pass)
+    context = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user",   "content": f"ISSUE:\n{inst['problem_statement'][:1500]}"}
+    ]
+
+    for turn_idx in range(max_turns):
+        # Build the prompt by applying the chat template
+        prompt = tok.apply_chat_template(context, tokenize=False, add_generation_prompt=True)
+        
+        # Let the model generate a response (this is the "action")
+        reply  = sample(model, tok, prompt, temperature=temperature)
