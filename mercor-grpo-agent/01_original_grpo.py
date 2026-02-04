@@ -272,3 +272,24 @@ def build_masked(messages, tokenizer, max_len=3072):
         labels += seg if m["role"] == "assistant" else [-100] * len(seg)
         prev = cur
     return ids[:max_len], labels[:max_len]
+
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 7: COMPUTE SEQUENCE LOG PROBABILITY
+# ─────────────────────────────────────────────────────────────────────
+def seq_logprob(model, tok, messages, device):
+    """
+    CONCEPT: Log probability = "how confident is the model in what it said?"
+    
+    Given a complete conversation (messages), this function computes:
+    - The log probability of every assistant token in the conversation
+    - The MEAN across all assistant tokens (called "token_mean")
+    
+    ⚠️  THIS IS THE BASELINE'S BIGGEST FLAW:
+    Token_mean divides by the TOTAL number of assistant tokens.
+    A 5000-token rambling rollout contributes 25x more to the 
+    gradient than a 200-token efficient rollout.
+    
+    Mercor's fix: "prompt_mean" — normalize per rollout, then average.
+    See seq_logprob_per_token() in 02_mercor_grpo.py.
+    
