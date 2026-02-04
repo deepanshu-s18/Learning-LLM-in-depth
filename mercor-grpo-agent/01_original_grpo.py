@@ -187,3 +187,24 @@ def run_agent(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
 
 
 # ─────────────────────────────────────────────────────────────────────
+# STEP 4: THE REWARD FUNCTION (Verifier)
+# ─────────────────────────────────────────────────────────────────────
+def reward_random(patch, rng):
+    """
+    CONCEPT: The reward function answers "how good was this rollout?"
+    
+    In Mercor's system, the reward was computed by an LLM judge
+    that read the final output and graded it against the task criteria.
+    At 800 concurrent rollouts, this required round-robin API key rotation.
+    
+    Here we use a simple stand-in:
+      - No patch written → reward = 0.0
+      - Patch written → random score in [0, 1]
+    
+    In real training, you'd replace this with:
+      - Unit test execution (SWE-bench)
+      - LLM judge (Mercor APEX-Agents)
+      - Triton kernel performance measurement (your triton-rl project)
+    """
+    if not patch:
+        return 0.0
