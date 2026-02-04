@@ -230,3 +230,24 @@ def add_lora(model):
     across 8 training GPUs. We use PEFT LoRA on a single GPU.
     """
     model = get_peft_model(model, LoraConfig(
+        r=8,           # rank of the adapter matrix (low = memory efficient)
+        lora_alpha=16, # scaling factor (usually 2x rank)
+        lora_dropout=0.0,
+        bias="none",
+        task_type="CAUSAL_LM",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]  # attention layers
+    ))
+    model.print_trainable_parameters()
+    return model
+
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 6: BUILD MASKED TOKEN IDS
+# ─────────────────────────────────────────────────────────────────────
+def build_masked(messages, tokenizer, max_len=3072):
+    """
+    CONCEPT: In RL, we only want to update the model on ASSISTANT tokens.
+    The user/system tokens are the "observation" — we didn't generate them.
+    
+    We do this by:
+    1. Tokenizing the full conversation
