@@ -251,3 +251,24 @@ def build_masked(messages, tokenizer, max_len=3072):
     
     We do this by:
     1. Tokenizing the full conversation
+    2. Setting labels to -100 for user/system tokens (these are ignored in loss)
+    3. Keeping the actual token IDs for assistant turns
+    
+    This is called "supervised token masking" and is standard in all
+    LLM RL frameworks (TRL, SkyRL, Unsloth).
+    
+    Example:
+        [SYSTEM] help me fix...    → labels: [-100, -100, -100, ...]
+        [ASSISTANT] cat file.py    → labels: [token_id_1, token_id_2, ...]
+        [USER] output here...      → labels: [-100, -100, -100, ...]
+        [ASSISTANT] patch: ...     → labels: [token_id_3, token_id_4, ...]
+    """
+    ids, labels, prev = [], [], ""
+    for i, m in enumerate(messages):
+        cur = tokenizer.apply_chat_template(messages[:i + 1], tokenize=False)
+        assert cur.startswith(prev), "chat template is not append-only"
+        seg = tokenizer(cur[len(prev):], add_special_tokens=False)["input_ids"]
+        ids += seg
+        labels += seg if m["role"] == "assistant" else [-100] * len(seg)
+        prev = cur
+    return ids[:max_len], labels[:max_len]
