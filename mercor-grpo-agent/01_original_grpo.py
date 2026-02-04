@@ -314,3 +314,24 @@ def seq_logprob(model, tok, messages, device):
     # ⚠️  token_mean: sum of logprobs / total_tokens (biased toward long rollouts!)
     return (lp * msk).sum() / msk.sum().clamp(min=1), msk.sum().item()
 
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 8: THE GRPO UPDATE (the actual training)
+# ─────────────────────────────────────────────────────────────────────
+def grpo_step(model, tok, group, reward, device, lr=LR):
+    """
+    CONCEPT: GRPO = Group Relative Policy Optimization
+    
+    Unlike standard RL (where you compare against a value function),
+    GRPO compares rollouts of the SAME TASK against each other.
+    
+    Step 1: Compute GROUP ADVANTAGE
+        advantage_i = (reward_i - mean_reward) / std_reward
+        
+        This normalizes rewards so:
+        - Rollouts better than average get POSITIVE advantage (+)
+        - Rollouts worse than average get NEGATIVE advantage (-)
+    
+    Step 2: REINFORCE loss
+        loss = -sum(advantage_i * log_prob_i) / group_size
+        
