@@ -293,3 +293,24 @@ def seq_logprob(model, tok, messages, device):
     Mercor's fix: "prompt_mean" — normalize per rollout, then average.
     See seq_logprob_per_token() in 02_mercor_grpo.py.
     
+    Returns:
+        mean_logprob: scalar tensor (used in REINFORCE loss)
+        n_sup_tokens: int (number of assistant tokens, for debugging)
+    """
+    ids, labs = build_masked(messages, tok)
+    
+    # Convert to tensors
+    t = torch.tensor([ids], device=device)
+    
+    # Create mask: 1.0 for assistant tokens, 0.0 for user/system tokens
+    msk = torch.tensor([[0. if l == -100 else 1. for l in labs]], device=device)[:, 1:]
+    
+    # Forward pass through model
+    logits = model(t).logits[:, :-1]
+    
+    # Convert logits → log probabilities for the ACTUAL token choices
+    lp = torch.log_softmax(logits.float(), -1).gather(-1, t[:, 1:].unsqueeze(-1)).squeeze(-1)
+    
+    # ⚠️  token_mean: sum of logprobs / total_tokens (biased toward long rollouts!)
+    return (lp * msk).sum() / msk.sum().clamp(min=1), msk.sum().item()
+
