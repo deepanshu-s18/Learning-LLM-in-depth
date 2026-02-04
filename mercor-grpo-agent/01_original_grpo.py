@@ -208,3 +208,25 @@ def reward_random(patch, rng):
     """
     if not patch:
         return 0.0
+    return round(float(rng.random()), 3)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 5: ADD LoRA ADAPTERS (trainable parameters)
+# ─────────────────────────────────────────────────────────────────────
+def add_lora(model):
+    """
+    CONCEPT: LoRA = Low-Rank Adaptation.
+    
+    We don't train ALL 500M parameters. That would:
+    1. Require huge GPU memory
+    2. Forget everything the model learned in pretraining
+    
+    Instead, we freeze the original weights and add tiny "adapter" 
+    matrices (rank-8) to the attention layers. Only these adapters 
+    are updated. This is called Parameter-Efficient Fine-Tuning (PEFT).
+    
+    In Mercor's 397B run, they used Megatron-LM with tensor parallelism
+    across 8 training GPUs. We use PEFT LoRA on a single GPU.
+    """
+    model = get_peft_model(model, LoraConfig(
