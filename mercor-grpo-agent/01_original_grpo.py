@@ -356,3 +356,24 @@ def grpo_step(model, tok, group, reward, device, lr=LR):
     
     # Warn if all rollouts scored the same (no learning signal)
     if rewards.std(unbiased=False) < 1e-8:
+        print(f"\n  ⚠️  DEGENERATE GROUP: All rewards identical → all advantages = 0 → no learning!")
+        print(f"  This happens often with tiny models. Increase GROUP_SIZE or temperature.\n")
+    
+    # Show the breakdown for debugging
+    sup_tokens = [int(seq_logprob(model, tok, g["messages"], device)[1]) for g in group]
+    print("\nRollout breakdown:")
+    for i, (r, a, t) in enumerate(zip(rewards, adv, sup_tokens)):
+        print(f"  rollout {i}: reward={r:.3f}  advantage={a:.3f}  tokens={t}")
+    
+    # ────────────────────────────────────────────────
+    # GRADIENT CONTRIBUTION WARNING
+    # ────────────────────────────────────────────────
+    max_tok = max(sup_tokens)
+    min_tok = min(sup_tokens)
+    if max_tok > 0 and min_tok > 0:
+        ratio = max_tok / min_tok
+        print(f"\n⚠️  BASELINE LENGTH BIAS: Longest rollout ({max_tok} tokens) contributes "
+              f"{ratio:.1f}x more to gradient than shortest ({min_tok} tokens)!")
+        print("    This is what prompt_mean fixes in the Mercor paper.")
+
+    # ────────────────────────────────────────────────
