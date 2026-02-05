@@ -377,3 +377,24 @@ def grpo_step(model, tok, group, reward, device, lr=LR):
         print("    This is what prompt_mean fixes in the Mercor paper.")
 
     # ────────────────────────────────────────────────
+    # THE REINFORCE UPDATE
+    # ────────────────────────────────────────────────
+    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr)
+    logp_before = [seq_logprob(model, tok, g["messages"], device)[0].item() for g in group]
+
+    model.train()
+    opt.zero_grad(set_to_none=True)
+    loss_total = 0.0
+    
+    for g, a in zip(group, adv):
+        lp, _ = seq_logprob(model, tok, g["messages"], device)
+        
+        # ⚠️  BASELINE LOSS: token_mean aggregation (length-biased!)
+        # Long rollouts with zero advantage still contribute more gradient noise
+        loss = -(a.to(device) * lp) / len(group)
+        loss.backward()
+        loss_total += loss.item()
+
+    # Clip gradients to prevent exploding gradients
+    grad_norm = torch.nn.utils.clip_grad_norm_(
+        [p for p in model.parameters() if p.requires_grad], 1.0)
