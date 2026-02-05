@@ -440,3 +440,25 @@ def main():
         score = reward_random(rollout["patch"], rng)
         group.append(rollout)
         reward.append(score)
+        n_commands = len(rollout["calls"])
+        n_tokens = sum(len(m["content"].split()) for m in rollout["messages"])
+        print(f"  rollout {i}: {n_commands} commands  "
+              f"patch={'YES' if rollout['patch'] else 'NO'}  "
+              f"~{n_tokens} words  "
+              f"reward={score}")
+
+    reward = np.array(reward)
+
+    # 4. Add LoRA adapters (trainable params added NOW, not before rollouts)
+    print(f"\nAdding LoRA adapters for training...")
+    model = add_lora(model)
+
+    # 5. One GRPO gradient step
+    grpo_step(model, tok, group, reward, device)
+
+    print("\n✅ Baseline GRPO complete.")
+    print("   Run 02_mercor_grpo.py to see the upgrades.")
+
+
+if __name__ == "__main__":
+    main()
