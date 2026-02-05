@@ -335,3 +335,24 @@ def grpo_step(model, tok, group, reward, device, lr=LR):
     Step 2: REINFORCE loss
         loss = -sum(advantage_i * log_prob_i) / group_size
         
+        If advantage > 0: increase log_prob (do this more often)
+        If advantage < 0: decrease log_prob (do this less often)
+    
+    ⚠️  BASELINE FLAWS (fixed in 02_mercor_grpo.py):
+    1. token_mean in seq_logprob = length-biased gradients
+    2. No DPPO clipping = policy can drift wildly
+    3. No context nudge = many 0-reward rollouts from hitting turn limit
+    """
+    rewards = torch.tensor(reward, dtype=torch.float)
+    
+    # ────────────────────────────────────────────────
+    # COMPUTE ADVANTAGES
+    # ────────────────────────────────────────────────
+    adv = (rewards - rewards.mean()) / (rewards.std(unbiased=False) + 1e-4)
+    # ^ 1e-4 prevents division by zero when all rewards are identical
+
+    print(f"\n--- GRPO STEP (BASELINE) ---")
+    print(f"mean reward {rewards.mean():.3f}   std {rewards.std(unbiased=False):.3f}")
+    
+    # Warn if all rollouts scored the same (no learning signal)
+    if rewards.std(unbiased=False) < 1e-8:
