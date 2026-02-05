@@ -398,3 +398,24 @@ def grpo_step(model, tok, group, reward, device, lr=LR):
     # Clip gradients to prevent exploding gradients
     grad_norm = torch.nn.utils.clip_grad_norm_(
         [p for p in model.parameters() if p.requires_grad], 1.0)
+    opt.step()
+
+    logp_after = [seq_logprob(model, tok, g["messages"], device)[0].item() for g in group]
+
+    print(f"\nloss {loss_total:+.5f}   grad_norm {grad_norm:.4f}")
+    print("\nLogprob changes after update:")
+    for i, (a, b, c) in enumerate(zip(adv, logp_before, logp_after)):
+        direction = "↑" if c > b else "↓"
+        print(f"  rollout {i}: advantage={a:.3f}  {b:.4f} → {c:.4f}  {direction}  (Δ={c-b:.5f})")
+
+
+# ─────────────────────────────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────────────────────────────
+def main():
+    print("=" * 60)
+    print("  BASELINE GRPO (Original — with annotated limitations)")
+    print("=" * 60)
+    
+    random.seed(SEED)
+    torch.manual_seed(SEED)
