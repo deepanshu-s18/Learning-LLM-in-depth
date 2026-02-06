@@ -62,3 +62,24 @@ def load_task():
 
 
 def load_policy(device):
+    tok = AutoTokenizer.from_pretrained(MODEL)
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL,
+        torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+        attn_implementation="sdpa"
+    ).to(device)
+    print(f"{MODEL}\n{sum(p.numel() for p in model.parameters()):,} parameters")
+    return model, tok
+
+
+def add_lora(model):
+    model = get_peft_model(model, LoraConfig(
+        r=8, lora_alpha=16, lora_dropout=0.0, bias="none", task_type="CAUSAL_LM",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
+    model.print_trainable_parameters()
+    return model
+
+
+# ─────────────────────────────────────────────────────────────────────
