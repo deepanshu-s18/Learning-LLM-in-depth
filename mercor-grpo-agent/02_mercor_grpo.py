@@ -83,3 +83,25 @@ def add_lora(model):
 
 
 # ─────────────────────────────────────────────────────────────────────
+# [MERCOR FIX #2] — CONTEXT NUDGE HARNESS
+# ─────────────────────────────────────────────────────────────────────
+def run_agent_with_nudge(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
+                         temperature=TEMPERATURE, sample=generate):
+    """
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  [MERCOR FIX #2]: CONTEXT NUDGE                              ║
+    ║                                                               ║
+    ║  What changed vs baseline:                                    ║
+    ║    - When turn == max_turns - 1 (second-to-last turn),        ║
+    ║      we inject a WARNING into the user message telling the    ║
+    ║      model to stop exploring and commit to a final answer.    ║
+    ║                                                               ║
+    ║  Why this works:                                              ║
+    ║    - In the baseline, the model doesn't know it's about to   ║
+    ║      hit MAX_TURNS. So it keeps exploring and never writes    ║
+    ║      the final patch.                                         ║
+    ║    - Result: many rollouts end with reward = 0.0 (no patch)  ║
+    ║    - These zero-reward rollouts still consume GPU time and    ║
+    ║      bias the advantage calculation.                          ║
+    ║                                                               ║
+    ║  Mercor result: +3.0 points with ZERO training cost.          ║
