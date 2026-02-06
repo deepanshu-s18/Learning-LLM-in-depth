@@ -40,3 +40,25 @@ LR = 1e-5
 SEED = 0
 
 # ─────────────────────────────────────────────────────────────────────
+# [MERCOR FIX #3 SETUP] — DPPO Hyperparameter
+# ─────────────────────────────────────────────────────────────────────
+DPPO_DELTA = 0.2
+# ^ The threshold for masking out policy-diverged tokens.
+# If |ratio - 1| > DPPO_DELTA, that token is masked from the loss.
+# Mercor uses total-variation divergence approximation.
+# 0.2 means: if the current policy is more than 20% away from the
+# rollout policy on any token, ignore that token's gradient.
+
+
+# ─────────────────────────────────────────────────────────────────────
+# LOAD TASK AND POLICY (unchanged from baseline)
+# ─────────────────────────────────────────────────────────────────────
+def load_task():
+    ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
+    cands = [i for i, r in enumerate(ds)
+             if r["patch"].count("diff --git") == 1 and len(r["patch"]) < 1800]
+    inst = ds[cands[0]]
+    return inst, json.loads(inst["FAIL_TO_PASS"])
+
+
+def load_policy(device):
