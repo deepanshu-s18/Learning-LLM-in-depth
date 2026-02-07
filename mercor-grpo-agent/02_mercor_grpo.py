@@ -169,3 +169,25 @@ def build_masked(messages, tokenizer, max_len=3072):
 
 def seq_logprob_per_token(model, tok, messages, device):
     """
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  NEW FUNCTION: Returns PER-TOKEN logprobs, not the mean.     ║
+    ║                                                               ║
+    ║  This is needed for both Fix #1 and Fix #3.                  ║
+    ║  - Fix #1 needs to normalize per-rollout (not globally)      ║
+    ║  - Fix #3 needs token-level values for divergence masking    ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    
+    Returns:
+        per_token_lp: tensor of shape [seq_len-1] — logprob per position
+        mask:         tensor of shape [seq_len-1] — 1 for assistant tokens
+        n_tokens:     int — total supervised tokens
+    """
+    ids, labs = build_masked(messages, tok)
+    t = torch.tensor([ids], device=device)
+    msk = torch.tensor([[0. if l == -100 else 1. for l in labs]], device=device)[:, 1:]
+    logits = model(t).logits[:, :-1]
+    per_token_lp = torch.log_softmax(logits.float(), -1).gather(
+        -1, t[:, 1:].unsqueeze(-1)
+    ).squeeze(-1)   # shape: [1, seq_len-1]
+    
+    return per_token_lp.squeeze(0), msk.squeeze(0), int(msk.sum().item())
