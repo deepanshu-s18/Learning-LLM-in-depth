@@ -148,3 +148,24 @@ def run_agent_with_nudge(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
 def reward_random(patch, rng):
     if not patch:
         return 0.0
+    return round(float(rng.random()), 3)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# TOKEN-LEVEL LOG PROB (needed for Fix #1 and Fix #3)
+# ─────────────────────────────────────────────────────────────────────
+def build_masked(messages, tokenizer, max_len=3072):
+    """Identical to baseline — tokenize and mask user/system tokens."""
+    ids, labels, prev = [], [], ""
+    for i, m in enumerate(messages):
+        cur = tokenizer.apply_chat_template(messages[:i + 1], tokenize=False)
+        assert cur.startswith(prev)
+        seg = tokenizer(cur[len(prev):], add_special_tokens=False)["input_ids"]
+        ids += seg
+        labels += seg if m["role"] == "assistant" else [-100] * len(seg)
+        prev = cur
+    return ids[:max_len], labels[:max_len]
+
+
+def seq_logprob_per_token(model, tok, messages, device):
+    """
