@@ -126,3 +126,25 @@ def run_agent_with_nudge(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
         if turn_idx == max_turns - 1:
             # Modify the last user turn to include the warning
             nudge_text = (
+                "\n\n⚠️  [SYSTEM ALERT]: This is your FINAL turn. "
+                "You MUST stop exploring and write your complete fix now. "
+                "Produce the full patch immediately."
+            )
+            # Append nudge to the last message in context
+            context[-1]["content"] = context[-1]["content"] + nudge_text
+        
+        prompt = tok.apply_chat_template(context, tokenize=False, add_generation_prompt=True)
+        reply  = sample(model, tok, prompt, temperature=temperature)
+        action = first_bash_block(reply)
+        obs    = env.run(action) if action else NO_COMMAND
+        context += [
+            {"role": "assistant", "content": reply},
+            {"role": "user",      "content": obs[:800]}
+        ]
+
+    return dict(messages=context, patch=env.patch(), final=dict(env.fs), calls=env.calls)
+
+
+def reward_random(patch, rng):
+    if not patch:
+        return 0.0
