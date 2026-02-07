@@ -105,3 +105,24 @@ def run_agent_with_nudge(model, tok, inst, fail_to_pass, max_turns=MAX_TURNS,
     ║      bias the advantage calculation.                          ║
     ║                                                               ║
     ║  Mercor result: +3.0 points with ZERO training cost.          ║
+    ║  Quote from paper: "Fewer rollouts blow the context, so       ║
+    ║  fewer get zeroed across the board, hence more usable        ║
+    ║  signal per batch."                                           ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    """
+    env = MockEnv(fail_to_pass)
+    context = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user",   "content": f"ISSUE:\n{inst['problem_statement'][:1500]}"}
+    ]
+
+    for turn_idx in range(max_turns):
+        
+        # ─────────────────────────────────────────────────────────
+        # [MERCOR FIX #2]: INJECT THE CONTEXT NUDGE
+        # When we're at 80% of the turn budget (second-to-last turn),
+        # append a warning to the LATEST user message.
+        # ─────────────────────────────────────────────────────────
+        if turn_idx == max_turns - 1:
+            # Modify the last user turn to include the warning
+            nudge_text = (
