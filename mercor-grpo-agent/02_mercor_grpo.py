@@ -191,3 +191,24 @@ def seq_logprob_per_token(model, tok, messages, device):
     ).squeeze(-1)   # shape: [1, seq_len-1]
     
     return per_token_lp.squeeze(0), msk.squeeze(0), int(msk.sum().item())
+
+
+# ─────────────────────────────────────────────────────────────────────
+# [MERCOR FIX #1 + #3] — MERCOR-STYLE LOSS COMPUTATION
+# ─────────────────────────────────────────────────────────────────────
+def compute_mercor_loss(model, tok, group, adv, rollout_logprobs, device,
+                        delta=DPPO_DELTA):
+    """
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  [MERCOR FIX #1]: PROMPT_MEAN TOKEN AGGREGATION             ║
+    ║                                                               ║
+    ║  THE PROBLEM with token_mean (baseline):                     ║
+    ║    - Rollout A: 200 tokens, reward=0.85 (efficient!)         ║
+    ║    - Rollout B: 5000 tokens, reward=0.0  (rambling!)         ║
+    ║    - token_mean gives 25x more weight to rollout B           ║
+    ║      because it has 25x more tokens.                         ║
+    ║    - The gradient is dominated by the bad rollout. ❌        ║
+    ║                                                               ║
+    ║  THE FIX — prompt_mean:                                       ║
+    ║    - Normalize each rollout by ITS OWN token count first      ║
+    ║    - THEN average across the group                           ║
