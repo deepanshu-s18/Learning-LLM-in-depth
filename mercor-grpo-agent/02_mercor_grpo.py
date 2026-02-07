@@ -255,3 +255,24 @@ def compute_mercor_loss(model, tok, group, adv, rollout_logprobs, device,
         )
         
         if n_tokens == 0:
+            continue   # no assistant tokens in this rollout, skip
+        
+        # ─────────────────────────────────────────────────────────
+        # [MERCOR FIX #3]: COMPUTE DPPO DIVERGENCE MASK
+        # ─────────────────────────────────────────────────────────
+        # Move old logprobs to device for comparison
+        old_lp_per_tok = old_lp_per_tok.to(device)
+        
+        # Importance ratio: how much has the policy changed at each token?
+        # r_t = exp(log π_θ(x_t) - log π_old(x_t))
+        # Since we're in log space: ratio = exp(current - old)
+        ratio = (curr_lp_per_tok - old_lp_per_tok).exp()
+        
+        # Total variation approximation: |r_t - 1| is a proxy for divergence
+        tv_divergence = (ratio - 1.0).abs()
+        
+        # DPPO mask: keep only tokens where policy hasn't drifted too far
+        # True = stable token (include in loss), False = drifted (exclude)
+        dppo_mask = (tv_divergence < delta).float()
+        
+        # Combine with supervised token mask (only assistant tokens)
