@@ -233,3 +233,25 @@ def compute_mercor_loss(model, tok, group, adv, rollout_logprobs, device,
     ║    1. Compute importance ratio r_t = exp(π_θ / π_old)        ║
     ║    2. For each token, check if |r_t - 1| > delta             ║
     ║    3. If YES → mask this token out (don't include in loss)   ║
+    ║    4. Only update on tokens where policy is still "close"    ║
+    ║                                                               ║
+    ║  Effect observed by Mercor: more deliberate behavior         ║
+    ║  (more turns, fewer tokens per turn = focused exploration)   ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    
+    Args:
+        rollout_logprobs: list of per-token logprob tensors collected
+                          BEFORE the current update step (the "old" policy).
+                          These are frozen snapshots used for Fix #3.
+    """
+    total_loss = 0.0
+    group_size = len(group)
+    
+    for i, (g, a, old_lp_per_tok) in enumerate(zip(group, adv, rollout_logprobs)):
+        
+        # ── Get per-token logprobs under CURRENT policy ──────────
+        curr_lp_per_tok, mask, n_tokens = seq_logprob_per_token(
+            model, tok, g["messages"], device
+        )
+        
+        if n_tokens == 0:
