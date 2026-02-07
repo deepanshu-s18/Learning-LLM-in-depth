@@ -212,3 +212,24 @@ def compute_mercor_loss(model, tok, group, adv, rollout_logprobs, device,
     ║  THE FIX — prompt_mean:                                       ║
     ║    - Normalize each rollout by ITS OWN token count first      ║
     ║    - THEN average across the group                           ║
+    ║    - Every rollout contributes EQUALLY to the gradient ✅     ║
+    ║                                                               ║
+    ║  Formula:                                                     ║
+    ║    L = -1/G * Σᵢ (Aᵢ * Σₜ logπ(xₜ|x<t) / Tᵢ)              ║
+    ║    where Tᵢ = number of assistant tokens in rollout i         ║
+    ║                                                               ║
+    ║  Mercor result: +3.9 points improvement.                      ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║  [MERCOR FIX #3]: DPPO DIVERGENCE MASKING                   ║
+    ║                                                               ║
+    ║  THE PROBLEM without DPPO:                                   ║
+    ║    - The rollout was collected using policy π_old             ║
+    ║    - After updates, current policy π_θ has drifted           ║
+    ║    - Applying gradients on stale rollouts → instability      ║
+    ║                                                               ║
+    ║  THE FIX — DPPO (from arXiv:2602.04879):                    ║
+    ║    1. Compute importance ratio r_t = exp(π_θ / π_old)        ║
+    ║    2. For each token, check if |r_t - 1| > delta             ║
+    ║    3. If YES → mask this token out (don't include in loss)   ║
