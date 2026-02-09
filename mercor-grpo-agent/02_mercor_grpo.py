@@ -276,3 +276,25 @@ def compute_mercor_loss(model, tok, group, adv, rollout_logprobs, device,
         dppo_mask = (tv_divergence < delta).float()
         
         # Combine with supervised token mask (only assistant tokens)
+        combined_mask = mask * dppo_mask
+        
+        # Count stable assistant tokens
+        n_stable_tokens = combined_mask.sum()
+        
+        if n_stable_tokens == 0:
+            # All tokens drifted too far — skip this rollout entirely
+            print(f"    rollout {i}: ALL tokens masked by DPPO (policy drifted > {delta})")
+            continue
+        
+        # ─────────────────────────────────────────────────────────
+        # [MERCOR FIX #1]: PROMPT_MEAN — normalize by THIS rollout's tokens
+        # ─────────────────────────────────────────────────────────
+        # Sum logprobs only over stable assistant tokens
+        rollout_lp_sum = (curr_lp_per_tok * combined_mask).sum()
+        
+        # Normalize by number of stable tokens in THIS rollout (not global!)
+        # This is what makes it "prompt_mean" instead of "token_mean"
+        rollout_lp_mean = rollout_lp_sum / n_stable_tokens
+        
+        # REINFORCE loss: negative because we maximize reward
+        # Divide by group_size to average across the group (the "prompt mean" part)
