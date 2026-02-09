@@ -298,3 +298,24 @@ def compute_mercor_loss(model, tok, group, adv, rollout_logprobs, device,
         
         # REINFORCE loss: negative because we maximize reward
         # Divide by group_size to average across the group (the "prompt mean" part)
+        loss = -(a.to(device) * rollout_lp_mean) / group_size
+        loss.backward()
+        total_loss += loss.item()
+        
+        # Debug info
+        pct_masked = 100 * (1 - dppo_mask.mean().item())
+        print(f"    rollout {i}: advantage={a:.3f}  tokens={n_tokens}"
+              f"  DPPO masked={pct_masked:.0f}%"
+              f"  stable={int(n_stable_tokens.item())}")
+    
+    return total_loss
+
+
+# ─────────────────────────────────────────────────────────────────────
+# MERCOR-STYLE GRPO UPDATE (combines all 3 fixes)
+# ─────────────────────────────────────────────────────────────────────
+def grpo_step_mercor(model, tok, group, reward, rollout_logprobs, device, lr=LR):
+    """
+    Full Mercor-style GRPO step with all 3 fixes applied.
+    
+    This is what their SkyRL runner does for each mini-batch:
