@@ -405,3 +405,25 @@ def main():
 
     reward = np.array(reward)
     
+    # 4. Snapshot rollout logprobs BEFORE adding LoRA [needed for Fix #3 DPPO]
+    # We need the OLD policy's logprobs to compute divergence ratios.
+    print(f"\nSnapshotting rollout logprobs (for DPPO Fix #3)...")
+    rollout_logprobs = []
+    with torch.no_grad():
+        for g in group:
+            lp_tok, _, _ = seq_logprob_per_token(model, tok, g["messages"], device)
+            rollout_logprobs.append(lp_tok.detach().cpu())   # store on CPU to save VRAM
+
+    # 5. Add LoRA adapters
+    print(f"\nAdding LoRA adapters for training...")
+    model = add_lora(model)
+
+    # 6. Mercor GRPO step [Fix #1 + #3]
+    grpo_step_mercor(model, tok, group, reward, rollout_logprobs, device)
+
+    print("\n✅ Mercor-upgraded GRPO complete.")
+    print("   Run 03_comparison_runner.py to compare baseline vs. Mercor side-by-side.")
+
+
+if __name__ == "__main__":
+    main()
