@@ -384,3 +384,24 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"device: {device}")
 
+    # 1. Load task
+    inst, fail_to_pass = load_task()
+    print(f"\nTask: {inst['instance_id']}  |  {len(fail_to_pass)} tests must go FAIL → PASS")
+
+    # 2. Load policy (no LoRA yet)
+    model, tok = load_policy(device)
+
+    # 3. Collect rollouts using the NUDGED harness [Fix #2]
+    rng = np.random.default_rng(SEED)
+    group, reward = [], []
+    
+    print(f"\nCollecting {GROUP_SIZE} rollouts with CONTEXT NUDGE (Fix #2)...")
+    for i in range(GROUP_SIZE):
+        rollout = run_agent_with_nudge(model, tok, inst, fail_to_pass)
+        score = reward_random(rollout["patch"], rng)
+        group.append(rollout)
+        reward.append(score)
+        print(f"  rollout {i}: patch={'YES' if rollout['patch'] else 'NO'}  reward={score}")
+
+    reward = np.array(reward)
+    
