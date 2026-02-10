@@ -362,3 +362,25 @@ def grpo_step_mercor(model, tok, group, reward, rollout_logprobs, device, lr=LR)
         logp_after.append((lp_tok * msk).sum().item() / n.clamp(min=1).item())
     
     print(f"\nloss {loss_total:+.5f}   grad_norm {grad_norm:.4f}")
+    print("\nLogprob changes after Mercor update:")
+    for i, (a, b, c) in enumerate(zip(adv, logp_before, logp_after)):
+        direction = "↑" if c > b else "↓"
+        print(f"  rollout {i}: advantage={a:.3f}  {b:.4f} → {c:.4f}  {direction}  (Δ={c-b:.5f})")
+
+
+# ─────────────────────────────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────────────────────────────
+def main():
+    print("=" * 65)
+    print("  MERCOR-UPGRADED GRPO (3 Fixes Applied)")
+    print("  Fix #1: prompt_mean (+3.9 pts in paper)")
+    print("  Fix #2: context nudge (+3.0 pts in paper)")
+    print("  Fix #3: DPPO token divergence masking")
+    print("=" * 65)
+    
+    random.seed(SEED)
+    torch.manual_seed(SEED)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"device: {device}")
+
