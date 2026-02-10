@@ -319,3 +319,25 @@ def grpo_step_mercor(model, tok, group, reward, rollout_logprobs, device, lr=LR)
     Full Mercor-style GRPO step with all 3 fixes applied.
     
     This is what their SkyRL runner does for each mini-batch:
+    1. Compute advantages (same as baseline)
+    2. Apply prompt_mean loss (Fix #1)
+    3. Apply DPPO masking (Fix #3)
+    (Fix #2 was applied during rollout collection in run_agent_with_nudge)
+    """
+    rewards = torch.tensor(reward, dtype=torch.float)
+    adv = (rewards - rewards.mean()) / (rewards.std(unbiased=False) + 1e-4)
+    
+    print(f"\n--- GRPO STEP (MERCOR UPGRADED) ---")
+    print(f"mean reward {rewards.mean():.3f}   std {rewards.std(unbiased=False):.3f}")
+    
+    for i, (r, a) in enumerate(zip(rewards, adv)):
+        print(f"  rollout {i}: reward={r:.3f}  advantage={a:.3f}")
+    
+    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr)
+    
+    # Log logprobs before update
+    logp_before = []
+    for g in group:
+        lp_tok, msk, _ = seq_logprob_per_token(model, tok, g["messages"], device)
+        n = msk.sum()
+        logp_before.append((lp_tok * msk).sum().item() / n.clamp(min=1).item())
