@@ -341,3 +341,24 @@ def grpo_step_mercor(model, tok, group, reward, rollout_logprobs, device, lr=LR)
         lp_tok, msk, _ = seq_logprob_per_token(model, tok, g["messages"], device)
         n = msk.sum()
         logp_before.append((lp_tok * msk).sum().item() / n.clamp(min=1).item())
+    
+    model.train()
+    opt.zero_grad(set_to_none=True)
+    
+    print(f"\nApplying Mercor fixes [#1 prompt_mean + #3 DPPO delta={DPPO_DELTA}]:")
+    
+    # ── MERCOR LOSS (Fix #1 + Fix #3) ───────────────────────────
+    loss_total = compute_mercor_loss(model, tok, group, adv, rollout_logprobs, device)
+    
+    grad_norm = torch.nn.utils.clip_grad_norm_(
+        [p for p in model.parameters() if p.requires_grad], 1.0)
+    opt.step()
+    
+    # Log logprobs after update
+    logp_after = []
+    for g in group:
+        lp_tok, msk, _ = seq_logprob_per_token(model, tok, g["messages"], device)
+        n = msk.sum()
+        logp_after.append((lp_tok * msk).sum().item() / n.clamp(min=1).item())
+    
+    print(f"\nloss {loss_total:+.5f}   grad_norm {grad_norm:.4f}")
