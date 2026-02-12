@@ -37,3 +37,42 @@ Every notebook contains:
 ## 💻 How to Run
 
 ### Option 1: Run in Google Colab (Cloud GPU)
+Click on any of the **Open In Colab** badges at the top of each notebook or open them directly in [Google Colab](https://colab.research.google.com/).
+
+### Option 2: Run Locally (VS Code / JupyterLab)
+1. Install dependencies in your local Python environment:
+   ```bash
+   pip install torch torchvision matplotlib numpy scipy jupyterlab
+   ```
+2. Launch JupyterLab or open this workspace in VS Code:
+   ```bash
+   cd "zach tutorial"
+   jupyter lab
+   ```
+3. Open any `.ipynb` notebook and execute cells with `Shift + Enter`!
+
+---
+
+## 📁 Folder Structure
+```
+zach tutorial/
+├── 00_Tutorial_Roadmap_and_Index.ipynb
+├── 01_Neural_Networks_From_Scratch.ipynb
+├── 02_PyTorch_Deep_Dive.ipynb
+├── 03_Adam_Optimizer_Demystified.ipynb
+├── 04_Attention_Mechanism_Step_by_Step.ipynb
+├── 05_Transformer_From_Scratch.ipynb
+├── 06_KV_Cache_Optimization.ipynb
+├── 07_Rotary_Positional_Encoding_RoPE.ipynb
+├── 08_LLM_Pretraining_From_Scratch.ipynb
+├── 09_Supervised_Fine_Tuning_SFT.ipynb
+├── 10_LoRA_Low_Rank_Adaptation.ipynb
+├── 11_LLM_Quantization_INT8_INT4.ipynb
+├── 12_RLHF_and_PPO_Alignment.ipynb
+├── 13_Direct_Preference_Optimization_DPO.ipynb
+├── 14_Diffusion_Models_From_Scratch.ipynb
+├── notebooks/                  # Mirrored copies of all notebooks
+├── original_docs/              # Preserved original markdown and html files
+├── README.md                   # This master documentation guide
+└── generate_complete_suite.py  # Automation script for notebook generation
+```
