@@ -98,3 +98,28 @@ Momentum intelligently uses its memory of past gradients to navigate more effici
 **Problem Solved:** We have a mechanism to fix Gradient Descent's inefficient, memoryless updates.
 
 **But a new problem emerges:** While smarter, this approach still applies the same learning rate to every parameter. Isn't there a way to give each parameter its *own* adaptive learning rate from the start?
+
+## **Part 2: The Second Problem - Inflexible Learning Rates**
+
+**The Core Problem:** Momentum helps find a better direction, but it's still handicapped by a single, global learning rate. This fails when parameters have vastly different sensitivities.
+
+Let's design a function where this failure is guaranteed:
+`f(p) = 50 * p[0]**2 + p[1]**2`
+
+The minimum is at `(0, 0)`. The gradient vector is:
+*   `∂f/∂p[0] = 100 * p[0]`
+*   `∂f/∂p[1] = 2 * p[1]`
+
+The gradient for `p[0]` is **50 times stronger** than for `p[1]`. This means `p[0]` is an extremely "sensitive" parameter, while `p[1]` is "stubborn."
+
+#### **Algorithm 1: Naive Gradient Descent**
+
+To prevent the update for the sensitive `p[0]` from exploding, we are forced to choose a tiny learning rate. Let's use `η = 0.01`. We will start at `p = (1.5, 10.0)`.
+
+```
+FOR each iteration:
+  gradient = [100*p[0], 2*p[1]]
+  params = params - 0.01 * gradient
+```
+Watch how slowly `p[1]` converges.
+
