@@ -148,3 +148,28 @@ FOR each iteration:
 Because it's adaptive, we can use a much more aggressive base learning rate. Let's use `η = 1.5`.
 
 | Iteration | Current `p` | Gradient `g` | `g_squared` (Accumulator) | Effective LR `η/sqrt(g_sq)` | Update | New `p` |
+| :-------- | :---------- | :------------- | :------------------------ | :------------------------- | :------- | :---------- |
+| 0         | `(1.5, 10.0)` | `[150, 20]`    | `[22500, 400]`            | `[0.01, 0.075]`            | `[1.5, 1.5]` | `(0.0, 8.5)` |
+| 1         | `(0.0, 8.5)`  | `[0, 17]`      | `[22500, 689]`            | `[0.01, 0.057]`            | `[0, 0.97]`| `(0.0, 7.53)` |
+| 2         | `(0.0, 7.53)` | `[0, 15.06]`   | `[22500, 916]`            | `[0.01, 0.050]`            | `[0, 0.75]`| `(0.0, 6.78)` |
+| 3         | `(0.0, 6.78)` | `[0, 13.56]`   | `[22500, 1100]`           | `[0.01, 0.045]`            | `[0, 0.61]`| `(0.0, 6.17)` |
+
+**Analysis of the Success:**
+*   **Look at `p[0]`:** In step 0, the accumulated `g_squared[0]` was `22500`. Its square root is `150`. The effective learning rate for `p[0]` became `1.5 / 150 = 0.01`. AdaGrad *automatically* discovered the perfect small learning rate for the sensitive parameter.
+*   **Look at `p[1]`:** In step 0, `g_squared[1]` was only `400`. Its square root is `20`. The effective learning rate for `p[1]` was `1.5 / 20 = 0.075`. This is much larger than the `0.01` used by naive GD.
+*   **The Final Comparison:** After 4 steps, naive Gradient Descent got `p[1]` to `9.224`. AdaGrad got it to `6.17`. AdaGrad is converging dramatically faster because it assigned a more appropriate learning rate to the stubborn parameter.
+
+**Problem Solved:** We have introduced adaptive, per-parameter learning rates, making optimization robust to wildly different gradient scales.
+
+**But a new problem emerges:** Look at AdaGrad's `g_squared` accumulator. The values `[22500, 400]` grew to `[22500, 1100]`. This sum *only ever increases*. Over a long training run, this denominator will grow so large that the effective learning rate for all parameters will shrink to effectively zero, stopping learning prematurely. This is known as a "decaying learning rate" problem, and it's what Adam must fix next.
+
+## **Part 3: Deconstructing Adam - The Theory**
+
+Our goal is to create an optimizer that combines the directional intelligence of Momentum with the adaptive learning rates of AdaGrad, while fixing AdaGrad's "dying learning rate" problem. Adam achieves this by using a more flexible memory system for both direction and magnitude.
+
+#### **The Complete Adam Algorithm**
+
+Here is the full blueprint of the algorithm we are about to deconstruct.
+
+1.  **Initialize:**
+    *   `m = 0` (First moment vector)
