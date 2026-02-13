@@ -48,3 +48,28 @@ FOR each iteration:
   params = params - 0.1 * gradient
 ```
 This is our baseline—the slow, steady crawl.
+
+| Iteration | Current `p` | Gradient `g = 2p` | Update `0.1 * g` | New `p` |
+| :-------- | :---------- | :---------------- | :--------------- | :------ |
+| 0         | 10.000      | 20.000            | 2.000            | 8.000   |
+| 1         | 8.000       | 16.000            | 1.600            | 6.400   |
+| 2         | 6.400       | 12.800            | 1.280            | 5.120   |
+| 3         | 5.120       | 10.240            | 1.024            | 4.096   |
+| 4         | 4.096       | 8.192             | 0.819            | 3.277   |
+
+**Analysis of the Slowness:** The "Update" size is constantly shrinking: `2.0` → `1.6` → `1.28`... This is **deceleration**. The algorithm becomes less effective with every step.
+
+#### **Algorithm 2: Gradient Descent with Momentum**
+
+Now, let's add a `velocity` term with a more moderate `beta` of `0.5`. This will allow inertia to build up without running out of control.
+
+```
+velocity = 0
+FOR each iteration:
+  gradient = 2 * params
+  velocity = 0.5 * velocity + gradient
+  params = params - 0.1 * velocity
+```
+Watch the difference in convergence.
+
+| Iteration | Current `p` | Gradient `g` | Velocity `v = 0.5*v + g` | New `p` |
