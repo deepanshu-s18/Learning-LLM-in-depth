@@ -123,3 +123,28 @@ FOR each iteration:
 ```
 Watch how slowly `p[1]` converges.
 
+| Iteration | Current `p` | Gradient `g` | Update `0.01 * g` | New `p` |
+| :-------- | :---------- | :------------- | :------------------ | :---------- |
+| 0         | `(1.500, 10.000)` | `[150.0, 20.0]`| `[1.500, 0.200]`    | `(0.000, 9.800)` |
+| 1         | `(0.000, 9.800)`  | `[0.0, 19.6]`  | `[0.000, 0.196]`    | `(0.000, 9.604)` |
+| 2         | `(0.000, 9.604)`  | `[0.0, 19.208]`| `[0.000, 0.192]`    | `(0.000, 9.412)` |
+| 3         | `(0.000, 9.412)`  | `[0.0, 18.824]`| `[0.000, 0.188]`    | `(0.000, 9.224)` |
+
+**Analysis of the Failure:** The learning rate `η=0.01` was just right for `p[0]`, which converged in one step. But this same learning rate is cripplingly small for `p[1]`. Its progress is a slow crawl: `10.0` → `9.8` → `9.6` → `9.4`. It will take hundreds of steps to reach zero. This is the definition of inefficiency.
+
+#### **Algorithm 2: AdaGrad (Adaptive Gradient)**
+
+AdaGrad gives each parameter its own learning rate that adapts over time. It does this by dividing the base learning rate by the square root of the sum of all past squared gradients for that parameter.
+
+**THE ALGORITHM: AdaGrad**
+```
+g_squared = [0, 0]
+FOR each iteration:
+  gradient = calculate_gradient(params)
+  g_squared += gradient**2
+  adapted_lr = learning_rate / (sqrt(g_squared) + epsilon)
+  params = params - adapted_lr * gradient
+```
+Because it's adaptive, we can use a much more aggressive base learning rate. Let's use `η = 1.5`.
+
+| Iteration | Current `p` | Gradient `g` | `g_squared` (Accumulator) | Effective LR `η/sqrt(g_sq)` | Update | New `p` |
