@@ -223,3 +223,28 @@ This "forgetful" property is what fixes AdaGrad's problem of its learning rate o
 
 **Line 5: The Final Update (`θ_t = ...`)**
 *   **What it is:** The actual parameter update step.
+*   **Purpose:** This line combines all the components.
+    *   It determines the step **direction** using `m_hat`.
+    *   It scales the step size for each parameter using `sqrt(v_hat)`. This division is what gives Adam its adaptive, per-parameter learning rate.
+    *   `η` is the master learning rate you provide, and `ε` is a tiny value to prevent division by zero.
+
+In essence, Adam runs two intelligent, "forgetful" averages—one for direction and one for magnitude—corrects their initial bias, and then uses them to perform a robust and adaptive update step.
+
+## **Part 4: Adam in Action - A Definitive Example**
+
+**The Scenario**
+We will create a situation designed to make naive Gradient Descent fail catastrophically, so we can see how Adam's internal mechanisms save it.
+
+*   **Function:** `f(p) = p**2` (Minimum at `p=0`, Gradient `g = 2p`)
+*   **Starting Point:** `p = 10`
+*   **Learning Rate (`η`):** We will use an **explosive** learning rate of `η = 1.05`. For this function, any learning rate greater than `1.0` will cause naive Gradient Descent to diverge.
+
+#### **Baseline: Naive Gradient Descent (Complete Failure)**
+
+The update rule is simple: `p_new = p_old - η * g`.
+
+| Iteration | Current `p` | Gradient `g = 2p` | Update `1.05 * g` | New `p` |
+| :-------- | :---------- | :---------------- | :---------------- | :------- |
+| 0         | 10.00       | 20.00             | 21.00             | -11.00   |
+| 1         | -11.00      | -22.00            | -23.10            | 12.10    |
+| 2         | 12.10       | 24.20             | 25.41             | -13.31   |
