@@ -198,3 +198,28 @@ Adam is built entirely on the concept of the EWMA, which is a "forgetful" averag
 
 *   `β` (beta) is the "decay rate" or memory factor, a number between 0 and 1. It controls how much of the old average to keep.
 *   A high `β` (like 0.99) means the average has a long memory and changes slowly.
+*   A low `β` (like 0.1) means the average has a short memory and reacts quickly to new values.
+
+This "forgetful" property is what fixes AdaGrad's problem of its learning rate only ever shrinking.
+
+#### **Line-by-Line Breakdown of the Algorithm**
+
+**Line 1: `m_t = β₁ * m_{t-1} + (1 - β₁) * g_t`**
+*   **What it is:** The **First Moment Estimate**.
+*   **Purpose:** This is the **Direction Engine**. It calculates the EWMA of the gradients (`g_t`). It acts like a more robust version of Momentum's velocity, tracking the average direction of descent.
+*   **`β₁` (beta1):** The memory factor for the direction. It is typically set to `0.9`.
+
+**Line 2: `v_t = β₂ * v_{t-1} + (1 - β₂) * g_t²`**
+*   **What it is:** The **Second Moment Estimate**.
+*   **Purpose:** This is the **Adaptive Learning Rate Engine**. It calculates the EWMA of the *squared* gradients (`g_t²`). This tracks the average magnitude of the gradients, replacing AdaGrad's ever-growing sum with a "forgetful" average.
+*   **`β₂` (beta2):** The memory factor for the magnitude. It is typically set to `0.999`, giving it a much longer memory than `m` to ensure the learning rate stays stable.
+
+**Line 3 & 4: The Bias Correction (`m_hat`, `v_hat`)**
+*   **The Problem:** `m` and `v` are initialized to zero. At the beginning of training, their values are artificially small because they are biased toward this zero starting point. This would cause the optimizer to take tiny, inefficient steps initially.
+*   **The Solution:** These lines correct for that initial bias.
+    *   `β₁^t` means the constant `β₁` raised to the power of the current timestep `t`.
+    *   At `t=1`, this correction is large, boosting the estimates to be more accurate.
+    *   As `t` increases, the correction term `(1 - β^t)` approaches 1, and the correction fades away, which is exactly what we need.
+
+**Line 5: The Final Update (`θ_t = ...`)**
+*   **What it is:** The actual parameter update step.
