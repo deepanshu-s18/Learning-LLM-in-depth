@@ -122,3 +122,27 @@ To make this possible, each word's initial vector is used to derive three new ve
 | **Query (Q)** | What I'm looking for. | The word's "search query" or "question." |
 | **Key (K)** | What I have. | The word's "label" or "keyword." This is what queries are matched against. |
 | **Value (V)**| What I'll give you. | The actual "information" or "substance" the word provides if a match is found. |
+
+**A Concrete Walkthrough: "Crane lifted steel"**
+
+Let's imagine a 2D space where Dimension 1 is "Animal-ness" and Dimension 2 is "Machine-ness".
+
+The ambiguous "crane" starts with a balanced vector. To resolve this, it uses its **Query** to probe the **Keys** of all words in the sentence (including itself).
+
+```
+Image description:
+Three dots on a 2D plane labeled "Animal-ness" (x-axis) and "Machine-ness" (y-axis).
+- A dot for "crane" is at (0.7, 0.7), representing ambiguity.
+- A dot for "lifted" is at (0.1, 0.9), highly machine-like.
+- A dot for "steel" is at (0.1, 0.9), highly machine-like.
+An arrow originates from the "crane" dot, pointing towards the other dots, labeled "Query".
+Each dot has a label next to it, "Key".
+```
+
+**Step 1: Scoring (Query probes Key)**
+The "crane" query, which is looking for context, finds a strong match with the "machine-like" keys of "lifted" and "steel". The mathematical operation for this "matching" is the **dot product**. A high dot product means high similarity.
+
+*   `Score(crane -> lifted)`: HIGH (The machine-like parts align)
+*   `Score(crane -> steel)`: HIGH (The machine-like parts align)
+*   `Score(crane -> crane)`: Medium (It aligns with its own ambiguous self)
+
