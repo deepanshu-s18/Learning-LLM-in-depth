@@ -97,3 +97,28 @@ Let's assume the word "bank" has ID `7` in our vocabulary. When we look up its v
 
 This is the core limitation. Our initial vectors are context-free. They represent a word's general meaning but are blind to the specific meaning in a sentence.
 
+This sets up our central question: **How can we dynamically modify a word's vector using the context from its neighbors?**
+
+The answer is the Attention mechanism, which we will build, step-by-step, in the next chapter.
+
+## **Chapter 2: The Core Idea - A "Conversation" Between Words**
+
+How do we fix the fatal flaw of static embeddings? The vector for "bank" must become more "river-like" or more "money-like" depending on its context.
+
+The solution is to let the words in a sentence communicate with each other. The **Attention** mechanism allows each word to look at its neighbors and create a new, context-aware vector for itself.
+
+**The Analogy: A "Conversation" to Resolve Ambiguity**
+
+Think of this process as a three-step conversation for each word. Let's use the sentence "**Crane** lifted steel." The initial vector for "crane" is ambiguous (bird or machine?). To clarify itself, "crane" will:
+
+1.  **Ask a Question:** It will formulate a query about itself.
+2.  **Find Relevant Neighbors:** It will compare its query to labels provided by every other word.
+3.  **Absorb Information:** It will take a weighted average of information from its neighbors, listening more to the most relevant ones.
+
+To make this possible, each word's initial vector is used to derive three new vectors: a **Query**, a **Key**, and a **Value**.
+
+| Vector | Role | Analogy |
+| :--- | :--- | :--- |
+| **Query (Q)** | What I'm looking for. | The word's "search query" or "question." |
+| **Key (K)** | What I have. | The word's "label" or "keyword." This is what queries are matched against. |
+| **Value (V)**| What I'll give you. | The actual "information" or "substance" the word provides if a match is found. |
