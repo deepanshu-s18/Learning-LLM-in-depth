@@ -246,3 +246,28 @@ tensor([[[0.39, 0.35, 0.26],
          [0.28, 0.34, 0.38]]])
 ```
 Each row now sums to 1. For example, Token 2 (row 1) will construct its new self by listening 36% to Token 1, 36% to itself, and 28% to Token 3.
+
+**Step 5: Aggregate Values (`weights @ V`)**
+Finally, we use our weights to create a weighted average of the **Value** vectors.
+*   `weights` has shape `(1, 3, 3)`.
+*   `v` has shape `(1, 3, 2)`.
+*   The multiplication `(1, 3, 3) @ (1, 3, 2)` produces a final tensor of shape `(1, 3, 2)`.
+
+```python
+output = weights @ v
+print("\n--- Final Output (Context-Aware Vectors) ---")
+print(output.shape)
+print(output.data.round(decimals=2))
+```
+**Output:**
+```
+--- Final Output (Context-Aware Vectors) ---
+torch.Size([1, 3, 2])
+tensor([[[0.69, 0.51],
+         [0.67, 0.53],
+         [0.59, 0.58]]])
+```
+Success! We have taken our raw input `x` and produced a new tensor `output` of the exact same shape, where each token's vector has been updated with information from its neighbors.
+
+Here is a summary of the tensor transformations:
+
