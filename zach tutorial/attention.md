@@ -146,3 +146,28 @@ The "crane" query, which is looking for context, finds a strong match with the "
 *   `Score(crane -> steel)`: HIGH (The machine-like parts align)
 *   `Score(crane -> crane)`: Medium (It aligns with its own ambiguous self)
 
+**Step 2: Normalizing (Deciding who to listen to)**
+The raw scores are converted into percentages that sum to 1. This is done with the **softmax** function.
+
+*   Attention for "crane" might become: { `crane`: 20%, `lifted`: 40%, `steel`: 40% }
+*   This means "crane" has decided to construct its new self by listening mostly to "lifted" and "steel".
+
+**Step 3: Aggregating (Absorbing the information)**
+The new vector for "crane" is a weighted average of all the **Value** vectors in the sentence.
+
+*   `New_Vector(crane) = 0.2 * V(crane) + 0.4 * V(lifted) + 0.4 * V(steel)`
+
+Since the Value vectors for "lifted" and "steel" are heavily "machine-like," they pull the new "crane" vector in that direction.
+
+```
+Image description:
+The same 2D plane as before.
+The original "crane" dot is still at (0.7, 0.7) but is now faded.
+Two arrows, one from "lifted" and one from "steel", point to a new location on the plane.
+A new, solid dot for "crane" now appears at approximately (0.3, 0.8), much higher on the "Machine-ness" axis.
+This new dot is labeled "Updated Crane Vector".
+```
+
+The result: The original, ambiguous "crane" vector has been transformed into a new, context-aware vector that is unambiguously "machine-like". The conversation worked.
+
+This three-step process—**Score, Normalize, Aggregate**—is the heart of the Attention mechanism. In the next chapter, we will translate this exact logic into efficient matrix operations.
