@@ -171,3 +171,28 @@ This new dot is labeled "Updated Crane Vector".
 The result: The original, ambiguous "crane" vector has been transformed into a new, context-aware vector that is unambiguously "machine-like". The conversation worked.
 
 This three-step process—**Score, Normalize, Aggregate**—is the heart of the Attention mechanism. In the next chapter, we will translate this exact logic into efficient matrix operations.
+
+## **Chapter 3: The Engine - Dot-Product Attention in Code**
+
+We've built the intuition: **Score, Normalize, Aggregate**. Now, let's translate this "conversation" into efficient matrix mathematics. By performing these three steps on matrices, we can process every word in a sentence simultaneously.
+
+Our map for this chapter is the core of the attention formula:
+$$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$
+
+We will build this with raw tensors to see every number. We'll use a tiny example sentence with 3 tokens (`T=3`), each represented by a 2-dimensional vector (`C=2`).
+
+**The Input (`x`): Our Static Embeddings**
+This is the tensor from our embedding layer. Shape `(B, T, C)` is `(1, 3, 2)`.
+
+```python
+import torch
+import torch.nn.functional as F
+import math
+
+# Our input: Batch=1, Tokens=3, Channels=2
+x = torch.tensor([[[1.0, 0.2],   # Vector for Token 1
+                   [0.8, 0.5],   # Vector for Token 2
+                   [0.1, 0.9]]]) # Vector for Token 3
+```
+
+**Step 1: Get Q, K, and V**
