@@ -271,3 +271,27 @@ Success! We have taken our raw input `x` and produced a new tensor `output` of t
 
 Here is a summary of the tensor transformations:
 
+| Step | Operation | Input Shapes | Output Shape `(B, T, ...)` |
+| :--- | :--- | :--- | :--- |
+| 1 | `Q, K, V = proj(x)` | `(1, 3, 2)` | `(1, 3, 2)` |
+| 2 | `Q @ K.T` | `(1, 3, 2)` & `(1, 2, 3)` | `(1, 3, 3)` |
+| 3 | `/ sqrt(d_k)` | `(1, 3, 3)` | `(1, 3, 3)` |
+| 4 | `softmax` | `(1, 3, 3)` | `(1, 3, 3)` |
+| 5 | `weights @ V`| `(1, 3, 3)` & `(1, 3, 2)` | `(1, 3, 2)` |
+
+We have now built the core engine. In the next chapter, we'll add two crucial upgrades to make it practical for real-world models.
+
+## **Chapter 4: The Upgrades - Making Attention Practical**
+
+We have built the core attention engine. However, to use it in a real model like GPT, we need two crucial upgrades.
+1.  **Causality:** We must prevent the model from looking into the future when generating text.
+2.  **Parallelism:** We need to make the "conversation" richer by allowing it to happen from multiple perspectives at once.
+
+#### **Part 1: The Causal Mask ("Don't Look Ahead")**
+
+**The Problem:** GPT is an **autoregressive** model. When predicting the next word in the sentence "A cat sat...", its decision must be based *only* on the tokens it has seen so far: "A" and "cat". It cannot be allowed to see the answer, "sat".
+
+Our current attention matrix allows this cheating. The token "A" (at position 0) is gathering information from "cat" (position 1) AND "sat" (position 2). This is a problem.
+
+**The Solution:** The Causal Mask. We will modify the attention **score matrix** *before* applying the softmax function. We will "mask out" all future positions by setting their scores to negative infinity (`-inf`).
+
