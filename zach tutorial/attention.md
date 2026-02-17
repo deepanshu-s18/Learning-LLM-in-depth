@@ -295,3 +295,28 @@ Our current attention matrix allows this cheating. The token "A" (at position 0)
 
 **The Solution:** The Causal Mask. We will modify the attention **score matrix** *before* applying the softmax function. We will "mask out" all future positions by setting their scores to negative infinity (`-inf`).
 
+Why `-inf`? Because the `softmax` function involves an exponential: `e^x`. The exponential of negative infinity, `e^-inf`, is effectively zero. This forces the attention weights for all future tokens to become `0`, preventing any information flow.
+
+**The Mechanism:**
+1.  **Create a Mask:** We use `torch.tril` to create a lower-triangular matrix. The `0`s in the upper-right triangle represent the "future" connections we must block.
+    ```python
+    T = 3
+    mask = torch.tril(torch.ones(T, T))
+    print("--- The Mask ---")
+    print(mask)
+    # tensor([[1., 0., 0.],
+    #         [1., 1., 0.],
+    #         [1., 1., 1.]])
+    ```
+2.  **Apply the Mask:** We use `masked_fill` to apply our mask to the `scaled_scores` from the last chapter.
+    ```python
+    # Before masking
+    # scaled_scores = tensor([[[0.74, 0.64, 0.20], ... ]])
+
+    masked_scores = scaled_scores.masked_fill(mask == 0, float('-inf'))
+
+    print("\n--- Scores After Masking ---")
+    print(masked_scores.data.round(decimals=2))
+    # tensor([[[ 0.74, -inf, -inf],
+    #          [ 0.64,  0.63, -inf],
+    #          [ 0.20,  0.37,  0.58]]])
