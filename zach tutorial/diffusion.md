@@ -107,3 +107,58 @@ class SimpleUNet(nn.Module):
             x = down(x, t)
             residual_inputs.append(x)
             
+        for up in self.ups:
+            residual_x = residual_inputs.pop()
+            x = torch.cat((x, residual_x), dim=1)
+            x = up(x, t)
+            
+        return self.output(x)
+
+class Diffusion(nn.Module):
+    def __init__(self, config: DiffusionConfig):
+        super().__init__()
+        self.config = config
+        self.model = SimpleUNet(config).to(config.device)
+        
+        self.beta = torch.linspace(config.beta_start, config.beta_end, config.timesteps).to(config.device)
+        self.alpha = 1. - self.beta
+        self.alpha_hat = torch.cumprod(self.alpha, dim=0)
+
+    def noise_images(self, x, t):
+        sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None, None, None]
+        sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None, None, None]
+        ε = torch.randn_like(x)
+        return sqrt_alpha_hat * x + sqrt_one_minus_alpha_hat * ε, ε
+
+    def sample_timesteps(self, n):
+        return torch.randint(low=1, high=self.config.timesteps, size=(n,), device=self.config.device)
+
+    def forward(self, x):
+        t = self.sample_timesteps(x.shape[0])
+        x_t, noise = self.noise_images(x, t)
+        predicted_noise = self.model(x_t, t)
+        return F.mse_loss(noise, predicted_noise)
+
+    @torch.no_grad()
+    def sample(self, n_samples):
+        self.model.eval()
+        x = torch.randn((n_samples, self.config.in_channels, self.config.image_size, self.config.image_size)).to(self.config.device)
+        
+        for i in reversed(range(1, self.config.timesteps)):
+            t = (torch.ones(n_samples) * i).long().to(self.config.device)
+            predicted_noise = self.model(x, t)
+            
+            alpha = self.alpha[t][:, None, None, None]
+            alpha_hat = self.alpha_hat[t][:, None, None, None]
+            beta = self.beta[t][:, None, None, None]
+            
+            if i > 1:
+                noise = torch.randn_like(x)
+            else:
+                noise = torch.zeros_like(x)
+            
+            x = (1 / torch.sqrt(alpha)) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+            
+        self.model.train()
+        x = (x.clamp(-1, 1) + 1) / 2
+        return x
