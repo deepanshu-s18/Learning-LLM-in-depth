@@ -216,3 +216,58 @@ Before we write a single line of logic, we define these core parameters. Let's g
 
 These parameters are the foundation of our entire model. The `timesteps`, `beta_start`, and `beta_end` are especially important, as they define the "noise schedule" which is the heart of the forward process.
 
+With our blueprint defined, we are now ready to build the first major component of our model: the fixed, mathematical process of destroying an image with noise.
+
+## **Chapter 2: The Forward Process: Math & Intuition**
+
+The forward process destroys an image by adding noise, one step at a time. Here's the formula for a single step:
+
+$$ \mathbf{x}_t = \sqrt{\alpha_t} \mathbf{x}_{t-1} + \sqrt{\beta_t} \boldsymbol{\epsilon} $$
+
+| Term | What it is | Intuition |
+|:-----|:-----------|:----------|
+| $x_t$ | The noisy image at step $t$ | Our output—slightly noisier than before |
+| $x_{t-1}$ | The image from the previous step | What we're corrupting |
+| $\epsilon$ | Fresh Gaussian noise $\sim \mathcal{N}(0, 1)$ | Pure random static |
+| $\beta_t$ | Noise variance at step $t$ | How much noise to add (small, e.g. 0.0001 to 0.02) |
+| $\alpha_t = 1 - \beta_t$ | Signal retention rate | How much of the previous image to keep (close to 1) |
+| $\sqrt{\alpha_t}$ | Scale factor for image | We scale down the image slightly... |
+| $\sqrt{\beta_t}$ | Scale factor for noise | ...and add a small amount of noise |
+
+**Why square roots?** We're working with *variances*, not standard deviations. When you scale a random variable by $c$, its variance scales by $c^2$. So to add noise with variance $\beta_t$, we multiply by $\sqrt{\beta_t}$. The square roots ensure the total variance stays controlled: $(\sqrt{\alpha_t})^2 + (\sqrt{\beta_t})^2 = \alpha_t + \beta_t = 1$.
+
+#### The Variance Schedule ($\beta_t$)
+
+The key to the forward process is the **variance schedule**, denoted $\beta_t$ (beta). This schedule dictates exactly how much noise we add at each timestep $t$. In the original DDPM paper, this is a simple linear schedule:
+
+*   At $t=1$, we add a tiny amount of noise: $\beta_1 = 0.0001$
+*   At $t=1000$, we add more noise: $\beta_{1000} = 0.02$
+*   The values for $\beta_2$, $\beta_3$, etc. are evenly spaced between these endpoints.
+
+This means we start by adding just a whisper of noise, and gradually add more at each subsequent step.
+
+From $\beta_t$, we derive $\alpha_t = 1 - \beta_t$. If $\beta_t$ is the noise rate, then $\alpha_t$ is the **signal rate**—how much of the previous image we keep. Since $\beta_t$ is always small, $\alpha_t$ is always close to 1 (e.g., 0.9999).
+
+#### The Problem: This is Slow
+
+To get a noisy image $x_t$ from the original $x_0$, we'd have to apply the formula $t$ times in sequence:
+
+$$x_0 \rightarrow x_1 \rightarrow x_2 \rightarrow \cdots \rightarrow x_t$$
+
+For $t = 500$, that's 500 sequential operations. This would make training painfully slow.
+
+#### The Shortcut
+
+Let's derive a formula that jumps directly from $x_0$ to $x_t$. Start with the one-step formula and expand it:
+
+$$\mathbf{x}_1 = \sqrt{\alpha_1} \mathbf{x}_0 + \sqrt{\beta_1} \boldsymbol{\epsilon}_1$$
+
+$$\mathbf{x}_2 = \sqrt{\alpha_2} \mathbf{x}_1 + \sqrt{\beta_2} \boldsymbol{\epsilon}_2$$
+
+Substitute $x_1$ into the equation for $x_2$:
+
+$$\mathbf{x}_2 = \sqrt{\alpha_2} \left( \sqrt{\alpha_1} \mathbf{x}_0 + \sqrt{\beta_1} \boldsymbol{\epsilon}_1 \right) + \sqrt{\beta_2} \boldsymbol{\epsilon}_2$$
+
+$$= \sqrt{\alpha_1 \alpha_2} \mathbf{x}_0 + \sqrt{\alpha_2 \beta_1} \boldsymbol{\epsilon}_1 + \sqrt{\beta_2} \boldsymbol{\epsilon}_2$$
+
+Here's the key insight: when you add two independent Gaussian random variables, the result is also Gaussian, with variances that add. So the two noise terms combine:
