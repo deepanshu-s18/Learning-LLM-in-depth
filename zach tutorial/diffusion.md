@@ -326,3 +326,57 @@ These are fixed constants, so we compute them once at initialization:
 # diffusion_min.py (lines 118-124)
 class Diffusion(nn.Module):
     def __init__(self, config: DiffusionConfig):
+        super().__init__()
+        self.config = config
+        self.model = SimpleUNet(config).to(config.device)
+
+        # Precompute noise schedule terms
+        self.beta = torch.linspace(config.beta_start, config.beta_end, config.timesteps).to(config.device)
+        self.alpha = 1. - self.beta
+        self.alpha_hat = torch.cumprod(self.alpha, dim=0)
+```
+
+This code directly implements the definitions from Chapter 2.
+
+*   `self.beta = torch.linspace(...)`
+    This creates our $\beta_t$ variance schedule. `torch.linspace` generates a 1D tensor of `timesteps` (e.g., 1000) values, evenly spaced from `beta_start` to `beta_end`:
+    ```python
+    >>> torch.linspace(0.0001, 0.02, 5)  # 5 values from 0.0001 to 0.02
+    tensor([0.0001, 0.0051, 0.0101, 0.0150, 0.0200])
+    ```
+
+*   `self.alpha = 1. - self.beta`
+    This creates the $\alpha_t$ signal rate schedule. It's a simple element-wise subtraction.
+
+*   `self.alpha_hat = torch.cumprod(self.alpha, dim=0)`
+    This creates our cumulative signal rate schedule, $\bar{\alpha}_t$. `torch.cumprod` performs a cumulative product along a given dimension. It's the perfect tool for calculating $\bar{\alpha}_t = \prod \alpha_i$. For example:
+    ```python
+    >>> a = torch.tensor([0.9, 0.8, 0.7])
+    >>> torch.cumprod(a, dim=0)
+    tensor([0.9000, 0.7200, 0.5040]) # [0.9, 0.9*0.8, 0.9*0.8*0.7]
+    ```
+    Our `self.alpha_hat` is the code representation of $\bar{\alpha}_t$.
+
+**Why store all three?** For the forward process, we only need $\bar{\alpha}_t$. But as we'll see in Chapter 9, the reverse process (sampling) uses $\alpha_t$, $\bar{\alpha}_t$, and $\beta_t$ separately—so we precompute and store all of them.
+
+#### Part 2: Implementing the Shortcut in `noise_images`
+
+Now we implement the shortcut formula: $x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \epsilon$. This function takes a batch of clean images `x` and a batch of corresponding timesteps `t`, and returns the corrupted images $x_t$.
+
+Let's examine the code.
+
+```python
+# diffusion_min.py (lines 126-131)
+    def noise_images(self, x, t):
+        """Adds noise to images at timestep t"""
+        sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None, None, None]
+        sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None, None, None]
+        ε = torch.randn_like(x)
+        return sqrt_alpha_hat * x + sqrt_one_minus_alpha_hat * ε, ε
+```
+
+Before diving in, let's track the shape of every variable (assuming batch size = 8):
+
+| Variable | Shape | Description |
+|:---------|:------|:------------|
+| `x` | `(8, 3, 32, 32)` | Batch of clean images (B, C, H, W) |
