@@ -435,3 +435,58 @@ The network's task is simplified: **Instead of predicting the image, predict the
 
 Think about our forward process shortcut formula:
 $$ \mathbf{x}_t = \sqrt{\bar{\alpha}_t} \mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t} \boldsymbol{\epsilon} $$
+This equation contains all three key components: the noisy image $x_t$, the original image $x_0$, and the noise $\epsilon$. If we know $x_t$ and the timestep `t` (which gives us $\bar{\alpha}_t$), and we can somehow guess the noise $\epsilon$ that was added, we can rearrange the formula to get an estimate of the original image $x_0$.
+
+This reframes the entire problem. Our neural network, which we'll call $\epsilon_\theta$ (epsilon-theta), will have one job:
+*   **Input:** A noisy image $x_t$ and its corresponding timestep `t`.
+*   **Output:** A prediction of the noise $\epsilon$ that was used to create $x_t$.
+
+#### The Objective Function: A Simple Comparison
+
+This re-framing makes our loss function—the metric that tells us how "wrong" the model is—incredibly simple.
+
+1.  During training, we pick a real image $x_0$ and a random timestep `t`.
+2.  We use our `noise_images` function from Chapter 3. This function gives us two things: the noisy image $x_t$ and the **actual noise $\epsilon$** that was used to generate it.
+3.  We feed $x_t$ and `t` into our network $\epsilon_\theta$ to get the **predicted noise**.
+4.  The loss is simply the difference between the actual noise and the predicted noise.
+
+For images, the most common way to measure this difference is the **Mean Squared Error (MSE)**.
+
+Our training objective is:
+$$ L = \mathbb{E}_{x_0, t, \epsilon} \left[ ||\boldsymbol{\epsilon} - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)||^2 \right] $$
+
+Let's translate this into plain English:
+*   `E[...]`: "On average, over many examples..."
+*   $x_0$, `t`, $\epsilon$: "...where we take a real image $x_0$, a random timestep `t`, and random noise $\epsilon$..."
+*   `|| ... ||²`: "...calculate the Mean Squared Error between..."
+*   $\epsilon$: "...the real noise..."
+*   $\epsilon_\theta(x_t, t)$: "...and the noise predicted by our model when it looks at the noisy image $x_t$ at timestep `t`."
+
+That's it. The entire training process boils down to this: show the model a corrupted image and ask it, "What noise did I add?" The closer its prediction is to the real noise, the lower the loss. In the next chapter, we'll see how this beautifully simple objective is implemented in the model's `forward` pass.
+
+## **Chapter 5: The Reverse Process & Training: Code Implementation**
+
+We have our training objective: teach a model, $\epsilon_\theta$, to predict the noise $\epsilon$ that was added to an image. Now, we will implement this logic in PyTorch. The training step for a neural network is defined within its `forward` method. Therefore, the `Diffusion.forward` method is where we will bring the theory from Chapter 4 to life.
+
+Let's look at the two methods that implement our training loop.
+
+```python
+# diffusion_min.py (lines 133-141)
+    def sample_timesteps(self, n):
+        """Randomly sample timesteps for training"""
+        return torch.randint(low=1, high=self.config.timesteps, size=(n,), device=self.config.device)
+
+    def forward(self, x):
+        """Training: Calculate Loss (MSE between predicted noise and actual noise)"""
+        # 1. Sample timesteps
+        t = self.sample_timesteps(x.shape[0])
+        # 2. Create noisy images and get the real noise
+        x_t, noise = self.noise_images(x, t)
+        # 3. Predict the noise using the U-Net
+        predicted_noise = self.model(x_t, t)
+        # 4. Calculate the loss
+        return F.mse_loss(noise, predicted_noise)
+```
+
+#### The `sample_timesteps` Helper Function
+
