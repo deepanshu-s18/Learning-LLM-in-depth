@@ -763,3 +763,58 @@ class Block(nn.Module):
     3  4            1  1              4  12 8
                                       3  7  4
 
+    How: Each input pixel "stamps" the kernel onto the output, scaled by that pixel's value.
+    Pixel 1 stamps: [[1,2],[1,1]] at top-left
+    Pixel 2 stamps: [[2,4],[2,2]] shifted right (overlaps add up)
+    Pixel 3 stamps: [[3,6],[3,3]] shifted down
+    Pixel 4 stamps: [[4,8],[4,4]] shifted diagonally
+    ```
+    With `stride=2`, the stamps spread further apart → output grows to 4×4.
+
+**The `forward` Method: The Data's Journey**
+This is where the magic happens. Let's trace the data `x` and the time embedding `t`.
+
+1.  **`h = self.bnorm1(self.relu(self.conv1(x)))`**
+    The input `x` goes through a standard sequence of Convolution -> GroupNorm -> Activation.
+
+2.  **`time_emb = self.relu(self.time_mlp(t))`**
+    In parallel, our processed time embedding `t` (from the `SimpleUNet`'s `time_mlp`) is passed through this block's own linear layer to prepare it for injection.
+
+3.  **`time_emb = time_emb[(..., ) + (None, ) * 2]`**
+    This is the broadcasting trick we've seen before. The `time_emb` has a shape of `(Batch, Channels)`. We reshape it to `(Batch, Channels, 1, 1)`.
+
+4.  **`h = h + time_emb`**
+    **This is the key step.** We add the time embedding directly to the image feature map `h`. PyTorch broadcasts the `(B, C, 1, 1)` time embedding, adding it to every single pixel in the `(B, C, H, W)` feature map. This is how we **condition** the network's behavior on the timestep. The network learns that this added "bias" from the time embedding is a signal about the noise level, and it adjusts how it processes the image features accordingly.
+
+5.  **`h = self.bnorm2(self.relu(self.conv2(h)))`**
+    The combined feature map goes through a second standard convolution block.
+
+6.  **`return self.transform(h)`**
+    Finally, the result is passed through the downsampling or upsampling layer, and the block's work is done.
+
+We have now completely dissected the U-Net. We understand its overall architecture, how it handles time, and the mechanics of its core `Block`. We are now ready to move on to the final and most exciting part: using our trained model to generate new images.
+
+## **Chapter 8: Generation & Sampling: Math & Intuition**
+
+The training is complete. Our U-Net, $\epsilon_\theta$, is now a master at one specific task: looking at a noisy image $x_t$ and predicting the noise $\epsilon$ within it. Now, we will use this master skill in a powerful, iterative loop to reverse the diffusion process and create a new image from pure chaos.
+
+**The Goal:** To start with a tensor of pure Gaussian noise, $x_T$, and apply our model $T$ times to progressively denoise it, stepping from $x_T \rightarrow x_{T-1} \rightarrow \cdots \rightarrow x_1 \rightarrow x_0$.
+
+**The Trick:** We don't have a "real" noisy image $x_T$ from the forward process—we're generating from scratch! But here's the cheat: after $T=1000$ steps of adding noise, $\bar{\alpha}_T \approx 0$, so $x_T \approx$ pure Gaussian noise. Any random noise tensor is statistically indistinguishable from a "real" $x_T$. So we just sample `torch.randn()` and pretend it came from destroying some image.
+
+#### The Core Logic: From Noise Prediction to Image Denoising
+
+How can we use a *noise predictor* to actually *denoise an image*?
+
+Recall the forward process "shortcut" formula:
+$$ \mathbf{x}_t = \sqrt{\bar{\alpha}_t} \mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t} \boldsymbol{\epsilon} $$
+If we have $x_t$ and our model gives us a good prediction for $\epsilon$ (let's call it $\epsilon_\theta$), we can simply rearrange this equation to solve for $x_0$:
+$$ \text{predicted } \mathbf{x}_0 = \frac{1}{\sqrt{\bar{\alpha}_t}}(\mathbf{x}_t - \sqrt{1 - \bar{\alpha}_t}\boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)) $$
+This is a powerful insight: **predicting the noise is equivalent to predicting the original clean image.**
+
+But why not just jump straight to $x_0$? Because our prediction is imperfect—especially early on when $x_t$ is mostly noise. Instead of trusting one noisy estimate, we take small steps: use the predicted $x_0$ to compute what $x_{t-1}$ should look like, then repeat. Each step refines the estimate.
+
+#### The DDPM Sampling Formula
+
+The authors of the DDPM paper derived a formula that does exactly this. It takes the current noisy image $x_t$ and the predicted noise $\epsilon_\theta$ to calculate the distribution of the previous image, $x_{t-1}$. The formula to sample from that distribution is:
+
