@@ -599,3 +599,58 @@ graph TD
     OutputConv --> Output["Predicted Noise (B, 3, 32, 32)"]
 ```
 
+1.  **Encoder (Downsampling Path):** The left side of the "U". The network progressively reduces the image's spatial dimensions (`H`, `W`) while increasing the number of channels. This forces the model to learn compressed, high-level features and understand the *context* of the image. This is the `self.downs` module list in our code.
+    ```
+    (B, 64, 32, 32) → (B, 128, 16, 16) → (B, 256, 8, 8) → (B, 512, 4, 4) → (B, 1024, 2, 2)
+    ```
+
+2.  **Decoder (Upsampling Path):** The right side of the "U". The network progressively increases the spatial dimensions back to the original size. This reconstructs the output image from the compressed features. This is the `self.ups` module list.
+    ```
+    (B, 1024, 2, 2) → (B, 512, 4, 4) → (B, 256, 8, 8) → (B, 128, 16, 16) → (B, 64, 32, 32)
+    ```
+
+3.  **Skip Connections (The Magic):** This is the crucial feature. Instead of only relying on the highly compressed information from the bottleneck, the decoder gets a direct "cheat sheet" from the encoder at each corresponding level. It concatenates the high-resolution feature maps from the downsampling path with its current low-resolution maps. This allows the model to use both high-level context and fine-grained, low-level details to make a very precise pixel-level prediction.
+
+#### High-Level Walkthrough of the Code
+
+Let's trace a tensor `x` through the `forward` method.
+
+1.  **`t = self.time_mlp(timestep)`:** First, we process the integer timestep `t` into a meaningful vector embedding. We'll examine how this works in the next chapter.
+
+2.  **`x = self.conv0(x)`:** A standard initial convolution that maps the input image (with 3 channels) into the model's `base_channels` (64). This is `nn.Conv2d(3, 64, 3, padding=1)`—a 3×3 kernel that slides over the image, combining RGB values into 64 learned feature channels. Shape: `(B, 3, 32, 32)` → `(B, 64, 32, 32)`. Spatial size stays the same because `padding=1` compensates for the kernel size.
+
+    **Quick example:** A 3×3 kernel on a 4×4 input (1 channel → 1 channel):
+    ```
+    Input:          Kernel:         Output (no padding, 2×2):
+    1  2  3  4      1 0 1           30  38
+    5  6  7  8      0 1 0           62  70
+    9  10 11 12     1 0 1
+    13 14 15 16
+
+    Top-left: 1*1 + 3*1 + 6*1 + 9*1 + 11*1 = 30
+    ```
+    The kernel slides across, computing a weighted sum at each position. With `padding=1`, we pad the input with zeros so the output stays 4×4.
+
+3.  **The Downsampling Loop:**
+    ```python
+    residual_inputs = []
+    for down in self.downs:
+        x = down(x, t)
+        residual_inputs.append(x)
+    ```
+    Here, `x` passes through each `Block` in the `downs` list. Each block performs convolutions and downsamples the image (e.g., from 32x32 to 16x16). We save the output of each block in the `residual_inputs` list. This list is our "cheat sheet" for the decoder.
+
+4.  **The Upsampling Loop:**
+    ```python
+    for up in self.ups:
+        residual_x = residual_inputs.pop()
+        x = torch.cat((x, residual_x), dim=1)
+        x = up(x, t)
+    ```
+    This is where the magic happens.
+    *   `residual_x = residual_inputs.pop()`: We get the saved feature map from the corresponding level in the encoder path.
+    *   `x = torch.cat(...)`: **This is the skip connection.** We concatenate the feature maps along the channel dimension (`dim=1`). For example, if `x` is `(B, 512, 4, 4)` and `residual_x` is `(B, 512, 4, 4)`, the result is `(B, 1024, 4, 4)`.
+
+    **Why concatenate instead of add?** Addition forces the network to merge information destructively—you lose the ability to distinguish what came from where. Concatenation preserves both signals separately and lets the next convolution layer learn *how* to combine them. The network can learn to weight encoder vs decoder features differently per channel.
+    *   `x = up(x, t)`: This combined tensor is then processed by the upsampling `Block`, which performs convolutions and increases the spatial resolution (e.g., from 16x16 to 32x32).
+
