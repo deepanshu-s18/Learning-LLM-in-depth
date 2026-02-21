@@ -111,3 +111,40 @@ Let's apply the Bradley-Terry model to our concrete example:
 
 2.  **Apply the sigmoid function:**
     $P(\text{winner} \succ \text{loser}) = \sigma(1.7) = \frac{1}{1 + e^{-1.7}} = \frac{1}{1 + 0.1827} \approx 0.845$
+
+Our model predicts an **84.5% probability** that Response B would be preferred over Response A. This makes intuitive sense: a larger positive difference in quality scores should correspond to a higher probability of preference.
+
+The sigmoid function's behavior for different score differences is crucial to grasp:
+
+| Score Difference ($\Delta r$) | Sigmoid($\Delta r$) | Interpretation |
+| :--- | :--- | :--- |
+| Large Positive (e.g., 5.0) | ~0.993 | Almost certain winner is preferred. |
+| **Our Example (1.7)** | **~0.845** | **Confident winner is preferred.** |
+| Zero (e.g., 0.0) | 0.500 | Completely uncertain; a 50/50 toss-up. |
+| Negative (e.g., -1.7) | ~0.155 | Confident *loser* is preferred (our scores are "wrong" for the human judgment). |
+| Large Negative (e.g., -5.0)| ~0.007 | Almost certain loser is preferred. |
+
+We have successfully taken a simple human preference and converted it into a quantifiable probability. This `P(winner > loser)` is the first critical piece of our DPO puzzle. In the next chapter, we'll see how to turn this probability into a "loss" that our LLM can learn from.
+
+## **Chapter 3: From Probability to a Loss Function: Negative Log-Likelihood**
+
+In the last chapter, we successfully used the Bradley-Terry model to convert a pair of abstract "quality scores" into a probability. We called this `P(winner ≻ loser)`, and for our example, we calculated its value to be `0.845`.
+
+This is a great first step, but a probability is just a prediction. To train a machine learning model, we need an **error signal**—a single number that tells the model how wrong its prediction was. This error signal is called a **loss function**, and the model's entire goal during training is to minimize this value.
+
+The standard, time-tested method for converting a probability into a loss is to calculate the **Negative Log-Likelihood (NLL)**.
+
+The formula is beautifully simple:
+
+$$ \mathcal{L} = -\log \left( P(\text{winner} \succ \text{loser}) \right) $$
+
+Now, we can combine this with the Bradley-Terry formula from Chapter 2 to create the complete loss function for our abstract scores:
+
+$$ \mathcal{L} = -\log(\sigma(r_{\text{winner}} - r_{\text{loser}})) $$
+
+#### A Quick Detour: Why Use the Negative Logarithm?
+
+Why not use a simpler function, like `Loss = 1 - P`? The negative logarithm has a specific, powerful property that makes it perfect for training models.
+
+Let's compare the two:
+
