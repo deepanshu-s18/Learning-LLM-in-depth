@@ -337,3 +337,41 @@ The code converts these logits to log-probabilities and then uses `gather` to pi
 We have successfully built a function that implements our naive reward. It takes a prompt and response and returns a single score. On the surface, this seems perfect. We can now get a score for both the winning and losing responses, plug them into our preference loss function from Chapter 3, and start training.
 
 However, as we will see in the next chapter, this seemingly logical reward function has subtle but catastrophic flaws.
+
+## **Chapter 6: The Failure of Naivety: Why Log-Probs Aren't Enough**
+
+In the last two chapters, we built what seems like a perfect system. We defined a reward for an LLM response as its sequence log-probability, and we implemented a PyTorch function to calculate it. The system is simple, intuitive, and appears to create the right incentives. It feels like we should be done.
+
+So, why isn't this the final solution?
+
+The naive reward function, $r(x, y) = \log \pi_{\theta}(y|x)$, fails because it creates unintended and deeply undesirable incentives. It has two subtle but critical flaws that can severely degrade the model's quality, teaching it to be lazy and unhelpful. We will now explore both with concrete examples.
+
+#### Failure Mode 1: The Length Bias -> A Tendency for Short Answers
+
+The sequence log-probability is a **sum** of individual token log-probabilities. Since probabilities are always between 0 and 1, their logarithms are always negative (e.g., `log(0.9) ≈ -0.105`). This leads to a simple, inescapable mathematical fact:
+
+> **Every token you add to a sequence makes its total score lower (more negative).**
+
+This creates a severe bias against longer, more detailed, and often more helpful responses, even when the human labeler explicitly preferred them.
+
+Let's consider a preference pair where the human chose the more verbose answer.
+
+*   **Prompt `x`:** "What is DPO?"
+*   **Winner `y_w` (Helpful, 7 tokens):** "An algorithm for aligning language models"
+*   **Loser `y_l` (Terse, 2 tokens):** "An algorithm"
+
+Let's assume our policy model, $\pi_{\theta}$, is reasonably good. It's confident in all these tokens, assigning each a high probability of 0.9, which has a log-probability of approximately **-0.105**.
+
+**Calculating the Naive Score for the Terse Loser (`y_l`)**
+This response has 2 tokens.
+*   Total Score $r_l = 2 \times (-0.105) = \mathbf{-0.21}$
+
+**Calculating the Naive Score for the Helpful Winner (`y_w`)**
+This response has 7 tokens.
+*   Total Score $r_w = 7 \times (-0.105) = \mathbf{-0.735}$
+
+Now, let's compare the scores our naive reward function has produced:
+*   Score of (Preferred) Winner `r_w`: **-0.735**
+*   Score of (Rejected) Loser `r_l`: **-0.21**
+
+The result is a disaster. Since `-0.21 > -0.735`, our reward function has assigned a **higher score to the worse answer**. If we train our model using this objective, it will learn a clear lesson: **shorter is better**. The model's outputs will become terse and unhelpful, directly contradicting the human feedback, simply to satisfy this flawed mathematical incentive.
