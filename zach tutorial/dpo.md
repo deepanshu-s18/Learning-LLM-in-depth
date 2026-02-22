@@ -186,3 +186,41 @@ This engine is abstract and general-purpose. Now, we must connect it to our spec
 
 #### The Intuition: Confidence as a Proxy for Quality
 
+Let's start with the most direct and intuitive idea. A "good" response should be one that our trainable language model is highly confident in generating. Conversely, a "bad" response should be one the model finds unlikely. If we can encourage the model to become more confident in the responses humans prefer, we should be able to steer its behavior in the right direction.
+
+How do we measure an LLM's confidence in a given sequence of text? We use its **sequence log-probability**.
+
+This leads us to our first, naive hypothesis for the reward function.
+
+**Naive Reward Hypothesis:** The quality score `r` of a response `y` given a prompt `x` is the total log-probability of generating that response, as calculated by our trainable policy model, $\pi_{\theta}$.
+
+#### The Formal Math
+
+This hypothesis translates into the following mathematical formula for our score, `r`:
+
+$$ r(x, y) = \log \pi_{\theta}(y|x) $$
+
+Let's break this down. The probability of an entire sequence `y` (which consists of tokens $y_1, y_2, ..., y_N$) is the product of the probabilities of generating each token one by one:
+
+$$ \pi_{\theta}(y|x) = \pi_{\theta}(y_1|x) \times \pi_{\theta}(y_2|x, y_1) \times \dots \times \pi_{\theta}(y_N|x, y_{<N}) $$
+
+Multiplying many small probabilities together is numerically unstable in a computer. To fix this, we work in log space, where products become simple sums:
+
+$$ r(x, y) = \log \pi_{\theta}(y|x) = \sum_{t=1}^{N} \log \pi_{\theta}(y_t | x, y_{<t}) $$
+
+*   **What this means:** The total score of a response is the **sum** of the log-probabilities of each of its individual tokens.
+
+Let's make this concrete with a simple example:
+
+*   **Prompt `x`:** "The capital of France"
+*   **Response `y`:** " is Paris"
+
+The model calculates the score in two steps:
+1.  Given the context "The capital of France", it calculates the log-probability of the next token being " is". Let's say it's `-0.2`.
+2.  Given the context "The capital of France is", it calculates the log-probability of the next token being "Paris". Let's say it's `-0.3`.
+
+The final score for the response " is Paris" would be the sum:
+$r(x, y) = (-0.2) + (-0.3) = \mathbf{-0.5}$
+
+This approach seems perfectly logical. To make the model prefer a winning response `y_w` over a losing one `y_l`, we just need to train it to produce a higher log-probability (a less negative score) for `y_w`.
+
