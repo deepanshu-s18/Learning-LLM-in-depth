@@ -224,3 +224,41 @@ $r(x, y) = (-0.2) + (-0.3) = \mathbf{-0.5}$
 
 This approach seems perfectly logical. To make the model prefer a winning response `y_w` over a losing one `y_l`, we just need to train it to produce a higher log-probability (a less negative score) for `y_w`.
 
+We now have our first concrete proposal for an LLM reward function. But to use it, we need to know how to actually compute this value in code. In the next chapter, we will do exactly that, writing a PyTorch function from scratch to calculate the sequence log-probability for any given response.
+
+## **Chapter 5: Code Deep Dive: Calculating Sequence Log-Probabilities**
+
+In the last chapter, we defined our first reward function for an LLM: the sequence log-probability. Now, we need to translate that mathematical concept into working PyTorch code. Our goal is to create a single, robust function that can calculate this score for any given prompt and response.
+
+Before we build our function, let's have a quick refresher on how a language model generates a single token. This will help us understand where the probabilities we need come from.
+
+#### A Quick Refresher: From Logits to Probabilities
+
+When you give a language model a sequence of input tokens, it performs a single "forward pass" and produces a final tensor called **logits**.
+
+1.  **Input:** A sequence of token IDs, e.g., `input_ids = [1, 2, 3, 4]` ("The capital of France").
+2.  **Model Forward Pass:** The model processes these IDs and outputs `logits`.
+3.  **Logits:** This is a large tensor of raw, unnormalized scores. Its shape is typically `(batch_size, sequence_length, vocab_size)`. For our input, the shape would be `(1, 4, 50257)` if we use a GPT-2 sized vocabulary. The key part is the last logit vector, `logits[0, -1, :]`, which contains a score for every single word in the vocabulary for being the *next* token.
+4.  **Probabilities:** To turn these raw scores into probabilities, we apply the **softmax function**.
+
+```python
+import torch
+import torch.nn.functional as F
+
+# A mock logit vector for the last token. High score for "is".
+# Shape: (vocab_size)
+mock_logits = torch.tensor([0.1, 3.0, 0.5, 0.2]) # Vocab: {"The":0, "is":1, "Paris":2, "Lyon":3}
+
+# Convert logits to probabilities
+probabilities = F.softmax(mock_logits, dim=-1)
+print(f"Probabilities: {probabilities.numpy()}")
+# Output: Probabilities: [0.045... 0.819... 0.061... 0.049...]
+```
+During generation, the model would *sample* from this probability distribution to pick the next token. But for DPO, we don't want to sample. We already have the response. We just need to find the probability the model assigned to the specific tokens that were *actually in that response*.
+
+#### The `get_sequence_log_probs` Function
+
+Now we're ready to build our core function. It will take a batch of prompts and responses and return the total log-probability for each response.
+
+```python
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
