@@ -488,3 +488,41 @@ Now it's time for the payoff. Let's revisit the two catastrophic failure modes f
 Let's re-run the numbers from our "What is DPO?" example, now using the DPO reward. We'll set `β = 0.1`.
 
 *   $y_w$ (Helpful Winner, 7 tokens)
+*   $y_l$ (Terse Loser, 2 tokens)
+
+To calculate the DPO reward, we now need log-probabilities from both models. Let's assume the following values:
+
+| Response | `log π_θ` (Policy) | `log π_ref` (Reference) | DPO Reward `β(log π_θ - log π_ref)` |
+| :--- | :--- | :--- | :--- |
+| **$y_w$ (Winner)** | -0.735 | -0.750 | `0.1 * (-0.735 - (-0.750)) = ` **+0.0015** |
+| **$y_l$ (Loser)** | -0.210 | -0.200 | `0.1 * (-0.210 - (-0.200)) = ` **-0.0010** |
+
+Look at the result! The magic is in the `DPO Reward` column.
+
+Even though the policy's raw log-prob for the winner (`-0.735`) is much lower than for the loser (`-0.210`), its DPO reward is now **positive**, while the loser's is **negative**. The reward now correctly reflects the human preference. The model is properly incentivized to produce the longer, more helpful answer because that's where its *relative improvement* over the reference model is greatest.
+
+#### 2. Solving the "Bland Prior" Bias
+
+*   **The Problem Recap:** The naive reward gave a massive return on investment for slightly improving the probability of already-common words (like "the"), encouraging repetitive filler instead of useful facts.
+*   **The DPO Fix:** Common, generic words are already highly probable for the SFT-trained reference model. Therefore, the difference in log-probabilities (`log π_θ - log π_ref`) will be tiny, and the resulting reward will be close to zero. The DPO reward function offers almost no incentive for polishing what's already easy and well-known.
+
+Let's re-run our "gradient budget" accounting with the DPO reward, again with `β = 0.1`.
+
+| Optimization Target | `log π_θ` (Policy, after small update) | `log π_ref` (Reference, the fixed starting point) | DPO Reward Gain `β * Δ(log_ratio)` |
+| :--- | :--- | :--- | :--- |
+| **Generic word "the"** | -0.0408 (Improved) | -0.0513 (Already High) | `0.1 * ((-0.0408) - (-0.0513)) = ` **+0.00105** |
+| **Specific word "Paris"**| -0.105 (Improved)| -0.916 (Was Low) | `0.1 * ((-0.105) - (-0.916)) = ` **+0.0811** |
+
+The tables have turned completely. The DPO reward for learning the specific, helpful fact ("Paris") is now **~77 times greater** than the reward for polishing the generic word ("the").
+
+The optimizer's gradient budget will now flow exactly where we want it: towards learning the novel, specific, and useful information that distinguishes a preferred response from a rejected one. The incentive to generate bland, repetitive filler has vanished.
+
+With two elegant strokes, the reference-aware DPO reward has fixed the fundamental flaws of our naive approach. We now have a reward signal that is robust, stable, and correctly aligned with our goal. In the next chapter, we will take this final piece and assemble the complete DPO loss function, connecting all the dots from our journey so far.
+
+## **Chapter 9: Assembling the Final DPO Formula**
+
+Our journey is nearing its end. We have built all the necessary components, piece by piece, and now it's time to assemble them into the final, complete Direct Preference Optimization loss function.
+
+This chapter is the grand synthesis. We will see how the preference modeling engine from Part I and the robust LLM reward function from Part III fit together perfectly.
+
+Let's quickly recap our building blocks:
