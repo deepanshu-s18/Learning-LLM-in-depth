@@ -563,3 +563,41 @@ In the final chapter, we will translate this complete formula into a working PyT
 We have completed the full theoretical journey. We started with the simple idea of human preference, built a mathematical engine to model it, stress-tested a naive reward function, and finally arrived at the robust, reference-aware solution that defines DPO.
 
 Now, it's time to translate that final, robust theory into a single, working PyTorch function. This is the moment where all the abstract concepts become concrete code.
+
+By the end of this chapter, you will see how our `get_sequence_log_probs` function from Chapter 5 becomes the engine for the final DPO training step, and you will walk through a full numerical example, tracing a single preference pair from input tokens to a final, trainable loss value.
+
+#### The DPO Training Step
+
+The core of the implementation is a function that takes a batch of preference data, our two models, and an optimizer, and performs one full DPO update. It cleanly orchestrates all the logic we've developed.
+
+```python
+import torch
+import torch.nn.functional as F
+# We assume our function from Chapter 5 is available
+# from chapter5 import get_sequence_log_probs 
+
+def dpo_training_step(policy_model, ref_model, optimizer, batch, beta=0.1):
+    """
+    Performs a single DPO optimization step on a batch of preference data.
+    'batch' is a dictionary with keys: 'prompt', 'chosen', 'rejected'.
+    """
+    policy_model.train()
+    optimizer.zero_grad()
+
+    # --- 1. Get log-probs for chosen and rejected responses from the POLICY model ---
+    # Gradients will flow through these calculations.
+    pi_chosen_logps = get_sequence_log_probs(policy_model, batch['prompt'], batch['chosen'])
+    pi_rejected_logps = get_sequence_log_probs(policy_model, batch['prompt'], batch['rejected'])
+
+    # --- 2. Get log-probs from the FROZEN REFERENCE model ---
+    # We use torch.no_grad() for efficiency as we don't need gradients for the ref model.
+    with torch.no_grad():
+        ref_chosen_logps = get_sequence_log_probs(ref_model, batch['prompt'], batch['chosen'])
+        ref_rejected_logps = get_sequence_log_probs(ref_model, batch['prompt'], batch['rejected'])
+
+    # --- 3. Calculate the DPO rewards (the inner part of the DPO loss) ---
+    # r_chosen = beta * (log_pi_chosen - log_ref_chosen)
+    # r_rejected = beta * (log_pi_rejected - log_ref_rejected)
+    chosen_rewards = beta * (pi_chosen_logps - ref_chosen_logps)
+    rejected_rewards = beta * (pi_rejected_logps - ref_rejected_logps)
+    
