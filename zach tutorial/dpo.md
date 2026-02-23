@@ -450,3 +450,41 @@ The reference model acts as a perfect anchor, a memory of our model's "best self
 #### Why Use the SFT Model as the Reference? (Not the Base Model)
 
 This is a critical question. Why copy the SFT model? Why not use the original, pre-trained base model as our reference?
+
+| Reference Choice | Feasibility | Why It's a Good/Bad Idea |
+| :--- | :--- | :--- |
+| **Base Model** | **Poor Choice** | The base model is a "parrot" that doesn't understand instructions. Comparing our helpful policy model's response to the base model's nonsensical text completion is like comparing an apple to an engine part. The baseline is too different and provides a meaningless, noisy signal. |
+| **SFT Model** | **Excellent Choice** | The SFT model is our starting point for preference tuning. It already knows how to be a helpful assistant. Using it as a reference ensures we are measuring *how much the policy has improved at following preferences*, relative to an already-strong starting point. It acts as a **guardrail**, preventing the policy from "forgetting" its SFT training in pursuit of a high preference score. |
+
+Using the SFT model as the reference keeps the DPO training process grounded. The goal isn't just to satisfy preferences, but to do so while remaining a helpful, instruction-following assistant.
+
+#### The New DPO Reward Function
+
+With our reference model in place, we can define our new, robust reward function. The score of a response is no longer its raw log-probability. Instead, it is the **scaled difference between the policy and reference model log-probabilities.**
+
+$$ r(x, y) = \beta \left( \log \pi_{\theta}(y|x) - \log \pi_{\text{ref}}(y|x) \right) $$
+
+Let's break this down:
+*   $\log \pi_{\theta}(y|x)$: The log-probability of the response from our trainable **policy model**.
+*   $\log \pi_{\text{ref}}(y|x)$: The log-probability of the *same response* from our frozen **reference model**.
+*   The difference $(\dots - \dots)$: This measures the **relative improvement** or *divergence* of the policy from its SFT starting point. A response only gets a high score if the policy finds it significantly *more* probable than the reference model did.
+*   $\beta$ (beta): This is a hyperparameter (typically a small number like 0.1) that acts like a knob. It controls how much we penalize the policy for straying too far from the reference model. It's a safety brake that keeps the policy from becoming too different from its well-behaved SFT version.
+
+We have now introduced our hero and its powerful new tool. In the next chapter, we will see this robust reward function in action, and watch as it single-handedly defeats the two villains—Length Bias and Bland Prior Bias—that doomed our naive approach.
+
+## **Chapter 8: How the DPO Reward Solves Everything**
+
+In the last chapter, we introduced our hero: the reference model (`π_ref`). We then crafted a new, robust reward function based on the *relative improvement* of our trainable policy model (`π_θ`) over this frozen baseline.
+
+The DPO Reward: $$ r(x, y) = \beta \left( \log \pi_{\theta}(y|x) - \log \pi_{\text{ref}}(y|x) \right) $$
+
+Now it's time for the payoff. Let's revisit the two catastrophic failure modes from Chapter 6—the Length Bias and the Bland Prior Bias—and watch as this elegant formula single-handedly solves them both.
+
+#### 1. Solving the Length Bias
+
+*   **The Problem Recap:** The naive reward (raw log-probability) punishes longer responses because summing more negative numbers always results in a lower (worse) score. This incorrectly favored a terse, 2-token response over a helpful, 7-token one.
+*   **The DPO Fix:** The reference model, being a copy of the SFT model, is also a language model. It has the *exact same architectural bias*. The log-probabilities for a long answer will be low for *both* the policy and the reference model. When we take their difference, the bias largely cancels out.
+
+Let's re-run the numbers from our "What is DPO?" example, now using the DPO reward. We'll set `β = 0.1`.
+
+*   $y_w$ (Helpful Winner, 7 tokens)
