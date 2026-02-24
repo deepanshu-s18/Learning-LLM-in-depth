@@ -77,3 +77,29 @@ Here is exactly how we will do it, presented as the code changes we are going to
          att = F.softmax(att, dim=-1)
          y = att @ v
          y = y.transpose(1, 2).contiguous().view(B, T, C)
+-        return self.resid_drop(self.c_proj(y))
++        return self.resid_drop(self.c_proj(y)), present_kv
+
+```
+Don't worry if this `diff` seems cryptic. By the end of this tutorial, you will understand the purpose of every single added line. Let's begin by dissecting the problem.
+
+## **Chapter 1: The Anatomy of Wasteful Generation**
+
+To understand the problem, we must first appreciate it. The inefficiency isn't in a bug or a mistake; it's inherent to the simple, stateless design of our `generate` loop and `CausalSelfAttention` module. Let's look at the exact code responsible.
+
+#### The Code in Question
+
+First, the generation loop. Its job is to repeatedly call the model with a progressively longer sequence.
+
+```python
+# Simplified from gpt2_min.py's generate() method
+def generate(self, idx, max_new_tokens):
+    # The core generation loop
+    for _ in range(max_new_tokens):
+        # 1. At each step, we pass the ENTIRE sequence `idx` to the model
+        logits, _ = self(idx)
+        
+        # 2. We only use the prediction from the very last time step
+        last_token_logits = logits[:, -1, :]
+        
+        # 3. Sample a new token
