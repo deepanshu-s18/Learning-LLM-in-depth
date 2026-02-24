@@ -130,3 +130,29 @@ def forward(self, x):
 
 The inefficiency arises from the interaction between these two pieces of code. The loop repeatedly calls the attention module with a sequence that is almost identical to the previous one, forcing the attention module to redo almost all of its work.
 
+#### A Concrete Example: The Waste in Action
+
+Let's trace the generation process step-by-step. Imagine our prompt is the two-word sequence "A cat".
+*   **Prompt Token IDs:** `idx = [10, 3]`
+
+**Step 1: Generating the 3rd token**
+
+The `generate` loop begins its first iteration.
+
+1.  **Input:** The model is called with the current sequence: `idx` of shape `(1, 2)`, containing `[10, 3]`.
+2.  **Inside `CausalSelfAttention.forward`:**
+    *   The input `x` (the embeddings for "A cat") has a shape of `(B=1, T=2, C=768)`.
+    *   The line `q, k, v = qkv.split(...)` executes.
+    *   The variable `k` is now a tensor of shape `(1, 2, 768)`. Let's visualize its contents:
+        `k = [ k_vector("A"), k_vector("cat") ]`
+    *   Similarly, `v` contains:
+        `v = [ v_vector("A"), v_vector("cat") ]`
+3.  **Output:** After the attention calculation, the model predicts the most likely next token is "sat" (ID `8`).
+4.  **Append:** The `generate` loop appends this new token. Our sequence is now `idx = [10, 3, 8]`.
+
+**Step 2: Generating the 4th token**
+
+The `generate` loop begins its second iteration.
+
+1.  **Input:** The model is called with the **new, longer** sequence: `idx` of shape `(1, 3)`, containing `[10, 3, 8]`.
+2.  **Inside `CausalSelfAttention.forward`:**
