@@ -288,3 +288,30 @@ class CausalSelfAttention(nn.Module):
 -       B, T, C = x.size()
 +       B, T, C = x.size() # Note: T is the new sequence length, usually 1 during generation
         qkv = self.c_attn(x)
+        q, k, v = qkv.split(self.n_embd, dim=2)
+        head_dim = C // self.n_head
+-       q = q.view(B, T, self.n_head, head_dim).transpose(1, 2)
+-       k = k.view(B, T, self.n_head, head_dim).transpose(1, 2)
+-       v = v.view(B, T, self.n_head, head_dim).transpose(1, 2)
++       q = q.view(B, T, self.n_head, head_dim).transpose(1, 2) # (B, nh, T, hs)
++       k = k.view(B, T, self.n_head, head_dim).transpose(1, 2) # (B, nh, T, hs)
++       v = v.view(B, T, self.n_head, head_dim).transpose(1, 2) # (B, nh, T, hs)
++
++       # NEW: Concatenate with past key-values if they exist
++       if past_kv is not None:
++           past_k, past_v = past_kv
++           k = torch.cat((past_k, k), dim=-2) # Concatenate along the sequence length dimension
++           v = torch.cat((past_v, v), dim=-2)
++
++       # NEW: The present key-value pair is the full sequence
++       present_kv = (k, v)
++
++       # Get the total sequence length
++       T_total = k.size(-2)
++
++       # Perform the attention calculation
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(head_dim))
+-       att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
++       # MODIFIED: Masking logic needs to account for the total sequence length
++       att = att.masked_fill(self.bias[:, :, T_total-T:T_total, :T_total] == 0, float("-inf"))
+        att = F.softmax(att, dim=-1)
