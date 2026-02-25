@@ -209,3 +209,30 @@ Let's revisit our "A cat sat..." example with this new workflow.
 
 **Step 1: Generating the 3rd token ("sat")**
 
+The `generate` loop begins its next iteration.
+
+1.  **Minimal Input:** The model is called with only the *last* token from our sequence: "sat" (ID `8`). The input `idx` has a shape `(1, 1)`.
+2.  **Minimal Computation:** Inside `CausalSelfAttention.forward`:
+    *   The input `x` (embeddings for just "sat") has `T=1`.
+    *   We compute the new Q, K, and V:
+        *   `Q_new = [ q("sat") ]`
+        *   `K_new = [ k("sat") ]`
+        *   `V_new = [ v("sat") ]`
+3.  **Retrieve & Concatenate:** We combine the past and present.
+    *   `K_full = concatenate([ k("A"), k("cat") ], [ k("sat") ])` -> `[ k("A"), k("cat"), k("sat") ]`
+    *   `V_full = concatenate([ v("A"), v("cat") ], [ v("sat") ])` -> `[ v("A"), v("cat"), v("sat") ]`
+4.  **Attend:** The attention calculation `(Q_new @ K_full.T) @ V_full` proceeds. We are querying with the new information ("sat") against the full context ("A cat sat").
+5.  **Update Cache:** The model predicts the next token is "on". The new cache `present_kv` now stores the K and V tensors for all three tokens, ready for the next step.
+
+Notice the critical difference: we arrived at the *exact same* `K_full` and `V_full` tensors as in the wasteful method, but we only performed the expensive projection for a single token.
+
+#### Visualizing the Efficiency with a New Grid
+
+Let's recreate our work grid. "✅" still means new work, but "💾" now means we are efficiently loading a vector from our cache.
+
+| Token     | Step 1 (Gen "sat") <br/> `T=1` | Step 2 (Gen "on") <br/> `T=1` | Step 3 (Gen "the") <br/> `T=1` | Step 4 (Gen "mat") <br/> `T=1` |
+| :-------- | :--------------------------: | :-------------------------: | :--------------------------: | :--------------------------: |
+| K/V("A")  |              💾              |              💾             |              💾              |              💾              |
+| K/V("cat")|              💾              |              💾             |              💾              |              💾              |
+| K/V("sat")|              ✅              |              💾             |              💾              |              💾              |
+| K/V("on") |                              |             ✅              |              💾              |              💾              |
