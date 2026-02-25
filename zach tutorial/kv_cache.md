@@ -315,3 +315,29 @@ class CausalSelfAttention(nn.Module):
 +       # MODIFIED: Masking logic needs to account for the total sequence length
 +       att = att.masked_fill(self.bias[:, :, T_total-T:T_total, :T_total] == 0, float("-inf"))
         att = F.softmax(att, dim=-1)
+        y = att @ v
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+-       return self.resid_drop(self.c_proj(y))
++
++       # Return the output AND the updated key-value cache
++       return self.resid_drop(self.c_proj(y)), present_kv
+
+```
+
+### A Running Example: Tracing the Tensors
+
+Let's trace the data flow for a single generation step to make this concrete.
+
+**Our Scenario:**
+*   **Prompt:** "A cat"
+*   **Action:** We are generating the **3rd** token.
+*   **Tiny Model Config:** `B=1`, `C=4`, `n_head=2`. This means `head_dim=2`.
+
+---
+
+#### Step 1: Entering the `forward` method
+
+The `generate` loop calls our new `forward` method. It has already processed "A cat", so it provides two arguments:
+
+1.  `x`: The embeddings for the **single new token** we are processing. Let's call it "sat".
+    *   Shape of `x`: `(B=1, T=1, C=4)`.
