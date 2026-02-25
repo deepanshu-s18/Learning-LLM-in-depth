@@ -236,3 +236,29 @@ Let's recreate our work grid. "✅" still means new work, but "💾" now means w
 | K/V("cat")|              💾              |              💾             |              💾              |              💾              |
 | K/V("sat")|              ✅              |              💾             |              💾              |              💾              |
 | K/V("on") |                              |             ✅              |              💾              |              💾              |
+| K/V("the")|                              |                             |              ✅              |              💾              |
+
+The contrast is stunning. The amount of new work (`✅`) at each step is now **constant**. We do one unit of work to generate one new token. We have successfully transformed the computation from O(T²) to O(T).
+
+#### A Blueprint for Our Code
+
+This new data flow can be visualized as a stateful loop. The cache is passed into the attention block and an updated version is passed out, ready for the next iteration.
+
+```mermaid
+graph TD
+    subgraph Generation Step N
+        A[Input: Token N-1] --> B{Attention Block};
+        C[Cache for Tokens 0..N-2] --> B;
+        B --> D[Output Logits for Token N];
+        B --> E[Updated Cache for Tokens 0..N-1];
+    end
+    
+    subgraph Generation Step N+1
+        F[Input: Token N] --> G{Attention Block};
+        E --"Passed to next step"--> G;
+        G --> H[Output Logits for Token N+1];
+        G --> I[Updated Cache for Tokens 0..N];
+    end
+
+```
+
