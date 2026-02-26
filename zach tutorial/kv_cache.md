@@ -394,3 +394,30 @@ We have successfully constructed the full Key and Value tensors with minimal new
 #### Step 4: The Attention Calculation & Masking
 
 Now the query from our new token "sat" needs to attend to the full history "A cat sat".
+
+```python
+    present_kv = (k, v) # The cache for the NEXT step
+    T_total = k.size(-2) # T_total is now 3
+
+    att = (q @ k.transpose(-2, -1))
+    # Shape of q: (1, 2, 1, 2)
+    # Shape of k.transpose: (1, 2, 2, 3)
+    # Shape of att: (1, 2, 1, 3)
+```
+
+The attention score matrix `att` has shape `(1, 2, 1, 3)`. It represents the scores from our single query ("sat") against the three keys ("A", "cat", "sat").
+
+Now for the subtle masking change:
+```python
+    # T_total = 3, T = 1
+    # Slice becomes: self.bias[:, :, 2:3, :3]
+    att = att.masked_fill(self.bias[:, :, T_total-T:T_total, :T_total] == 0, float("-inf'))
+```
+This correctly selects the **3rd row** of our 3x3 causal mask `[[1,0,0], [1,1,0], [1,1,1]]`. The relevant part is `[1,1,1]`, which allows our query for "sat" to attend to all three tokens.
+
+---
+
+#### Step 5: The Output and New Return Value
+
+The rest of the calculation proceeds as normal. The final output `y` will have shape `(B=1, T=1, C=4)`.
+
