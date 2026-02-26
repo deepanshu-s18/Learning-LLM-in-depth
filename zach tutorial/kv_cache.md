@@ -368,3 +368,29 @@ The model performs the projection, but only on our tiny `T=1` input.
 *   Shape of new `v`: `(1, 2, 1, 2)`
 
 ---
+
+#### Step 3: The Caching Logic - `torch.cat` in Action
+
+This is the core of the cache. The `if past_kv is not None:` block executes.
+
+```python
+    if past_kv is not None:
+        past_k, past_v = past_kv
+        # past_k shape: (1, 2, 2, 2)
+        # new k shape:  (1, 2, 1, 2)
+        k = torch.cat((past_k, k), dim=-2)
+        v = torch.cat((past_v, v), dim=-2)
+```
+
+The `torch.cat` operation appends the new `k` to the `past_k` along the sequence dimension (`dim=-2`).
+
+*   Shape of `k` after `cat`: `(1, 2, 3, 2)`. It now contains `[ k("A"), k("cat"), k("sat") ]`.
+*   Shape of `v` after `cat`: `(1, 2, 3, 2)`. It now contains `[ v("A"), v("cat"), v("sat") ]`.
+
+We have successfully constructed the full Key and Value tensors with minimal new computation.
+
+---
+
+#### Step 4: The Attention Calculation & Masking
+
+Now the query from our new token "sat" needs to attend to the full history "A cat sat".
