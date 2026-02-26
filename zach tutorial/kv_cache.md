@@ -447,3 +447,30 @@ The function returns two things:
 
 We have successfully modified the core engine and understand how the KV cache works within the attention mechanism.
 
+## **Chapter 4: A Final Trace of the Efficient Workflow**
+
+Let's trace a single generation step to see how the cache flows through the attention layer in action.
+
+**Scenario:** We are generating the 4th token. Our current sequence is "A cat sat".
+
+This table summarizes the state of our key variables as data flows through the attention layer during this single step.
+
+| Location in Code          | Variable Name       | Tensor Shape / Data Structure        | Description                                                          |
+| :------------------------ | :------------------ | :----------------------------------- | :------------------------------------------------------------------- |
+| **Attention (input)**     | `x`                 | `(1, 1, C)`                          | The embedding for the single new token "sat".                        |
+|                           | `past_kv`           | `(k, v)` tuple                       | The cache from the previous step, holding K/V for "A cat".           |
+| **Attention (compute)**   | `new_k`, `new_v`    | `(1, n_h, 1, h_d)`                   | New K/V vectors are computed for "sat".                              |
+|                           | `full_k`, `full_v`  | `(1, n_h, 3, h_d)`                   | The new K/V are concatenated with the cached K/V for "A cat".        |
+| **Attention (output)**    | `y`                 | `(1, 1, C)`                          | The attention output for "sat" with full context.                    |
+|                           | `present_kv`        | `(k, v)` tuple                       | The updated cache for "A cat sat", ready for the next step.          |
+
+And with that pattern, the cache grows with each new token generated.
+
+#### Conclusion: From O(T²) to O(T)
+
+We have successfully transformed our Transformer. By identifying the massive redundant computation in the original stateless design, we implemented a simple and elegant caching mechanism.
+
+*   **Before:** Generating the 1000th token required re-computing K and V for the 999 previous tokens.
+*   **After:** Generating the 1000th token requires computing K and V for **only one** new token and retrieving the rest from memory.
+
+You have now implemented one of the most critical optimizations for large language models, transforming an algorithm with quadratic complexity into one with linear complexity. The KV cache has clicked.
