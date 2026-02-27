@@ -52,3 +52,30 @@ Its only job is to perform this equation: `output = input @ W.T + b`
 #### A Minimal, Reproducible Example
 
 Let's see this in action. We'll create a tiny linear layer that takes a vector of size 3 and outputs a vector of size 2. To make this perfectly clear, we will set the weights and bias manually.
+
+**1. Setup the layer and input:**
+
+```python
+import torch
+import torch.nn as nn
+
+# A layer that maps from 3 features to 2 features
+layer = nn.Linear(in_features=3, out_features=2, bias=True)
+
+# A single input vector (with a batch dimension of 1)
+input_tensor = torch.tensor([[1., 2., 3.]])
+
+# Manually set the weights and bias for a clear example
+with torch.no_grad():
+    layer.weight = nn.Parameter(torch.tensor([[0.1, 0.2, 0.3],
+                                              [0.4, 0.5, 0.6]]))
+    layer.bias = nn.Parameter(torch.tensor([0.7, 0.8]))
+
+```
+
+**2. Inspect the Exact Components:**
+
+Now we have known values for everything.
+
+*   **Input `x`:** `[1., 2., 3.]`
+*   **Weight `W`:** `[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]`
