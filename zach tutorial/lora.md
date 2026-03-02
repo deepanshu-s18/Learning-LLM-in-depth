@@ -134,3 +134,30 @@ This seems trivial. So where is the problem? The problem is scale.
     *   Weight parameters: `3 * 2 = 6`
     *   Bias parameters: `2`
     *   **Total:** `8` trainable parameters.
+
+*   **A Single LLM Layer (e.g., `4096x4096`):**
+    *   Weight parameters: `4096 * 4096 = 16,777,216`
+    *   Bias parameters: `4096`
+    *   **Total:** `16,781,312` trainable parameters.
+
+A single layer in an LLM can have over **16 million** parameters. A full model has dozens of these layers. Trying to update all of them during fine-tuning is what melts GPUs. This is the bottleneck LoRA is designed to break.
+
+## **Chapter 3: The LoRA Method - Math and Astonishing Savings**
+
+This is the core idea. Instead of changing the massive weight matrix $W$, we freeze it and learn a tiny "adjustment" matrix, $\Delta W$.
+
+The new, effective weight matrix, $W_{eff}$, is a simple sum:
+
+$W_{eff} = W_{frozen} + \Delta W$
+
+Training the full $\Delta W$ would be too expensive. The breakthrough of LoRA is to force this change to be **low-rank**, meaning we can construct it from two much smaller matrices, $A$ and $B$. We also add a scaling factor, $\frac{\alpha}{r}$, where $r$ is the rank and $\alpha$ is a hyperparameter.
+
+The full LoRA update is defined by this formula:
+
+$\Delta W = \frac{\alpha}{r} B A$
+
+#### A Step-by-Step Numerical Example
+
+Let's build a tiny LoRA update from scratch.
+
+**Given:**
