@@ -161,3 +161,31 @@ $\Delta W = \frac{\alpha}{r} B A$
 Let's build a tiny LoRA update from scratch.
 
 **Given:**
+*   A frozen weight matrix $W_{frozen}$ of shape `[out=4, in=3]`.
+*   A LoRA rank $r=2$.
+*   A scaling factor $\alpha=4$.
+
+$W_{frozen} = \begin{pmatrix} 1 & 1 & 1 \\ 2 & 2 & 2 \\ 3 & 3 & 3 \\ 4 & 4 & 4 \end{pmatrix}$
+
+Now, we define our trainable LoRA matrices, $A$ and $B$:
+*   $A$ must have shape `[r, in]`, so `[2, 3]`.
+*   $B$ must have shape `[out, r]`, so `[4, 2]`.
+
+Let's assume after training they have these values:
+
+$A = \begin{pmatrix} 1 & 0 & 2 \\ 0 & 3 & 0 \end{pmatrix} \quad B = \begin{pmatrix} 1 & 0 \\ 0 & 0 \\ 0 & 2 \\ 1 & 1 \end{pmatrix}$
+
+**Step 1: Calculate the core update, $B A$**
+
+This is a standard matrix multiplication. The result will have the same shape as $W_{frozen}$.
+
+$B A = \begin{pmatrix} 1 & 0 \\ 0 & 0 \\ 0 & 2 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} 1 & 0 & 2 \\ 0 & 3 & 0 \end{pmatrix} = \begin{pmatrix} (1*1+0*0) & (1*0+0*3) & (1*2+0*0) \\ (0*1+0*0) & (0*0+0*3) & (0*2+0*0) \\ (0*1+2*0) & (0*0+2*3) & (0*2+2*0) \\ (1*1+1*0) & (1*0+1*3) & (1*2+1*0) \end{pmatrix} = \begin{pmatrix} 1 & 0 & 2 \\ 0 & 0 & 0 \\ 0 & 6 & 0 \\ 1 & 3 & 2 \end{pmatrix}$
+
+**Step 2: Apply the scaling factor, $\frac{\alpha}{r}$**
+
+Our scaling factor is $\frac{4}{2} = 2$. We multiply our result by this scalar.
+
+$\Delta W = 2 \times \begin{pmatrix} 1 & 0 & 2 \\ 0 & 0 & 0 \\ 0 & 6 & 0 \\ 1 & 3 & 2 \end{pmatrix} = \begin{pmatrix} 2 & 0 & 4 \\ 0 & 0 & 0 \\ 0 & 12 & 0 \\ 2 & 6 & 4 \end{pmatrix}$
+
+This $\Delta W$ matrix is the total change that our LoRA parameters will apply to the frozen weights.
+
