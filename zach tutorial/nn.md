@@ -251,3 +251,45 @@ We need both ∂f/∂x1 and ∂f/∂x2. Let's use the chain rule:
 - ∂f/∂v = 3v² (derivative of v³)
 
 Therefore: **∂f/∂x1 = 3v² × 2u × 2 = 12uv²**
+
+**For ∂f/∂x2:**
+∂f/∂x2 = (∂f/∂v) × (∂v/∂x2)
+
+- ∂v/∂x2 = ∂u/∂x1 × ∂u/∂x2 + ∂(3x2²)/∂x2 = 2u × 1 + 6x2 = 2u + 6x2
+- ∂f/∂v = 3v² (same as before)
+
+Therefore: **∂f/∂x2 = 3v² × (2u + 6x2)**
+
+#### **Chain Rule Makes Complex Functions Tractable**
+
+**What we're minimizing:** f(x1,x2) = ((2x1 + x2)² + 3x2²)³ where (x1,x2) are the **independent variables** (we control them) and f(x1,x2) is the **dependent variable** (result of our choices).
+
+Now here's the magic: we can use both gradients in our multi-variable gradient descent algorithm!
+
+```
+FOR 100 iterations:
+  ∂f/∂x1 = 12uv² 
+  ∂f/∂x2 = 3v²(2u + 6x2)
+  x1 = x1 - η × ∂f/∂x1
+  x2 = x2 - η × ∂f/∂x2
+RETURN (x1,x2)
+```
+
+The chain rule lets us find gradients for arbitrarily complex nested functions with multiple variables. Combined with gradient descent, we can minimize even the most intimidating functions!
+
+**The power of this approach:** No matter how complex your function gets - deeply nested, multiple variables - you can always:
+1. Use the chain rule to find all partial derivatives
+2. Apply gradient descent to minimize it
+
+This systematic approach works for ANY differentiable function. Now you can handle functions with millions of variables and thousands of nested operations!
+
+## Part 4: Forward Pass - Building Our First Neural Network
+
+#### **What's a Neural Network?**
+
+A neural network is just a collection of simple functions (called "neurons") organized in "layers." Each neuron takes some inputs, does a simple calculation, and passes the result to the next layer.
+
+**Neurons:** Each neuron is just a simple function - like f(x,y) = (x + 2y)² or g(a,b) = 3ab. Nothing magical!
+
+**Layers:** We organize neurons into layers because of **dependencies**. Think of it like cooking:
+- **Layer 1 neurons:** Use the raw ingredients (inputs x1, x2)
