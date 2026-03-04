@@ -293,3 +293,46 @@ A neural network is just a collection of simple functions (called "neurons") org
 
 **Layers:** We organize neurons into layers because of **dependencies**. Think of it like cooking:
 - **Layer 1 neurons:** Use the raw ingredients (inputs x1, x2)
+- **Layer 2 neurons:** Use the results from Layer 1 (can't compute until Layer 1 is done)
+- **Layer 3 neurons:** Use the results from Layer 2, and so on...
+
+This creates a **forward flow**: Raw data → Layer 1 → Layer 2 → Final answer
+
+**Why layers matter:** Each layer must finish its calculations before the next layer can start. It's like an assembly line where each station depends on the previous one.
+
+Let's build a neural network with interesting nested functions. It will have:
+- **2 inputs** (x1, x2)
+- **2 neurons in Layer 1** 
+- **1 neuron in Layer 2**
+- **5 weights to learn** (w1, w2, w3, w4, w5)
+
+This is called the **Forward Pass** - the network reads inputs and produces a prediction. No learning yet, just calculating an output.
+
+#### **The Network Architecture**
+
+Each neuron is just a nested function:
+
+```
+Layer 1:
+  neuron 1: h1 = (x1 + w1*x2)²
+  neuron 2: h2 = w2*x1*x2
+
+Layer 2:
+  neuron 1: y_pred = w3*h1 + w4*h2 + w5
+```
+
+**Our Task:** Train the network to learn this target function: f(x1,x2) = 2x1² + 3x2
+
+Here are our 3 training examples:
+
+| Input (x1,x2) | y_true | What We Want |
+|-------------|---------------|--------------|
+| (3, 2) | 2(3²) + 3(2) = 18 + 6 = **24** | Network should output 24 |
+| (1, 4) | 2(1²) + 3(4) = 2 + 12 = **14** | Network should output 14 |
+| (2, 1) | 2(2²) + 3(1) = 8 + 3 = **11** | Network should output 11 |
+
+Let's see how our network does on all examples:
+
+**Initial weights:** w1=1, w2=2, w3=1, w4=1, w5=0
+
+#### **Network Results**
