@@ -420,3 +420,46 @@ Layer 1:
 Layer 2:
   Input:
     variable: h1, h2, w3, w4, w5
+  Output:
+    neuron 1: y_pred = w3×h1 + w4×h2 + w5 = 1×25 + 1×12 + 0 = 37
+
+Error:
+  Input:
+    constant: y_true = 24
+    variable: y_pred = 37
+  Output:
+    Error = (y_true - y_pred)² = (24 - 37)² = 169
+```
+
+Think of this like a blame investigation. Our prediction was wrong (Error = 169), and we need to figure out which weights are most responsible for this mistake.
+
+#### **Starting Simple: w5**
+
+Let's start with the simplest case. How much is w5 to blame?
+
+w5's path to the error is direct: Error ← y_pred ← w5
+
+To find how changing w5 affects the error, we use the chain rule:
+∂Error/∂w5 = ∂Error/∂y_pred × ∂y_pred/∂w5
+
+Let's calculate each piece:
+- ∂Error/∂y_pred = ∂/∂y_pred [(y_true - y_pred)²] = 2×(y_pred - y_true) = 2×(37 - 24) = **26**
+- ∂y_pred/∂w5 = ∂/∂w5 [w3×h1 + w4×h2 + w5] = **1**
+
+Therefore: **∂Error/∂w5 = 26 × 1 = 26**
+
+#### **Adding Complexity: w1**
+
+Now let's try a trickier weight. How much is w1 to blame?
+
+w1's path to the error is longer: Error ← y_pred ← h1 ← w1
+
+Using the chain rule:
+∂Error/∂w1 = ∂Error/∂y_pred × ∂y_pred/∂h1 × ∂h1/∂w1
+
+We already know ∂Error/∂y_pred = 26. Let's find the other pieces:
+- ∂y_pred/∂h1 = ∂/∂h1 [w3×h1 + w4×h2 + w5] = w3 = **1**
+- ∂h1/∂w1 = ∂/∂w1 [(x1 + w1×x2)²] = 2×(x1 + w1×x2)×x2 = 2×(3 + 1×2)×2 = **20**
+
+Therefore: **∂Error/∂w1 = 26 × 1 × 20 = 520**
+
