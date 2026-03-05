@@ -336,3 +336,45 @@ Let's see how our network does on all examples:
 **Initial weights:** w1=1, w2=2, w3=1, w4=1, w5=0
 
 #### **Network Results**
+
+| Input (x1,x2) | y_true | Network Predicts | Difference |
+|-------------|----------|------------------|------------|
+| (3, 2) | 24 | 37 | -13 |
+| (1, 4) | 14 | 33 | -19 |
+| (2, 1) | 11 | 13 | -2 |
+
+#### **Let's quantify the error!**
+
+**How do we measure success?** We need a single number that tells us how wrong our network is across all examples.
+
+**Why not just add up the differences?** (-13) + (-19) + (-2) = -34. But what if we had differences of +17 and -17? They'd cancel out to 0, making the network look perfect when it's actually terrible!
+
+**Solution: Square the differences!** (difference)² is always positive, and bigger mistakes get penalized more:
+- Small mistake: (-2)² = 4  
+- Big mistake: (-19)² = 361
+
+**Total Squared Error:**
+Error = (-13)² + (-19)² + (-2)² = 169 + 361 + 4 = **534**
+
+Our network is way off! It should learn f(x1,x2) = 2x1² + 3x2, but it's computing something completely different. The large total error shows this network desperately needs training.
+
+We have successfully completed the Forward Pass. Our network made a prediction and we measured how wrong it was.
+
+Next, we'll use the tools from Parts 1-3 to fix this terrible prediction. We'll trace the error backward through all the complex nested operations (chain rule) to find how much each weight contributed (partial derivatives), then adjust all weights to reduce the error (gradient descent).
+
+## Part 5: Backpropagation - How Neural Networks Learn
+
+#### **Key Insight: Neural Networks ARE Nested Functions**
+
+Remember from Part 3 how we handled complex nested functions? Neural networks are exactly the same thing!
+
+**Side-by-side comparison:**
+
+| Complex Functions (Part 3) | Neural Networks (Part 4) |
+|----------------------------|---------------------------|
+| Nested operations: f(g(h(x))) | Layered operations: Layer2(Layer1(inputs)) |
+| Variables: x1, x2 | Variables: ??? |
+| Goal: Minimize f(x1,x2) | Goal: Minimize Error(???) |
+| Tool: Chain rule + Gradient descent | Tool: Chain rule + Gradient descent |
+
+**Question: What are the variables in our neural network?**
