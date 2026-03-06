@@ -547,3 +547,45 @@ Using our updated weights: w1=0.948, w2=1.9844, w3=0.935, w4=0.9688, w5=-0.0026
 
 | | Before Learning | After Learning | Target |
 |---|---|---|---|
+| **Prediction** | 37 | 33.95 | 24 |
+| **How far off** | 13 units too high | 10 units too high | Perfect = 0 |
+
+**Excellent!** The network moved in the right direction! It went from 37 to 33.95, getting closer to the target of 24. The error decreased from 13 units to about 10 units - that's progress!
+
+**This is intelligence emerging from mathematics.** The network used the chain rule to trace responsibility backward, then adjusted itself in the right direction. With more iterations, it will get even closer to the target!
+
+## Part 6: Multiple Training Examples - Learning from All Data
+
+**The limitation:** So far we've only trained on one example: (x1=3, x2=2, y_true=24). But real networks learn from thousands or millions of examples!
+
+**The question:** What if we have multiple training pairs? How do we handle them all?
+
+Remember our target function: f(x1,x2) = 2x1² + 3x2. We had three training examples:
+
+| Input (x1,x2) | y_true | What We Want |
+|-------------|---------------|--------------|
+| (3, 2) | 2(3²) + 3(2) = 18 + 6 = **24** | Network should output 24 |
+| (1, 4) | 2(1²) + 3(4) = 2 + 12 = **14** | Network should output 14 |
+| (2, 1) | 2(2²) + 3(1) = 8 + 3 = **11** | Network should output 11 |
+
+We only used the first example. But to truly learn the pattern, our network needs to see all the data!
+
+#### **Two Approaches: Online vs Batch Learning**
+
+**Approach 1: Online Learning (what we did)**
+```
+For each example (x1, x2, y_true) in training_data:
+    1. Forward pass: compute y_pred
+    2. Calculate gradients: ∂Error/∂w for all weights  
+    3. Update weights: w = w - η × ∂Error/∂w
+    4. Move to next example
+```
+
+**Approach 2: Batch Learning**
+```
+1. For each example (x1, x2, y_true) in training_data:
+     - Forward pass: compute y_pred
+     - Calculate gradients: ∂Error/∂w for all weights
+     - Store gradients (don't update yet!)
+   
+2. Sum all gradients: ∂Total_Error/∂w = Σ ∂Error/∂w
