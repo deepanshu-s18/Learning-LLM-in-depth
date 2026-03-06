@@ -589,3 +589,46 @@ For each example (x1, x2, y_true) in training_data:
      - Store gradients (don't update yet!)
    
 2. Sum all gradients: ∂Total_Error/∂w = Σ ∂Error/∂w
+3. Update weights once: w = w - η × ∂Total_Error/∂w
+```
+
+#### **Let's Try Batch Learning**
+
+Using our **original** weights: w1=1, w2=2, w3=1, w4=1, w5=0
+
+#### **Step 1: Forward Pass for All Examples**
+
+| Example | (x1,x2) | y_true | h1 | h2 | y_pred | Error |
+|---------|---------|--------|----|----|--------|-------|
+| 1 | (3, 2) | 24 | (3+1×2)² = 25 | 2×3×2 = 12 | 1×25 + 1×12 + 0 = **37** | (24-37)² = **169** |
+| 2 | (1, 4) | 14 | (1+1×4)² = 25 | 2×1×4 = 8 | 1×25 + 1×8 + 0 = **33** | (14-33)² = **361** |
+| 3 | (2, 1) | 11 | (2+1×1)² = 9 | 2×2×1 = 4 | 1×9 + 1×4 + 0 = **13** | (11-13)² = **4** |
+
+#### **Step 2: Calculate Gradients for All Examples**
+
+| Example | ∂Error/∂w1 | ∂Error/∂w2 | ∂Error/∂w3 | ∂Error/∂w4 | ∂Error/∂w5 |
+|---------|------------|------------|------------|------------|------------|
+| 1 | 26 × 1 × 20 = **520** | 26 × 1 × 6 = **156** | 26 × 25 = **650** | 26 × 12 = **312** | 26 × 1 = **26** |
+| 2 | 38 × 1 × 10 = **380** | 38 × 1 × 4 = **152** | 38 × 25 = **950** | 38 × 8 = **304** | 38 × 1 = **38** |
+| 3 | 4 × 1 × 6 = **24** | 4 × 1 × 4 = **16** | 4 × 9 = **36** | 4 × 4 = **16** | 4 × 1 = **4** |
+| **TOTAL** | **924** | **324** | **1636** | **632** | **68** |
+
+Where:
+- Example 1: ∂Error/∂y_pred = 2×(37-24) = 26
+- Example 2: ∂Error/∂y_pred = 2×(33-14) = 38  
+- Example 3: ∂Error/∂y_pred = 2×(13-11) = 4
+
+#### **Step 3: Update Weights Using Total Gradients**
+
+Using learning rate η = 0.0001:
+
+| Weight | Old Value | Total Gradient | Update | New Value |
+|--------|-----------|---------------|--------|-----------|
+| w1 | 1 | 924 | 1 - 0.0001×924 | **0.9076** |
+| w2 | 2 | 324 | 2 - 0.0001×324 | **1.9676** |
+| w3 | 1 | 1636 | 1 - 0.0001×1636 | **0.8364** |
+| w4 | 1 | 632 | 1 - 0.0001×632 | **0.9368** |
+| w5 | 0 | 68 | 0 - 0.0001×68 | **-0.0068** |
+
+**Key insight:** Batch learning uses information from ALL examples to update weights, giving a more stable learning direction than online learning with individual examples!
+
