@@ -632,3 +632,45 @@ Using learning rate η = 0.0001:
 
 **Key insight:** Batch learning uses information from ALL examples to update weights, giving a more stable learning direction than online learning with individual examples!
 
+#### **Verification: Before vs After Batch Learning**
+
+Let's test our new weights on all examples to see the improvement:
+
+**Using NEW weights:** w1=0.9076, w2=1.9676, w3=0.8364, w4=0.9368, w5=-0.0068
+
+| Example | Target | BEFORE (old weights) | AFTER (batch weights) | Improvement |
+|---------|--------|---------------------|----------------------|-------------|
+| (3, 2) | 24 | 37 (13 too high) | **30.98** (7 too high) | ✓ Better by 6 units |
+| (1, 4) | 14 | 33 (19 too high) | **27.69** (14 too high) | ✓ Better by 5 units |
+| (2, 1) | 11 | 13 (2 too high) | **10.66** (0.3 too low) | ✓ Much closer! |
+
+**Calculations for new predictions:**
+- Example 1: h1=(3+0.9076×2)²=24.52, h2=1.9676×3×2=11.81 → y_pred=0.8364×24.52+0.9368×11.81-0.0068=**30.98**
+- Example 2: h1=(1+0.9076×4)²=24.03, h2=1.9676×1×4=7.87 → y_pred=0.8364×24.03+0.9368×7.87-0.0068=**27.69**  
+- Example 3: h1=(2+0.9076×1)²=8.46, h2=1.9676×2×1=3.94 → y_pred=0.8364×8.46+0.9368×3.94-0.0068=**10.66**
+
+**Amazing!** All three predictions improved significantly after just one batch update!
+
+#### **The Power of Multiple Examples**
+
+**Why this matters:** 
+- **Single example:** Network might memorize that one case
+- **Multiple examples:** Network must find patterns that work for ALL cases  
+- **Result:** Better generalization to new, unseen data
+
+#### **The Tradeoff: Batch Size in Practice**
+
+**Pure online learning (batch size = 1):**
+- ✓ Fast updates, less memory
+- ✗ Noisy gradients, unstable learning
+
+**Full batch learning (batch size = all data):**
+- ✓ Stable, accurate gradients
+- ✗ Slow, needs massive memory for large datasets
+  - Must compute forward and backward pass for ALL examples simultaneously (each needs activation storage)
+  - For 1M training examples: need 1M times more memory than mini-batch!
+
+**Mini-batch learning (batch size = 32-512):** *The sweet spot!*
+- ✓ Stable enough gradients
+- ✓ Reasonable memory usage
+- ✓ Can parallelize computation on GPUs
