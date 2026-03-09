@@ -73,3 +73,28 @@ FOR each iteration:
 Watch the difference in convergence.
 
 | Iteration | Current `p` | Gradient `g` | Velocity `v = 0.5*v + g` | New `p` |
+| :-------- | :---------- | :----------- | :--------------------------- | :------ |
+| 0         | 10.000      | 20.000       | `0.5*0 + 20.0 = 20.000`      | 8.000   |
+| 1         | 8.000       | 16.000       | `0.5*20.0 + 16.0 = 26.000`   | 5.400   |
+| 2         | 5.400       | 10.800       | `0.5*26.0 + 10.8 = 23.800`   | 3.020   |
+| 3         | 3.020       | 6.040        | `0.5*23.8 + 6.04 = 17.940`   | 1.226   |
+| 4         | 1.226       | 2.452        | `0.5*17.94 + 2.45 = 11.422`  | 0.084   |
+
+**Analysis of the Success:**
+*   **Compare `p` at Iteration 4:** Standard Gradient Descent is still far away at `3.277`. Momentum is already at `0.084`, practically at the minimum. This is a clear, unambiguous win.
+*   **Look at the `velocity`:** In step 1, the gradient was `16`, but the velocity was `26`. In step 2, the gradient was `10.8`, but the velocity was `23.8`. Because the gradients were all in the same direction, they accumulated, creating a much larger and more effective update step. This is **controlled acceleration**.
+*   **No Instability:** Unlike the previous bad example, this version converges beautifully without any wild overshooting.
+
+---
+#### **Revisiting the Ravine: The Two Jobs of Momentum**
+
+Now we can confidently state that Momentum is a superior algorithm. In a complex landscape like our 2D ravine (`f(p) = p[0]**2 + 50 * p[1]**2`), it performs two critical jobs simultaneously:
+
+1.  **Accelerates:** In the shallow `p[0]` direction, the gradients are small but consistent. Momentum builds up velocity here—just like in our successful 1D example—speeding up progress along the valley floor.
+2.  **Damps:** In the steep `p[1]` direction, the gradients are huge but constantly flip signs (`+150`, `-120`, etc.). When Momentum averages these opposing forces, they cancel each other out, which powerfully suppresses the wasteful zig-zagging.
+
+Momentum intelligently uses its memory of past gradients to navigate more efficiently.
+
+**Problem Solved:** We have a mechanism to fix Gradient Descent's inefficient, memoryless updates.
+
+**But a new problem emerges:** While smarter, this approach still applies the same learning rate to every parameter. Isn't there a way to give each parameter its *own* adaptive learning rate from the start?
