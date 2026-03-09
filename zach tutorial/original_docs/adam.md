@@ -173,3 +173,28 @@ Here is the full blueprint of the algorithm we are about to deconstruct.
 
 1.  **Initialize:**
     *   `m = 0` (First moment vector)
+    *   `v = 0` (Second moment vector)
+    *   `t = 0` (Timestep)
+
+2.  **Loop for each training iteration:**
+    *   `t = t + 1`
+    *   `g_t =` Calculate gradient at current step
+    *   **Update Biased Moment Estimates:**
+        *   $m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t$
+        *   $v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2$
+    *   **Compute Bias-Corrected Estimates:**
+        *   $\hat{m}_t = \frac{m_t}{1 - \beta_1^t}$
+        *   $\hat{v}_t = \frac{v_t}{1 - \beta_2^t}$
+    *   **Update Parameters:**
+        *   $\theta_t = \theta_{t-1} - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$
+
+Now, let's break down what each part of this machine does.
+
+#### **The Core Component: Exponentially Weighted Moving Average (EWMA)**
+
+Adam is built entirely on the concept of the EWMA, which is a "forgetful" average. Its formula is:
+
+`average_t = β * average_{t-1} + (1 - β) * new_value_t`
+
+*   `β` (beta) is the "decay rate" or memory factor, a number between 0 and 1. It controls how much of the old average to keep.
+*   A high `β` (like 0.99) means the average has a long memory and changes slowly.
