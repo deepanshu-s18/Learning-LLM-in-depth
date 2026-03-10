@@ -47,3 +47,28 @@ This might look intimidating, but we will build it from the ground up until ever
 
 ---
 
+### **Chapter 1: The Starting Point & Its Fatal Flaw (Word Embeddings)**
+
+A neural network cannot understand the word "cat". It can only understand lists of numbers, called **vectors**. Our first job is to convert every word in our vocabulary into a unique vector.
+
+The mechanism for this is a simple lookup table called an **Embedding Layer**.
+
+**The Mechanism: A Learnable Dictionary**
+Imagine a giant spreadsheet with one row for every word in the vocabulary. Each row contains the vector for that word. The `nn.Embedding` layer is exactly this.
+
+```python
+import torch
+import torch.nn as nn
+
+# A tiny config for our example
+vocab_size = 10    # Our dictionary has 10 words
+n_embd = 4         # Each word will be represented by a vector of size 4
+
+# The layer is our coordinate book
+token_embedding_table = nn.Embedding(vocab_size, n_embd)
+
+# Let's look up the vector for the word with ID=3
+input_id = torch.tensor([3])
+vector = token_embedding_table(input_id)
+
+print(f"The vector for word ID {input_id.item()} is:\n{vector}")
