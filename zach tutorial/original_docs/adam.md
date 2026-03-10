@@ -248,3 +248,28 @@ The update rule is simple: `p_new = p_old - η * g`.
 | 0         | 10.00       | 20.00             | 21.00             | -11.00   |
 | 1         | -11.00      | -22.00            | -23.10            | 12.10    |
 | 2         | 12.10       | 24.20             | 25.41             | -13.31   |
+| 3         | -13.31      | -26.62            | -27.95            | 14.64    |
+| 4         | 14.64       | 29.28             | 30.74             | -16.10   |
+
+**Analysis of the Failure:** Look at the absolute value of `p`. It is growing at every step: `10` → `11` → `12.1` → `13.31`. This is **divergence**. The algorithm is not just inefficient; it is fundamentally broken and exploding towards infinity. It is unusable with this learning rate.
+
+---
+
+#### **Adam: Taming the Explosive Learning Rate**
+
+Now, we give Adam the **exact same unusable learning rate** (`η = 1.05`) and watch how its machinery handles the situation. We will use standard `β₁=0.9` and `β₂=0.999`. Let's trace the first 10 iterations to see the full story.
+
+| t | `p` | `g` | `m` | `v` | `m_hat` | `v_hat` | Update | New `p` |
+|:-:|:----|:----|:----|:----|:----|:----|:--- |:--- |
+| 1 | 10.00 | 20.00 | 2.00 | 0.40 | 20.00 | 400.0 | 1.05 | 8.95 |
+| 2 | 8.95 | 17.90 | 3.59 | 0.72 | 18.89 | 360.4 | 1.04 | 7.91 |
+| 3 | 7.91 | 15.82 | 4.81 | 0.97 | 17.58 | 354.7 | 0.98 | 6.93 |
+| 4 | 6.93 | 13.86 | 5.72 | 1.16 | 16.58 | 341.7 | 0.94 | 5.99 |
+| 5 | 5.99 | 11.98 | 6.35 | 1.31 | 15.51 | 319.8 | 0.91 | 5.08 |
+| 6 | 5.08 | 10.16 | 6.73 | 1.41 | 14.41 | 294.1 | 0.88 | 4.20 |
+| 7 | 4.20 | 8.40 | 6.90 | 1.48 | 13.35 | 266.3 | 0.85 | 3.35 |
+| 8 | 3.35 | 6.70 | 6.88 | 1.51 | 12.35 | 237.9 | 0.82 | 2.53 |
+| 9 | 2.53 | 5.06 | 6.70 | 1.51 | 11.41 | 209.9 | 0.80 | 1.73 |
+| 10| 1.73 | 3.46 | 6.38 | 1.48 | 10.53 | 182.9 | 0.78 | 0.95 |
+
+**Analysis of the Definitive Success:**
