@@ -196,3 +196,28 @@ x = torch.tensor([[[1.0, 0.2],   # Vector for Token 1
 ```
 
 **Step 1: Get Q, K, and V**
+In a real model, Q, K, and V are produced by passing `x` through three separate, learnable `nn.Linear` layers. This allows the model to learn the best "query", "key", and "value" representation for each word. For this tutorial, we will simplify and set them all equal to `x`.
+
+```python
+q, k, v = x, x, x
+```
+
+**Step 2: Score (`QK^T`)**
+This is the heart of the "conversation." To compute the similarity score of every token's query with every other token's key, we use a single matrix multiplication.
+*   `q` has shape `(1, 3, 2)`.
+*   We transpose `k` to `k.transpose(-2, -1)`, giving it a shape of `(1, 2, 3)`.
+*   The multiplication `(1, 3, 2) @ (1, 2, 3)` results in a `(1, 3, 3)` matrix of scores.
+
+```python
+scores = q @ k.transpose(-2, -1)
+print("--- Raw Scores (Attention Matrix) ---")
+print(scores.shape)
+print(scores.data.round(decimals=2))
+```
+**Output:**
+```
+--- Raw Scores (Attention Matrix) ---
+torch.Size([1, 3, 3])
+tensor([[[1.04, 0.90, 0.28],   # Token 1's scores for (T1, T2, T3)
+         [0.90, 0.89, 0.53],   # Token 2's scores for (T1, T2, T3)
+         [0.28, 0.53, 0.82]]])  # Token 3's scores for (T1, T2, T3)
