@@ -72,3 +72,28 @@ input_id = torch.tensor([3])
 vector = token_embedding_table(input_id)
 
 print(f"The vector for word ID {input_id.item()} is:\n{vector}")
+```
+**Output:**
+```
+The vector for word ID 3 is:
+tensor([[-1.5323, -0.2343,  0.5132, -1.0833]], grad_fn=<EmbeddingBackward0>)
+```
+Initially, these vectors are random. During training, the model learns the optimal vector for each word.
+
+**The Fatal Flaw: No Context**
+
+This simple lookup has one massive problem: it is **static**. The vector for a word is the same regardless of the words around it.
+
+Let's return to our "bank" example.
+*   Sentence 1: "I sat on the river **bank**."
+*   Sentence 2: "I withdrew money from the **bank**."
+
+Let's assume the word "bank" has ID `7` in our vocabulary. When we look up its vector, the process is identical for both sentences.
+
+| Context | Word | Lookup Process | Resulting Vector |
+| :--- | :--- | :--- | :--- |
+| "river..." | bank | `embedding_table[7]` | `[0.1, 0.8, -0.4, ...]` |
+| "money..." | bank | `embedding_table[7]` | `[0.1, 0.8, -0.4, ...]` **(Identical!)** |
+
+This is the core limitation. Our initial vectors are context-free. They represent a word's general meaning but are blind to the specific meaning in a sentence.
+
