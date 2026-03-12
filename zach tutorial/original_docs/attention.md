@@ -221,3 +221,28 @@ torch.Size([1, 3, 3])
 tensor([[[1.04, 0.90, 0.28],   # Token 1's scores for (T1, T2, T3)
          [0.90, 0.89, 0.53],   # Token 2's scores for (T1, T2, T3)
          [0.28, 0.53, 0.82]]])  # Token 3's scores for (T1, T2, T3)
+```
+This `(3,3)` matrix holds the raw compatibility scores. For example, the query for Token 1 (row 0) has the highest compatibility with the key for Token 1 (column 0), which is `1.04`.
+
+**Step 3: Scale**
+This is the ` / sqrt(d_k)` part of the formula. We divide the scores by the square root of the key dimension (`d_k` is the last dimension of `k`, which is `2`). This is a small technical detail that helps stabilize the training process, especially in large models.
+```python
+d_k = k.size(-1) # d_k = 2
+scaled_scores = scores / math.sqrt(d_k)
+```
+
+**Step 4: Normalize (`softmax`)**
+We apply the `softmax` function along each row. This converts the raw scores into attention weights that sum to 1, representing the percentages from our intuition.
+```python
+weights = F.softmax(scaled_scores, dim=-1) # Softmax along the rows
+print("\n--- Attention Weights ---")
+print(weights.data.round(decimals=2))
+```
+**Output:**
+```
+--- Attention Weights ---
+tensor([[[0.39, 0.35, 0.26],
+         [0.36, 0.36, 0.28],
+         [0.28, 0.34, 0.38]]])
+```
+Each row now sums to 1. For example, Token 2 (row 1) will construct its new self by listening 36% to Token 1, 36% to itself, and 28% to Token 3.
