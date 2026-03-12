@@ -395,3 +395,28 @@ class CausalSelfAttention(nn.Module):
         # 2. Split into multiple heads for parallel conversations
         q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
         k = k.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
+        v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
+
+        # 3. The core engine: scaled, masked, dot-product attention
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf")) # No looking ahead!
+        att = F.softmax(att, dim=-1)
+        y = att @ v
+
+        # 4. Merge the heads back together and finalize
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        return self.c_proj(y)
+```
+Each part of this code now has a clear purpose:
+*   **Problem:** We take a static input `x` and produce a context-aware output `y`.
+*   **Intuition:** The Q, K, V "conversation" is implemented here.
+*   **Engine:** The core `q @ k.transpose...` logic is the mathematical heart.
+*   **Upgrades:** The `masked_fill` provides causality, and the `view/transpose` operations create the parallel heads.
+
+In the last 20 minutes, we have gone on a journey. We started with a fundamental problem: words are static, but meaning depends on context. We solved it by building a mechanism that allows words to have a "conversation."
+
+We built the intuition for this conversation with Queries, Keys, and Values. We translated that intuition into the efficient mathematics of dot-product attention. We then upgraded it with a causal mask and multi-head parallelism to make it powerful and practical.
+
+This `CausalSelfAttention` module is the single most important component of modern large language models. It is the engine that drives understanding in every "Transformer Block," which are then stacked dozens of times to create models like GPT.
+
+The magic is gone, replaced by elegant, understandable engineering. **Attention has clicked.**
