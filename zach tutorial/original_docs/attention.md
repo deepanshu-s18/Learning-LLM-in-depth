@@ -370,3 +370,28 @@ By having multiple parallel conversations, the model can analyze the input text 
 We now have all the conceptual pieces. In the final chapter, we will assemble them into our complete, production-ready code.
 
 ## **Chapter 5: The Final Blueprint & Conclusion**
+
+We have built all the pieces: the core engine, the causal mask, and the multi-head architecture. Now, let's look at our final blueprint one last time to see how these concepts snap together into a single, elegant piece of code.
+
+The intimidating module from the introduction should now look like a familiar map.
+
+```python
+class CausalSelfAttention(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        assert config.n_embd % config.n_head == 0
+        # The layers for QKV projection, multi-head output, and the mask
+        self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd)
+        self.c_proj = nn.Linear(config.n_embd, config.n_embd)
+        self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size)).view(1, 1, config.block_size, config.block_size))
+        # ...
+
+    def forward(self, x):
+        B, T, C = x.size()
+        
+        # 1. Get Q, K, V from a single efficient projection
+        q, k, v = self.c_attn(x).split(self.n_embd, dim=2)
+        
+        # 2. Split into multiple heads for parallel conversations
+        q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
+        k = k.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
