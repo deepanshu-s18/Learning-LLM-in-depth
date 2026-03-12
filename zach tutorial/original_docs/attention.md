@@ -345,3 +345,28 @@ The upper-right triangle of our attention matrix is now all zeros. "A" can only 
 
 **The Mechanism:**
 Let's use a realistic `C = 768` and `n_head = 12`. The dimension of each head will be `head_dim = C / n_head = 64`.
+
+1.  **Split:** We take our Q, K, and V tensors (each shape `B, T, C`) and reshape them to `(B, n_head, T, head_dim)`. This makes the "heads" an explicit dimension.
+    ```python
+    # B=1, T=3, C=768
+    q = torch.randn(1, 3, 768)
+    
+    # Split C into (n_head, head_dim) -> (12, 64)
+    q_multi_head = q.view(1, 3, 12, 64)
+    
+    # Bring the head dimension forward for parallel computation
+    q_multi_head = q_multi_head.transpose(1, 2) # -> (1, 12, 3, 64)
+    ```
+2.  **Attend in Parallel:** We perform the exact same scaled dot-product attention as before. PyTorch's broadcasting automatically handles the `n_head` dimension, performing 12 attention calculations at once. The output has shape `(B, n_head, T, head_dim)`.
+3.  **Merge:** We reverse the split operation. We concatenate the heads back together into a single `C`-dimensional vector.
+    ```python
+    # Transpose back and reshape
+    merged_output = output_per_head.transpose(1, 2).contiguous().view(1, 3, 768)
+    ```
+4.  **Project:** We pass this merged output through a final linear layer (`c_proj`). This allows the model to learn how to best combine the insights from all the different heads.
+
+By having multiple parallel conversations, the model can analyze the input text from many different perspectives at the same time, making it far more powerful.
+
+We now have all the conceptual pieces. In the final chapter, we will assemble them into our complete, production-ready code.
+
+## **Chapter 5: The Final Blueprint & Conclusion**
