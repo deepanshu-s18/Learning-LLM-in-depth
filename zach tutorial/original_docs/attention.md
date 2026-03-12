@@ -320,3 +320,28 @@ Why `-inf`? Because the `softmax` function involves an exponential: `e^x`. The e
     # tensor([[[ 0.74, -inf, -inf],
     #          [ 0.64,  0.63, -inf],
     #          [ 0.20,  0.37,  0.58]]])
+    ```
+3.  **Re-run Softmax:** Applying softmax to these masked scores gives us causal attention weights.
+    ```python
+    causal_weights = F.softmax(masked_scores, dim=-1)
+    print("\n--- Final Causal Attention Weights ---")
+    print(causal_weights.data.round(decimals=2))
+    # tensor([[[1.00, 0.00, 0.00],
+    #          [0.50, 0.50, 0.00],
+    #          [0.29, 0.35, 0.36]]])
+    ```
+The upper-right triangle of our attention matrix is now all zeros. "A" can only attend to itself. "cat" can only attend to "A" and itself. Information now only flows from the past to the present.
+
+---
+#### **Part 2: Multi-Head Attention ("Many Conversations at Once")**
+
+**The Problem:** Our current attention mechanism is like having one person in a meeting who is responsible for figuring out all the relationships between words (syntax, semantics, etc.). This is a lot of pressure.
+
+**The Solution:** Multi-Head Attention. We split our embedding dimension `C` into several smaller chunks, called "heads". Each head will be its own independent attention mechanism, conducting its own "conversation" in parallel.
+
+*   **Head 1** might learn to focus on verb-object relationships.
+*   **Head 2** might learn to focus on pronoun references.
+*   ...and so on.
+
+**The Mechanism:**
+Let's use a realistic `C = 768` and `n_head = 12`. The dimension of each head will be `head_dim = C / n_head = 64`.
