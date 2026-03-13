@@ -162,3 +162,57 @@ class Diffusion(nn.Module):
         self.model.train()
         x = (x.clamp(-1, 1) + 1) / 2
         return x
+```
+
+**Our Promise:** In the next 40 minutes, this file will be completely demystified. You will understand not just what each line does, but *why* it's there.
+
+**Key Formulas & Concepts You Will Master:**
+
+*   The Forward Process "Shortcut" Formula:
+    $$ \mathbf{x}_t = \sqrt{\bar{\alpha}_t} \mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t} \boldsymbol{\epsilon} $$
+*   The Reverse Process (DDPM Sampling) Formula:
+    $$ \mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}} \left( \mathbf{x}_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t) \right) + \sigma_t \mathbf{z} $$
+*   The Training Objective: A simple Mean Squared Error, `MSE($\epsilon$, $\epsilon_\theta$)`.
+*   The `SimpleUNet` architecture, `SinusoidalPositionEmbeddings`, and how to condition a model on time.
+
+
+## **Chapter 1: Our Blueprint - The `DiffusionConfig`**
+
+Every complex project, from a skyscraper to a neural network, starts with a blueprint. This blueprint defines the key parameters and dimensions that guide the entire construction. In our `diffusion_min.py` file, this role is played by the `DiffusionConfig` class.
+
+Let's look at the code we are about to build.
+
+```python
+# diffusion_min.py (lines 7-17)
+from dataclasses import dataclass
+import torch
+
+@dataclass
+class DiffusionConfig:
+    image_size: int = 32
+    in_channels: int = 3
+    base_channels: int = 64
+    time_emb_dim: int = 256
+    timesteps: int = 1000
+    beta_start: float = 1e-4
+    beta_end: float = 0.02
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"
+```
+
+This is a Python `@dataclass`, which is just a clean and simple way to group variables together. It's a container that holds all the knobs we can turn to change the size, speed, and behavior of our diffusion model.
+
+Before we write a single line of logic, we define these core parameters. Let's go through them one by one.
+
+| Parameter | What it Controls | Intuition | `diffusion_min.py` Value |
+| :--- | :--- | :--- | :--- |
+| `image_size` | The height and width of the images we will generate. | The size of our digital canvas. | `32` (e.g., 32x32 pixels) |
+| `in_channels`| The number of color channels in our input images. | Is it a grayscale image (1) or a color image (3 for RGB)? | `3` |
+| `base_channels`| The initial number of channels in the first layer of our U-Net. | Controls the **width** and overall size of our neural network. A larger number means a more powerful (and slower) model. | `64` |
+| `time_emb_dim`| The dimensionality of the vector that will represent the timestep `t`. | We need to tell our network whether we're at the beginning, middle, or end of the denoising process. This defines the "size" of that time signal. | `256` |
+| `timesteps` | The total number of noising steps in the forward process (`T`). | How many steps of destruction will we apply? This also defines the number of steps our model will take to generate an image. | `1000` |
+| `beta_start` | The noise variance ($\beta$) for the very first timestep (`t=1`). | How much noise do we add at the very beginning? | `0.0001` (a tiny amount) |
+| `beta_end` | The noise variance ($\beta$) for the final timestep (`t=T`). | How much noise do we add at the very end? | `0.02` (a larger amount) |
+| `device` | Standard PyTorch boilerplate for device management. | Do we run on the GPU (`cuda`) or CPU? | `"cuda" if available` |
+
+These parameters are the foundation of our entire model. The `timesteps`, `beta_start`, and `beta_end` are especially important, as they define the "noise schedule" which is the heart of the forward process.
+
