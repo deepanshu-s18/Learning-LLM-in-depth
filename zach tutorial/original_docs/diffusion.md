@@ -271,3 +271,58 @@ $$\mathbf{x}_2 = \sqrt{\alpha_2} \left( \sqrt{\alpha_1} \mathbf{x}_0 + \sqrt{\be
 $$= \sqrt{\alpha_1 \alpha_2} \mathbf{x}_0 + \sqrt{\alpha_2 \beta_1} \boldsymbol{\epsilon}_1 + \sqrt{\beta_2} \boldsymbol{\epsilon}_2$$
 
 Here's the key insight: when you add two independent Gaussian random variables, the result is also Gaussian, with variances that add. So the two noise terms combine:
+
+$$\sqrt{\alpha_2 \beta_1} \boldsymbol{\epsilon}_1 + \sqrt{\beta_2} \boldsymbol{\epsilon}_2 \sim \mathcal{N}(0, \alpha_2 \beta_1 + \beta_2)$$
+
+Since $\beta_1 = 1 - \alpha_1$, we can simplify:
+$$\alpha_2 \beta_1 + \beta_2 = \alpha_2(1 - \alpha_1) + (1 - \alpha_2) = 1 - \alpha_1 \alpha_2$$
+
+So we can write:
+$$\mathbf{x}_2 = \sqrt{\alpha_1 \alpha_2} \mathbf{x}_0 + \sqrt{1 - \alpha_1 \alpha_2} \boldsymbol{\epsilon}$$
+
+The pattern is clear. Continuing this for $t$ steps gives us:
+
+$$ \mathbf{x}_t = \sqrt{\bar{\alpha}_t} \mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t} \boldsymbol{\epsilon} $$
+
+where $\bar{\alpha}_t = \alpha_1 \times \alpha_2 \times \cdots \times \alpha_t$ is the cumulative product.
+
+This is the single most important equation for the forward process. Let's break it down:
+
+*   $x_0$ is our original, clean image.
+*   $\epsilon$ is a single sample of pure Gaussian noise.
+*   $\bar{\alpha}_t$ (alpha-bar) is the cumulative product: $\bar{\alpha}_t = \alpha_1 \times \alpha_2 \times \cdots \times \alpha_t$
+
+The term $\bar{\alpha}_t$ tells us how much of the original image signal remains at timestep $t$. As $t$ increases, $\bar{\alpha}_t$ decays from 1.0 toward 0.0—the original signal fades away and only noise remains.
+
+The formula is just a weighted sum: we take $\sqrt{\bar{\alpha}_t}$ of the original image and add $\sqrt{1 - \bar{\alpha}_t}$ of pure noise. When $t$ is small, we keep most of the image. When $t$ is large, we keep almost none—just noise.
+
+This shortcut is essential for efficient training. We can generate a training sample $(x_t, \epsilon)$ for any random $t$ on the fly, without any iteration. In the next chapter, we'll translate this formula directly into PyTorch code.
+
+## **Chapter 3: The Forward Process: Code Implementation**
+
+We need to implement this formula in PyTorch:
+
+$$ \mathbf{x}_t = \sqrt{\bar{\alpha}_t} \mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t} \boldsymbol{\epsilon} $$
+
+Looking at this formula, we need three things:
+1. $\bar{\alpha}_t$ — the cumulative signal rate, precomputed for all timesteps
+2. $x_0$ — the clean image (input)
+3. $\epsilon$ — fresh Gaussian noise (we'll sample this on the fly)
+
+Since $\bar{\alpha}_t$ depends only on the timestep (not the image), we can precompute it once and reuse it. Our implementation has two pieces:
+1.  The pre-computation of our noise schedules ($\beta_t$, $\alpha_t$, $\bar{\alpha}_t$).
+2.  The "shortcut" function that generates a noisy image $x_t$ for any given $x_0$ and $t$.
+
+#### Part 1: Pre-computing the Schedules in `Diffusion.__init__`
+
+Recall that $\bar{\alpha}_t = \alpha_1 \times \alpha_2 \times \cdots \times \alpha_t$, where $\alpha_t = 1 - \beta_t$. We need to:
+1. Create the $\beta_t$ schedule (linearly spaced values)
+2. Compute $\alpha_t = 1 - \beta_t$
+3. Compute $\bar{\alpha}_t$ as the cumulative product of $\alpha$
+
+These are fixed constants, so we compute them once at initialization:
+
+```python
+# diffusion_min.py (lines 118-124)
+class Diffusion(nn.Module):
+    def __init__(self, config: DiffusionConfig):
