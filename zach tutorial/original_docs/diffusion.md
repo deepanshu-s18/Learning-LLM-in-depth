@@ -490,3 +490,57 @@ Let's look at the two methods that implement our training loop.
 
 #### The `sample_timesteps` Helper Function
 
+First, let's look at the simple helper function.
+```python
+def sample_timesteps(self, n):
+    return torch.randint(low=1, high=self.config.timesteps, size=(n,), device=self.config.device)
+```
+*   Its purpose is to generate a batch of random timesteps. `n` is the batch size (e.g., 8).
+*   `torch.randint` creates a 1D tensor of `n` random integers. The `low` is 1 and the `high` is `self.config.timesteps` (1000).
+*   **Why random?** During training, we want our model to become a robust noise predictor, capable of handling *any* noise level. By sampling `t` randomly for each image in every batch, we ensure the model sees examples from the full spectrum of noise levels (`t=1` to `t=999`) and doesn't overfit to any specific one.
+
+*   **Why not all timesteps per image?** You could, but it's wasteful. Training on all 1000 timesteps for one image means 1000 forward passes before a single gradient update. Random sampling gives you the same coverage over time with 1000x less compute per step. Stochastic gradient descent works.
+
+#### The `forward` Method: The Training Step in Four Lines
+
+The `forward` method is the heart of our training. It takes a batch of clean images `x` (from our dataset) and calculates the single loss value that will be used to update all the model's weights. It follows the logic from Chapter 4 perfectly.
+
+**Line 1: `t = self.sample_timesteps(x.shape[0])`**
+We start by getting a random timestep `t` for each image in our input batch `x`. `x.shape[0]` is the batch size. If our batch contains 8 images, `t` will be a tensor of 8 random integers, e.g., `[150, 27, 843, ...]`.
+
+**Line 2: `x_t, noise = self.noise_images(x, t)`**
+This is where we generate our training data on the fly. We call the `noise_images` function we built in Chapter 3.
+*   **Input:** The clean images `x` and the random timesteps `t`.
+*   **Output:**
+    *   `x_t`: A batch of noisy images, where each image is corrupted according to its corresponding timestep in `t`. This will be the **input to our U-Net**.
+    *   `noise`: The batch of pure Gaussian noise $\epsilon$ that was used to create `x_t`. This is our **ground truth target**.
+
+**Line 3: `predicted_noise = self.model(x_t, t)`**
+This is the prediction step. `self.model` is our `SimpleUNet`.
+*   **Input:** The noisy images `x_t` and the timesteps `t` that tell the model the noise level.
+*   **Output:** `predicted_noise`, which is the U-Net's best guess for the noise that was added. This tensor has the same shape as `x_t`.
+
+**Line 4: `return F.mse_loss(noise, predicted_noise)`**
+This is the final, elegant step. We use PyTorch's built-in Mean Squared Error loss function.
+*   It directly compares the `noise` (the real noise $\epsilon$) with the `predicted_noise` (the model's guess $\epsilon_\theta$).
+*   It computes the squared difference for every single pixel, then averages them all to produce a single scalar loss value.
+
+This single number is then passed to the PyTorch optimizer, which calculates the gradients and updates all the weights inside our `SimpleUNet` to nudge its predictions closer to the real noise.
+
+#### Shape Reference
+
+| Variable | Shape | Description |
+|:---------|:------|:------------|
+| `x` | `(B, 3, 32, 32)` | Clean images from dataset |
+| `t` | `(B,)` | Random timesteps, e.g., `[150, 27, 843, ...]` |
+| `x_t` | `(B, 3, 32, 32)` | Noisy images at timestep `t` |
+| `noise` | `(B, 3, 32, 32)` | Ground truth noise $\epsilon$ |
+| `predicted_noise` | `(B, 3, 32, 32)` | U-Net's prediction $\epsilon_\theta$ |
+| `loss` | scalar | MSE between `noise` and `predicted_noise` |
+
+We have now defined the complete training procedure. The next step is to open up the "black box" of `self.model` and understand how the `SimpleUNet` actually makes its prediction.
+
+## **Chapter 6: The Noise Predictor's Architecture: `SimpleUNet`**
+
+We've established that we need a model, $\epsilon_\theta$, that can look at a noisy image $x_t$ and predict the noise that was added. The architecture chosen for this task is a **U-Net**. This chapter will explain *why* a U-Net is the perfect tool for the job and walk through its high-level structure and data flow.
+
