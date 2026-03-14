@@ -654,3 +654,57 @@ Let's trace a tensor `x` through the `forward` method.
     **Why concatenate instead of add?** Addition forces the network to merge information destructively—you lose the ability to distinguish what came from where. Concatenation preserves both signals separately and lets the next convolution layer learn *how* to combine them. The network can learn to weight encoder vs decoder features differently per channel.
     *   `x = up(x, t)`: This combined tensor is then processed by the upsampling `Block`, which performs convolutions and increases the spatial resolution (e.g., from 16x16 to 32x32).
 
+5.  **`return self.output(x)`:** A final 1x1 convolution maps the feature channels from the last upsampling block back down to our desired output channels (3 for an RGB noise map), completing the prediction.
+
+#### Shape Reference
+
+| Variable | Shape | Description |
+|:---------|:------|:------------|
+| `x` (input) | `(B, 3, 32, 32)` | Noisy image |
+| `timestep` | `(B,)` | Integer timesteps |
+| `t` | `(B, 256)` | Time embedding after `time_mlp` |
+| After `conv0` | `(B, 64, 32, 32)` | Initial feature map |
+| After `downs[0]` | `(B, 128, 16, 16)` | Downsampled |
+| After `downs[1]` | `(B, 256, 8, 8)` | Downsampled |
+| After `downs[2]` | `(B, 512, 4, 4)` | Downsampled |
+| After `downs[3]` | `(B, 1024, 2, 2)` | Bottleneck |
+| After `ups[3]` | `(B, 64, 32, 32)` | Back to original size |
+| `output` | `(B, 3, 32, 32)` | Predicted noise |
+
+Now that we understand the U-Net's overall structure, the next step is to zoom in on its fundamental component: the `Block`, and understand how it incorporates the crucial time information.
+
+## **Chapter 7: U-Net Guts: The `Block` and Time Embedding**
+
+In the last chapter, we saw the high-level architecture of our `SimpleUNet`. Now, we will zoom in on its two most fundamental components:
+1.  `SinusoidalPositionEmbeddings`: The clever mechanism for encoding the timestep `t` into a useful vector.
+2.  `Block`: The reusable workhorse module that performs the convolutions and integrates the time information.
+
+#### Part A: Encoding Time with `SinusoidalPositionEmbeddings`
+
+A critical piece of information for our model is the timestep `t`. The model needs to know if it's dealing with a slightly noisy image (low `t`) or a very noisy one (high `t`), as its denoising strategy should change accordingly.
+
+**The Problem:** We cannot just feed the integer `t` (e.g., 5, 250, 900) directly into a neural network. These are just scalar values and don't provide a rich enough signal for the model to interpret the subtle differences and relationships between timesteps.
+
+**The Solution:** We use **Sinusoidal Position Embeddings**, a technique introduced in the original "Attention Is All You Need" Transformer paper. It maps a single integer `t` into a high-dimensional vector.
+
+```python
+# diffusion_min.py (lines 19-32)
+class SinusoidalPositionEmbeddings(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        self.dim = dim
+
+    def forward(self, time):
+        device = time.device
+        half_dim = self.dim // 2
+        embeddings = math.log(10000) / (half_dim - 1)
+        embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
+        embeddings = time[:, None] * embeddings[None, :]
+        embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
+        return embeddings
+```
+
+**Intuition:** This module creates the embedding vector by passing the timestep `t` through a series of `sin` and `cos` functions with different, geometrically progressing frequencies. This gives each timestep a unique, wave-like "fingerprint". The model can easily learn to interpret the patterns in these fingerprints to understand the noise level `t`.
+
+#### Part B: Dissecting the `Block`
+
