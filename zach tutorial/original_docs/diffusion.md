@@ -544,3 +544,58 @@ We have now defined the complete training procedure. The next step is to open up
 
 We've established that we need a model, $\epsilon_\theta$, that can look at a noisy image $x_t$ and predict the noise that was added. The architecture chosen for this task is a **U-Net**. This chapter will explain *why* a U-Net is the perfect tool for the job and walk through its high-level structure and data flow.
 
+Let's look at the class signature and the `forward` pass first, as this reveals the overall data journey.
+
+```python
+# diffusion_min.py (lines 68-116, abbreviated)
+class SimpleUNet(nn.Module):
+    """A minimal U-Net to predict noise"""
+    def __init__(self, config: DiffusionConfig):
+        # ... (layer definitions) ...
+
+    def forward(self, x, timestep):
+        t = self.time_mlp(timestep)
+        x = self.conv0(x)
+        
+        residual_inputs = []
+        for down in self.downs:
+            x = down(x, t)
+            residual_inputs.append(x)
+            
+        for up in self.ups:
+            residual_x = residual_inputs.pop()
+            # Add skip connection
+            x = torch.cat((x, residual_x), dim=1)
+            x = up(x, t)
+            
+        return self.output(x)
+```
+
+#### Why a U-Net?
+
+A U-Net is an encoder-decoder architecture with a special feature called a "skip connection." It's exceptionally good at image-to-image tasks, which is exactly what we're doing: our input is an image (noisy) and our output is an image (the predicted noise map).
+
+Here's a visual blueprint of its structure:
+
+```mermaid
+graph TD
+    Input["Input Image (B, 3, 32, 32)"] --> Conv0
+
+    subgraph Encoder
+        Conv0 --> D1 --> D2 --> D3 --> D4
+    end
+
+    subgraph Decoder
+        U1 --> U2 --> U3 --> U4 --> OutputConv
+    end
+
+    D4 --> U1
+
+    D1 -. skip .-> U4
+    D2 -. skip .-> U3
+    D3 -. skip .-> U2
+    D4 -. skip .-> U1
+
+    OutputConv --> Output["Predicted Noise (B, 3, 32, 32)"]
+```
+
