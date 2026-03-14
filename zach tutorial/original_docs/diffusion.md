@@ -380,3 +380,58 @@ Before diving in, let's track the shape of every variable (assuming batch size =
 | Variable | Shape | Description |
 |:---------|:------|:------------|
 | `x` | `(8, 3, 32, 32)` | Batch of clean images (B, C, H, W) |
+| `t` | `(8,)` | Random timesteps, e.g., `[50, 120, 345, 800, ...]` |
+| `self.alpha_hat` | `(1000,)` | Precomputed $\bar{\alpha}$ for all 1000 timesteps |
+| `self.alpha_hat[t]` | `(8,)` | The $\bar{\alpha}_t$ value for each image's timestep |
+| `sqrt_alpha_hat` | `(8, 1, 1, 1)` | After reshaping for broadcasting |
+| $\epsilon$ | `(8, 3, 32, 32)` | Fresh Gaussian noise $\epsilon$, same shape as `x` |
+
+Now let's walk through the code:
+
+1.  **`sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])`**
+    Here, `t` is a 1D tensor of random timesteps for each image in our batch (e.g., `[50, 120, 345, 800]`). We use `t` to index into our pre-computed `self.alpha_hat` schedule to get the correct $\bar{\alpha}_t$ value for each image.
+
+2.  **The `[:, None, None, None]` Slicing**
+    This is a crucial step for broadcasting. Let's track our tensor shapes:
+    *   Our image batch `x` has shape `(Batch, Channels, H, W)`, e.g., `(8, 3, 32, 32)`.
+    *   Our timestep tensor `t` has shape `(Batch)`, e.g., `(8)`.
+    *   Therefore, `self.alpha_hat[t]` also has shape `(Batch)`.
+
+    We cannot multiply a `(8, 3, 32, 32)` tensor by a `(8)` tensor directly. We need to reshape the schedule values to `(8, 1, 1, 1)`. The `[:, None, None, None]` syntax does exactly this. PyTorch's broadcasting rules then automatically expand this to match the `(8, 3, 32, 32)` shape for the element-wise multiplication.
+
+3.  **`ε = torch.randn_like(x)`**
+    This line generates our noise $\epsilon$. `torch.randn_like(x)` is a convenient function that creates a tensor of random numbers from a standard normal distribution with the *exact same shape and device* as the input tensor `x`.
+
+4.  **`return sqrt_alpha_hat * x + ..., ε`**
+    This is a direct, one-to-one implementation of the shortcut formula. We return two things:
+    *   The first value is the noisy image $x_t$.
+    *   The second value is the noise $\epsilon$ we used to create it. We return this because it is the **ground truth** that our U-Net model will be trained to predict.
+
+We have now fully implemented the forward process. We have a deterministic and efficient way to take any image and produce a noisy version for any timestep `t`. With these training samples in hand, we are ready to define the reverse process and teach our U-Net how to predict the noise.
+
+## **Chapter 4: The Reverse Process & Training: Math & Intuition**
+
+We have mastered the art of controlled destruction. Now, we must learn the art of creation. The reverse process is about starting with pure noise (`x_T`) and incrementally denoising it, step-by-step, until we have a clean image ($x_0$).
+
+#### The Problem: Reversing the Irreversible
+
+The forward process adds noise at each step `t` using a conditional probability distribution, $q(x_t | x_{t-1})$. To reverse this, we need to calculate the probability of the previous image given the current one, $p(x_{t-1} | x_t)$.
+
+**Q: But isn't the noise at each step independent? Why is reversing hard?**
+
+Yes, each $\epsilon_t$ is independent. But going backward, you don't know *which* noise was added—you can't just subtract it. The reverse conditional $p(x_{t-1} | x_t)$ requires integrating over all possible original images, which is intractable.
+
+Unfortunately, calculating this distribution directly is mathematically intractable. It would require using the entire dataset for every single step, which is computationally impossible.
+
+#### The Solution: Train a Neural Network to Approximate It
+
+If we can't calculate the reverse step, we can train a powerful neural network to *learn* an approximation of it. Our goal is to create a model that takes a noisy image $x_t$ and tells us what $x_{t-1}$ should look like.
+
+#### The "Aha!" Moment: Re-parameterize to Predict the Noise
+
+The authors of the original DDPM paper made a groundbreaking discovery. Instead of training the network to directly predict the pixels of the slightly-less-noisy-image $x_{t-1}$, it is far more effective and stable to re-parameterize the problem.
+
+The network's task is simplified: **Instead of predicting the image, predict the noise.**
+
+Think about our forward process shortcut formula:
+$$ \mathbf{x}_t = \sqrt{\bar{\alpha}_t} \mathbf{x}_0 + \sqrt{1 - \bar{\alpha}_t} \boldsymbol{\epsilon} $$
