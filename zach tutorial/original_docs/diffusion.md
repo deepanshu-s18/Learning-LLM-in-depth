@@ -708,3 +708,58 @@ class SinusoidalPositionEmbeddings(nn.Module):
 
 #### Part B: Dissecting the `Block`
 
+The `Block` is the core building block of our U-Net's encoder and decoder paths. It has two main jobs: process the image features with convolutions, and inject the time embedding information.
+
+```python
+# diffusion_min.py (lines 34-66)
+class Block(nn.Module):
+    """Simple Conv -> GroupNorm -> GELU block"""
+    def __init__(self, in_ch, out_ch, time_emb_dim, up=False):
+        super().__init__()
+        self.time_mlp = nn.Linear(time_emb_dim, out_ch)
+        if up:
+            self.conv1 = nn.Conv2d(2 * in_ch, out_ch, 3, padding=1)
+            self.transform = nn.ConvTranspose2d(out_ch, out_ch, 4, 2, 1)
+        else:
+            self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1)
+            self.transform = nn.Conv2d(out_ch, out_ch, 4, 2, 1)
+        
+        self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
+        self.bnorm1 = nn.GroupNorm(8, out_ch)
+        self.bnorm2 = nn.GroupNorm(8, out_ch)
+        self.relu = nn.GELU()
+
+    def forward(self, x, t):
+        # First Conv
+        h = self.bnorm1(self.relu(self.conv1(x)))
+        # Time embedding injection
+        time_emb = self.relu(self.time_mlp(t))
+        # Broadcast time_emb (B, C) -> (B, C, H, W)
+        time_emb = time_emb[(..., ) + (None, ) * 2]
+        h = h + time_emb
+        # Second Conv + Downsample/Upsample
+        h = self.bnorm2(self.relu(self.conv2(h)))
+        return self.transform(h)
+```
+
+**The `__init__` Method:**
+*   `self.time_mlp`: A simple `nn.Linear` layer. Its job is to project the sinusoidal time embedding into a vector that has the same number of channels (`out_ch`) as our image feature map.
+
+    **Quick example:** `nn.Linear(3, 2)` transforms a 3D vector to 2D:
+    ```
+    Input: [1, 2, 3]    Weights:        Bias:     Output:
+                        [[0.1, 0.2],    [0.5,     [1*0.1 + 2*0.4 + 3*0.7 + 0.5,  = [3.5,
+                         [0.4, 0.5],     0.6]      1*0.2 + 2*0.5 + 3*0.8 + 0.6]     4.2]
+                         [0.7, 0.8]]
+    ```
+    It's just `output = input @ weights + bias`. Each output dimension is a learned weighted sum of all inputs.
+*   `if up:`: This handles the skip connections. If we are in the upsampling path (`up=True`), the first convolution (`conv1`) must accept `2 * in_ch` because we will have concatenated the feature maps from the skip connection.
+*   `self.transform`: This is the layer that changes the image size. It's either a `Conv2d` with a `stride` of 2 (for downsampling) or a `ConvTranspose2d` (for upsampling).
+
+    **What's `ConvTranspose2d`?** It's the "reverse" of convolution—it upsamples by spreading each input pixel through a learned kernel.
+    ```
+    Input (2×2):    Kernel (2×2):     Output (3×3, stride=1, no padding):
+    1  2            1  2              1  4  4
+    3  4            1  1              4  12 8
+                                      3  7  4
+
