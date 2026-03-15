@@ -872,3 +872,58 @@ Let's look at the code we are about to dissect.
         x = torch.randn((n_samples, self.config.in_channels, self.config.image_size, self.config.image_size)).to(self.config.device)
         
         for i in reversed(range(1, self.config.timesteps)):
+            t = (torch.ones(n_samples) * i).long().to(self.config.device)
+            predicted_noise = self.model(x, t)
+            
+            alpha = self.alpha[t][:, None, None, None]
+            alpha_hat = self.alpha_hat[t][:, None, None, None]
+            beta = self.beta[t][:, None, None, None]
+            
+            if i > 1:
+                noise = torch.randn_like(x)
+            else:
+                noise = torch.zeros_like(x)
+            
+            # Standard DDPM sampling formula
+            x = (1 / torch.sqrt(alpha)) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+            
+        self.model.train()
+        x = (x.clamp(-1, 1) + 1) / 2 # Scale to [0, 1]
+        return x
+```
+
+#### Dissecting the `sample` Method
+
+Let's walk through the code in logical blocks.
+
+**1. Setup and Initialization**
+```python
+@torch.no_grad()
+def sample(self, n_samples):
+    self.model.eval()
+    x = torch.randn((n_samples, ...)).to(self.config.device)
+```
+*   `@torch.no_grad()`: This is a PyTorch decorator that disables gradient calculation. It's a crucial optimization for inference, as it significantly reduces memory usage and speeds up computation.
+*   `self.model.eval()`: This puts our U-Net into evaluation mode. This is important for layers like `Dropout` or `BatchNorm` (though our simple U-Net doesn't use them) to behave correctly during inference.
+*   `x = torch.randn(...)`: This is our starting canvas. We create a batch of `n_samples` images filled with pure Gaussian noise. This is our initial `x_T` (where `T` is `timesteps-1` in our loop).
+
+**2. The Denoising Loop**
+```python
+for i in reversed(range(1, self.config.timesteps)):
+    t = (torch.ones(n_samples) * i).long().to(self.config.device)
+    ...
+```
+*   `for i in reversed(range(1, self.config.timesteps))`: This sets up our main loop. It iterates backward from `T-1` down to `1`. `i` is our current timestep.
+*   `t = (torch.ones(...) * i).long()`: We need to create a tensor `t` of shape `(n_samples,)` where every element is the current timestep `i`. This is the `t` we will pass to our U-Net.
+
+**3. The Core Sampling Formula**
+This is a direct, line-by-line translation of the math from Chapter 8.
+$$ \mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}} \left( \mathbf{x}_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t) \right) + \sigma_t \mathbf{z} $$
+
+```python
+    # Get the model's prediction for the noise
+    predicted_noise = self.model(x, t)
+    
+    # Get the pre-computed schedule values for the current timestep t
+    alpha = self.alpha[t][:, None, None, None]
+    alpha_hat = self.alpha_hat[t][:, None, None, None]
