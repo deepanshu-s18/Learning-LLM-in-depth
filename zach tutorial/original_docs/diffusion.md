@@ -818,3 +818,57 @@ But why not just jump straight to $x_0$? Because our prediction is imperfect—e
 
 The authors of the DDPM paper derived a formula that does exactly this. It takes the current noisy image $x_t$ and the predicted noise $\epsilon_\theta$ to calculate the distribution of the previous image, $x_{t-1}$. The formula to sample from that distribution is:
 
+$$ \mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}} \left( \mathbf{x}_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}} \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t) \right) + \sigma_t \mathbf{z} $$
+
+**Q: How to derive it?**
+
+The full proof uses Bayes' theorem on Gaussians, but the intuition is simple. We know:
+- Forward: $x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1-\bar{\alpha}_t} \epsilon$
+- Our model predicts $\epsilon$, so we can estimate $x_0$
+
+The formula just says: "given your estimate of $x_0$, what's the most likely $x_{t-1}$?" For Gaussians, this has a closed-form answer. The messy coefficients come from matching the variances correctly.
+
+This equation looks intimidating, but its job is simple. Let's break it down into an intuitive recipe for getting $x_{t-1}$ from $x_t$:
+
+1.  **$\epsilon_\theta(x_t, t)$:** First, we ask our U-Net to predict the noise in the current image $x_t$.
+
+2.  **$x_t - (\cdots \times \epsilon_\theta)$:** We subtract a scaled version of this predicted noise from our current image. This is the "denoising" part. The term $(1 - \alpha_t) / \sqrt{1 - \bar{\alpha}_t}$ is the scaling factor. This gives us a raw prediction for the clean image.
+
+3.  **$1 / \sqrt{\alpha_t} \times (\cdots)$:** We then scale this raw result up. This corrects for the fact that during the forward process, we scaled the image down by $\sqrt{\alpha_t}$ at each step. This is the "correction" part.
+
+4.  **$+ \sigma_t z$:** Finally, we add back a small amount of new noise.
+    *   $z$ is a fresh sample of Gaussian noise (if $t > 1$) or zeros (if $t=1$).
+    *   $\sigma_t$ (sigma) is the standard deviation, which is a fixed value derived from our $\beta$ schedule.
+    *   **Why add noise back?** The reverse process is also stochastic. This small injection of randomness at each step (except the very last one) improves the quality of the final samples and prevents the model from getting "stuck" in a deterministic path.
+
+#### The Generation Loop
+
+The entire generation process is just a loop that repeatedly applies this formula.
+
+```
+Imagine a timeline from t=1000 down to t=0.
+1.  Start at t=1000 with x_1000, which is pure random noise.
+2.  Set t = 999. Use x_1000 and the formula to calculate x_999. The image is now 99.9% noise.
+3.  Set t = 998. Use x_999 and the formula to calculate x_998. The image is now 99.8% noise.
+4.  ...
+5.  Set t = 1. Use x_2 and the formula to calculate x_1. The image now looks almost clean.
+6.  Set t = 0. Use x_1 and the formula to calculate x_0. The final, clean image emerges.
+```
+
+In the next chapter, we will see how this elegant mathematical loop is implemented in the `sample` method of our `Diffusion` class.
+
+## **Chapter 9: Generation & Sampling: Code Implementation**
+
+We have our trained U-Net and the mathematical formula for taking one step backward in the denoising process. Now, we will implement the full generation loop in the `Diffusion.sample` method. This method will orchestrate the entire creative process, from a canvas of pure noise to a finished image.
+
+Let's look at the code we are about to dissect.
+
+```python
+# diffusion_min.py (lines 143-165)
+    @torch.no_grad()
+    def sample(self, n_samples):
+        """Inference: Generate images from pure noise"""
+        self.model.eval()
+        x = torch.randn((n_samples, self.config.in_channels, self.config.image_size, self.config.image_size)).to(self.config.device)
+        
+        for i in reversed(range(1, self.config.timesteps)):
