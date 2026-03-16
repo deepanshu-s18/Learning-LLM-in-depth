@@ -927,3 +927,58 @@ $$ \mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}} \left( \mathbf{x}_t - \frac{1 - 
     # Get the pre-computed schedule values for the current timestep t
     alpha = self.alpha[t][:, None, None, None]
     alpha_hat = self.alpha_hat[t][:, None, None, None]
+    beta = self.beta[t][:, None, None, None]
+
+    # Prepare the new noise to add back in
+    if i > 1:
+        noise = torch.randn_like(x)
+    else:
+        noise = torch.zeros_like(x)
+    
+    # The full formula in one line of code
+    x = (1 / torch.sqrt(alpha)) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+```
+*   Each term in the code (`alpha`, `alpha_hat`, `predicted_noise`) maps directly to its mathematical counterpart ($\alpha_t$, $\bar{\alpha}_t$, $\epsilon_\theta$).
+*   The `if i > 1:` logic handles the $\sigma_t z$ term. For all steps except the very last one, we add new random noise. For the final step (`i=1`), we add no noise (`zeros_like(x)`) to get our final clean image. `sqrt(beta)` is our $\sigma_t$.
+
+**4. Finalization and Return**
+```python
+    self.model.train()
+    x = (x.clamp(-1, 1) + 1) / 2 # Scale to [0, 1]
+    return x
+```
+*   `self.model.train()`: It's good practice to set the model back to training mode after sampling is complete.
+*   `x = (x.clamp(-1, 1) + 1) / 2`: Our U-Net was trained on images whose pixel values were normalized to the range `[-1, 1]`. The output of our sampling loop will also be in this range. To make it a viewable image, we need to transform it back to the standard pixel range of `[0, 1]`.
+    *   `clamp(-1, 1)` ensures there are no out-of-bounds values.
+    *   `+ 1` shifts the range to `[0, 2]`.
+    *   `/ 2` scales the range to `[0, 1]`.
+*   `return x`: We return the batch of newly generated, clean images.
+
+With this final piece of the puzzle, our `diffusion_min.py` is no longer a mystery. We have successfully implemented a complete Denoising Diffusion Probabilistic Model from scratch.
+
+## **Conclusion: You've Built a Diffusion Model**
+
+We have reached the end of our 40-minute journey. We started with a file, `diffusion_min.py`, that represented a seemingly magical technology. We made a promise: to take it apart, piece by piece, until the magic dissolved into understandable, elegant engineering.
+
+And that is exactly what we did. You now understand the complete lifecycle of a diffusion model, not as an abstract concept, but through the concrete implementation of every component.
+
+Let's recap the core logic one last time:
+
+1.  **The Forward Process:** We established a fixed, mathematical procedure to gradually destroy an image with noise. We mastered the concept of the variance schedule ($\beta_t$), the signal rates ($\alpha_t$, $\bar{\alpha}_t$), and the crucial "shortcut" formula that lets us corrupt any image to any timestep `t` instantly.
+
+2.  **The Training Process:** We reframed the problem of reversing the process into a simple, supervised learning task. We taught a `SimpleUNet`, our $\epsilon_\theta$, to do one thing: predict the noise that was added to an image, using a straightforward Mean Squared Error loss between the real noise and the predicted noise.
+
+3.  **The Generation Process:** We implemented the `sample` loop, which weaponizes our trained noise predictor. By repeatedly applying the DDPM sampling formula, we orchestrated the creation of a new image, step-by-step, from a canvas of pure random static.
+
+#### Connecting to the Real World: What's the difference between this and Stable Diffusion?
+
+You may be wondering, if it's this simple, why are models like Stable Diffusion so massive and complex? The answer is that they are built on the *exact same fundamental principles* you just implemented, but with two key additions for efficiency and control.
+
+| Feature | Our `diffusion_min.py` Model | Stable Diffusion (Latent Diffusion Model) |
+| :--- | :--- | :--- |
+| **Diffusion Space** | Operates directly on pixels (e.g., 32x32 image). | **Operates in a compressed latent space.** An autoencoder first compresses a 512x512 image into a smaller 64x64 "latent" representation. The diffusion process happens on this small latent, saving immense computation. A decoder then converts the final denoised latent back into a full-resolution image. |
+| **Guidance** | **Unconditional.** It generates random images based on its training data. | **Conditional.** The U-Net is given extra information—typically a text embedding from a model like CLIP. This embedding *guides* the denoising process at every step, forcing the output to match the text prompt. This is often implemented using a mechanism called cross-attention. |
+
+The crucial takeaway is that the core engine—the iterative denoising of a noisy signal using a trained noise predictor—is identical. The `sample()` loop you built is the heart of Stable Diffusion. They just do it on a compressed "idea" of an image instead of the image itself, and they give the U-Net a text prompt to guide its predictions.
+
+The black box is open. The fundamental principles of modern generative AI are no longer a mystery. You have built one from scratch.
