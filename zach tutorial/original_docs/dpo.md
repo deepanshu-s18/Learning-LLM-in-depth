@@ -73,3 +73,41 @@ Let's revisit our example from Chapter 1:
 
 *   **Response B:** "The article provides a detailed analysis of climate change, attributing rising sea levels primarily to thermal expansion and glacial melt. It contrasts market-based policy solutions, like carbon taxes, with regulatory approaches." (The preferred one)
 *   **Response A:** "The article discusses climate change, focusing on rising sea levels and CO2 emissions. It mentions policy solutions." (The rejected one)
+
+If a human judges **B > A**, we can assume:
+*   $r_{\text{B}}$ (quality score for Response B) > $r_{\text{A}}$ (quality score for Response A)
+
+For our tutorial, let's assign some hypothetical scores to make this concrete:
+*   $r_{\text{winner}}$ (for Response B): **2.5**
+*   $r_{\text{loser}}$ (for Response A): **0.8**
+
+Our goal is to build a system that, given these scores, can predict the human's preference with a probability.
+
+#### Formalizing Preferences: The Bradley-Terry Model
+
+A simple yet powerful mathematical framework for modeling pairwise comparisons like this is the **Bradley-Terry model**. It states that the probability of one item (the winner) being preferred over another (the loser) is a function of the *difference* in their underlying quality scores.
+
+The formula is:
+
+$$ P(\text{winner} \succ \text{loser}) = \sigma(r_{\text{winner}} - r_{\text{loser}}) $$
+
+Let's break down this formula:
+
+*   **$P(\text{winner} \succ \text{loser})$:** This is the probability that the winner is indeed preferred over the loser, according to our model.
+*   **$r_{\text{winner}}$ and $r_{\text{loser}}$:** These are the quality scores we just discussed.
+*   **$\sigma$:** This is the **sigmoid function**. It's a fundamental tool in machine learning for converting any real number into a probability between 0 and 1.
+    *   The sigmoid function is defined as: $\sigma(x) = \frac{1}{1 + e^{-x}}$
+    *   It squashes values:
+        *   Large positive `x` (big score difference) -> `σ(x)` approaches 1.0 (high probability)
+        *   `x = 0` (no score difference) -> `σ(x)` is 0.5 (50/50 probability)
+        *   Large negative `x` (loser's score is much higher) -> `σ(x)` approaches 0.0 (low probability)
+
+#### Step-by-Step Calculation with Our Example
+
+Let's apply the Bradley-Terry model to our concrete example:
+
+1.  **Calculate the score difference ($\Delta r$):**
+    $\Delta r = r_{\text{winner}} - r_{\text{loser}} = 2.5 - 0.8 = 1.7$
+
+2.  **Apply the sigmoid function:**
+    $P(\text{winner} \succ \text{loser}) = \sigma(1.7) = \frac{1}{1 + e^{-1.7}} = \frac{1}{1 + 0.1827} \approx 0.845$
