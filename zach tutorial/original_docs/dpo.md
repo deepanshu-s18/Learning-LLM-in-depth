@@ -299,3 +299,41 @@ Let's trace this function with a real example to see exactly what's happening.
 
 First, we need our tokenized inputs.
 ```python
+# Assume a simple tokenizer
+# vocab: {"The":1, "capital":2, "of":3, "France":4, " is":5, "Paris":6, "Lyon":7}
+prompt = torch.tensor([[1, 2, 3, 4]])      # Shape: (1, 4)
+response = torch.tensor([[5, 6]])          # Shape: (1, 2)
+
+# Assume we have a 'policy_model' and mock its output logits for this walkthrough
+```
+
+Now, let's trace the execution of `get_sequence_log_probs(policy_model, prompt, response)`.
+
+**Step 1-3: Get `response_logits`**
+*   `input_ids` becomes `[1, 2, 3, 4, 5, 6]` ("The capital of France is Paris").
+*   The model outputs `logits` of shape `(1, 6, vocab_size)`.
+*   `prompt_len` is 4.
+*   We slice the logits at `[:, 3:5, :]`. This gives us the logits from two positions:
+    1.  The prediction after the context `...France` (at index 3).
+    2.  The prediction after the context `...France is` (at index 4).
+
+Let's assume the relevant mock logits (for tokens 5, 6, 7) from these two positions are:
+```
+# Logits from context "...France":  Scores for [" is", "Paris", "Lyon"] -> [3.0, 0.5, 0.2]
+# Logits from context "...France is": Scores for [" is", "Paris", "Lyon"] -> [0.1, 4.0, 1.0]
+```
+
+**Step 4 & 5: Calculating `token_log_probs`**
+The code converts these logits to log-probabilities and then uses `gather` to pick out the ones corresponding to our target tokens (`[5, 6]`).
+
+| Context | Target Token | Logits `[5,6,7]` | Log-Probs `[5,6,7]` | Gathered `log P(token)` |
+| :--- | :--- | :--- | :--- |:--- |
+| "... France" | `is` (idx 5) | `[3.0, 0.5, 0.2]` | `[-0.23, -2.73, -3.03]` | **-0.23** |
+| "... France is" | `Paris` (idx 6)| `[0.1, 4.0, 1.0]` | `[-4.08, -0.18, -3.18]` | **-0.18** |
+
+**Step 6: Summing to get the final score**
+*   Final Score $r = (-0.23) + (-0.18) = \mathbf{-0.41}$
+
+We have successfully built a function that implements our naive reward. It takes a prompt and response and returns a single score. On the surface, this seems perfect. We can now get a score for both the winning and losing responses, plug them into our preference loss function from Chapter 3, and start training.
+
+However, as we will see in the next chapter, this seemingly logical reward function has subtle but catastrophic flaws.
