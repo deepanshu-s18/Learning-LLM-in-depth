@@ -262,3 +262,40 @@ Now we're ready to build our core function. It will take a batch of prompts and 
 
 ```python
 def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single forward pass
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions (logits)
+    # The model's forward pass returns logits (and optionally other things)
+    outputs = model(input_ids)
+    logits = outputs.logits # Assuming a Hugging Face-style model output
+
+    # 3. Slice the logits to only include predictions for the response tokens.
+    # The logit for the first response token is predicted from the last prompt token.
+    prompt_len = prompt_tokens.size(1)
+    # We ignore the logit for the very last token, as it predicts what comes *after* our response.
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. Calculate the log-probabilities of the actual response tokens using log_softmax
+    # for better numerical stability than log(softmax(x)).
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Gather the log-probs for the specific tokens that were in our response.
+    # response_tokens.unsqueeze(-1) adds a dimension to match log_probs shape for gather.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Sum up the log-probabilities for each sequence in the batch to get the total score.
+    return token_log_probs.sum(dim=1)
+```
+
+#### A Concrete Example: "is Paris"
+
+Let's trace this function with a real example to see exactly what's happening.
+*   **Prompt `x`:** "The capital of France"
+*   **Response `y`:** " is Paris"
+
+First, we need our tokenized inputs.
+```python
