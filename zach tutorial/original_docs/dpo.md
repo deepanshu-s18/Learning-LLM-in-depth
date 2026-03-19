@@ -526,3 +526,40 @@ Our journey is nearing its end. We have built all the necessary components, piec
 This chapter is the grand synthesis. We will see how the preference modeling engine from Part I and the robust LLM reward function from Part III fit together perfectly.
 
 Let's quickly recap our building blocks:
+
+1.  **The Preference Model (Chapters 2 & 3):** We learned how to convert a preference between two items with scores `r_winner` and `r_loser` into a trainable loss. This formed the outer shell of our algorithm.
+    $$ \mathcal{L} = -\log(\sigma(r_{\text{winner}} - r_{\text{loser}})) $$
+
+2.  **The Robust LLM Reward (Chapters 7 & 8):** We developed a reference-aware reward function that correctly scores an LLM's response `y` by measuring its improvement over a frozen baseline `π_ref`.
+    $$ r(x, y) = \beta \left( \log \pi_{\theta}(y|x) - \log \pi_{\text{ref}}(y|x) \right) $$
+
+Now, we perform the final step: we **substitute** our robust LLM reward function into the preference model's loss function.
+
+#### The Final Formula, Step-by-Step
+
+Let's start with the core of the preference loss, which is the difference in scores:
+$$ r_{\text{winner}} - r_{\text{loser}} $$
+
+Now, let's replace `r_winner` with the full DPO reward for the winning response, `y_w`, and `r_loser` with the reward for the losing response, `y_l`:
+
+$$ \underbrace{\beta \left( \log \pi_{\theta}(y_w|x) - \log \pi_{\text{ref}}(y_w|x) \right)}_{\text{Score for the Winner}} - \underbrace{\beta \left( \log \pi_{\theta}(y_l|x) - \log \pi_{\text{ref}}(y_l|x) \right)}_{\text{Score for the Loser}} $$
+
+For convenience, we can factor out the `β` and rearrange the terms:
+
+$$ \beta \left( \left( \log \pi_{\theta}(y_w|x) - \log \pi_{\text{ref}}(y_w|x) \right) - \left( \log \pi_{\theta}(y_l|x) - \log \pi_{\text{ref}}(y_l|x) \right) \right) $$
+
+Finally, we plug this entire expression back into our original loss function from Chapter 3:
+
+$$ \mathcal{L}_{\text{DPO}} = -\log \sigma \left( \beta \left( \left( \log \pi_{\theta}(y_w|x) - \log \pi_{\text{ref}}(y_w|x) \right) - \left( \log \pi_{\theta}(y_l|x) - \log \pi_{\text{ref}}(y_l|x) \right) \right) \right) $$
+
+This is the final DPO loss function. It might look complex, but you now understand the origin and purpose of every single component.
+
+There is no more magic. We have successfully derived the entire DPO algorithm from first principles, starting with the simple idea of "judging is easier than creating." We have a robust, theoretically sound, and powerful formula for aligning a language model directly on human preferences.
+
+In the final chapter, we will translate this complete formula into a working PyTorch implementation and watch the numbers flow through it one last time.
+
+## **Chapter 10: The Grand Finale: A Full PyTorch Implementation**
+
+We have completed the full theoretical journey. We started with the simple idea of human preference, built a mathematical engine to model it, stress-tested a naive reward function, and finally arrived at the robust, reference-aware solution that defines DPO.
+
+Now, it's time to translate that final, robust theory into a single, working PyTorch function. This is the moment where all the abstract concepts become concrete code.
