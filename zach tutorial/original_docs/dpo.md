@@ -412,3 +412,41 @@ We have now seen that our simple, intuitive reward function is fundamentally bro
 
 In the last chapter, our naive reward function crashed and burned. We proved that using raw log-probability as a score leads to a model that writes short, repetitive, and unhelpful answers. It learns to chase statistical safety instead of human preference.
 
+The core problem is that we are measuring an **absolute score**. We need to shift our thinking. Instead of asking, "How good is this response in a vacuum?", we should be asking a much smarter question:
+
+> "How much *better* is this response compared to what my model would have said at the beginning of training?"
+
+By measuring **relative improvement**, we can build a much more stable and robust reward system. To do this, we need a consistent baseline—a "measuring stick" to compare against.
+
+Enter the hero of our story: the **Reference Model**.
+
+#### What is a Reference Model? A Frozen Snapshot in Time
+
+The reference model is deceptively simple: it is a **frozen, read-only copy of our model from the beginning of DPO training**.
+
+The entire DPO training lifecycle looks like this:
+
+```mermaid
+graph TD
+    A[Pre-trained Base Model] --> B[Supervised Fine-Tuning]
+    B --> C[SFT Model is Ready]
+    
+    subgraph "DPO Training Starts"
+        C --> D["Policy Model (π_θ)<br/>Trainable: Its weights are updated."]
+        C --> E["Reference Model (π_ref)<br/>Frozen: Its weights NEVER change."]
+    end
+    
+    D --> F(DPO Loss Calculation)
+    E --> F
+```
+
+1.  We start with our capable SFT model (the "apprentice" from Chapter 1).
+2.  Before the first DPO training step, we create **two identical copies** of it in memory.
+3.  One copy becomes the **Policy Model ($\pi_{\theta}$)**. This is the model we will actively train and improve.
+4.  The other copy becomes the **Reference Model ($\pi_{\text{ref}}$)**. We freeze it immediately (`requires_grad=False`). It will never learn or change for the entire duration of DPO training.
+
+The reference model acts as a perfect anchor, a memory of our model's "best self" right after SFT. It provides a stable, consistent baseline against which we can measure the policy model's progress.
+
+#### Why Use the SFT Model as the Reference? (Not the Base Model)
+
+This is a critical question. Why copy the SFT model? Why not use the original, pre-trained base model as our reference?
