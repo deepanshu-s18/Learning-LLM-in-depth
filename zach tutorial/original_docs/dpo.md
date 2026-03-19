@@ -375,3 +375,40 @@ Now, let's compare the scores our naive reward function has produced:
 *   Score of (Rejected) Loser `r_l`: **-0.21**
 
 The result is a disaster. Since `-0.21 > -0.735`, our reward function has assigned a **higher score to the worse answer**. If we train our model using this objective, it will learn a clear lesson: **shorter is better**. The model's outputs will become terse and unhelpful, directly contradicting the human feedback, simply to satisfy this flawed mathematical incentive.
+
+#### Failure Mode 2: The "Bland Prior" Bias -> A Tendency for Repetitive Filler
+
+This second failure mode is more subtle but equally damaging. The model's weights are shared globally. The optimizer's goal is to improve the DPO objective across the entire dataset. It has a limited "gradient budget" and will spend it where it gets the best return on investment.
+
+The naive reward function incentivizes the model to simply make its own predictions more likely. The easiest and "cheapest" way to do this is to slightly increase the probability of tokens that are **already common and easy to predict** (like "is", "a", "the"), rather than spending a lot of effort learning specific, rare, and difficult facts.
+
+Let's do some "gradient budget" accounting. The optimizer must choose between two ways to improve the total loss:
+
+1.  **Option A (Hard):** Learn a specific, helpful fact. For example, in the 10 dataset examples where the prompt is about the capital of France, increase the log-probability of "Paris" from -2.0 to -1.0 (a `+1.0` gain per example).
+2.  **Option B (Easy):** Polish what's already known. For example, in the 50,000 places across the dataset where the common token "the" appears, slightly increase its already-high log-probability from -0.05 to -0.04 (a tiny `+0.01` gain per example).
+
+Let's calculate the total "reward" the optimizer gets from each choice:
+*   **Total Gain from Option A (Learning "Paris"):** `10 examples × 1.0 gain/example =` **+10**
+*   **Total Gain from Option B (Polishing "the"):** `50,000 examples × 0.01 gain/example =` **+500**
+
+The optimizer gets **50 times more reward** for making a generic word slightly more probable than for learning a useful fact.
+
+**What does a model trained with this bias look like?**
+It learns that the optimal strategy to get a high score is to generate text full of high-frequency, statistically "safe" words. The ultimate expression of this is **repetition and filler**.
+
+Consider this preference pair:
+*   **Prompt:** "What are the risks of AI?"
+*   **Winner:** "Some risks include job displacement and algorithmic bias."
+*   **Loser:** "That is a very interesting question."
+
+The model trained with the naive objective might discover it can get an even higher score than the "winner" by generating something like this:
+*   **Model's Hacked Response:** "It is a fact that it is a fact that it is..."
+
+Why? Because the sequence of tokens `P("It") * P("is") * P("a") * P("fact") * P("that")` might consist of tokens that are individually *extremely* high-probability (`>0.99`), leading to a total sequence log-probability (e.g., `-0.1`) that is much better than the more nuanced, human-preferred answer (e.g., `-1.5`). The model has "hacked" the reward by exploiting this bias. It outputs filler because filler is statistically easy and therefore high-probability.
+
+We have now seen that our simple, intuitive reward function is fundamentally broken. It punishes helpful verbosity, leading to **short answers**, and it rewards statistical safety, leading to **repetitive filler**. To fix this, we need a more sophisticated reward function that can measure a response's quality *relative to a stable baseline*. This is the role of the reference model, which we will introduce in the next chapter.
+
+## **Chapter 7: The Hero Arrives: The Reference Model**
+
+In the last chapter, our naive reward function crashed and burned. We proved that using raw log-probability as a score leads to a model that writes short, repetitive, and unhelpful answers. It learns to chase statistical safety instead of human preference.
+
