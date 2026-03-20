@@ -639,3 +639,41 @@ The code now calculates the robust DPO reward for both responses.
 *   **`rejected_rewards` ($r_l$):**
     `0.1 * (-15.0 - (-14.0)) = 0.1 * (-1.0) = -0.1`
 
+The model's rewards (`0.2` vs `-0.1`) correctly align with the human preference. The `reward_accuracy` for this example is 1.0.
+
+**Step 4: Calculate the Final Loss**
+The final step is to compute the negative log-sigmoid of the reward difference.
+
+1.  **Reward Difference (`chosen_rewards - rejected_rewards`):**
+    `0.2 - (-0.1) = 0.3`
+
+2.  **Log-Sigmoid:**
+    `F.logsigmoid(torch.tensor(0.3))` calculates `log(sigmoid(0.3))`, which is `log(0.574) ≈ -0.555`.
+
+3.  **Final Loss (negated):**
+    `loss = -(-0.555) = 0.555`
+
+The final scalar loss for this training example is **0.555**.
+
+**Step 5: Backpropagation**
+The `loss.backward()` call will now compute the gradients of this `0.555` loss value with respect to the policy model's parameters. The optimizer will then take a small step to adjust the model's weights in a direction that would have:
+*   Increased `pi_chosen_logps` (e.g., from -10.0 towards -9.9)
+*   Decreased `pi_rejected_logps` (e.g., from -15.0 towards -15.1)
+
+This change would increase the `reward_difference`, making the `logsigmoid` term less negative, and thus pushing the final `loss` value closer to zero.
+
+Here is a table summarizing the entire data flow for our single example:
+
+| Variable | `chosen` (`y_w`) | `rejected` (`y_l`) | Notes |
+| :--- | :--- | :--- |:--- |
+| `pi_logps` | -10.0 | -15.0 | Differentiable output from policy model |
+| `ref_logps` | -12.0 | -14.0 | Fixed output from reference model |
+| **`rewards` ($r$)** | **0.2** | **-0.1** | `beta * (pi_logps - ref_logps)` |
+| `reward_difference` | \multicolumn{2}{c|}{`0.2 - (-0.1) = 0.3`} | The argument to the loss function |
+| **`loss`** | \multicolumn{2}{c|}{`-F.logsigmoid(0.3) = 0.555`} | Final scalar loss to be minimized |
+
+#### Conclusion: From Preference to Policy
+
+We have now successfully built a complete, robust, and efficient implementation of Direct Preference Optimization from the ground up. This technique is a cornerstone of modern LLM alignment, offering a powerful way to steer model behavior directly from human preferences without the complexity of training a separate reward model or using a full reinforcement learning loop.
+
+You have seen how a simple, practical insight—that judging is easier than creating—can be systematically translated into a robust mathematical formula and, finally, into clean, working code. The real-world application of DPO is simply this exact logic, scaled up to massive preference datasets and state-of-the-art language models.
