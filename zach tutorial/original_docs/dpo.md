@@ -601,3 +601,41 @@ def dpo_training_step(policy_model, ref_model, optimizer, batch, beta=0.1):
     chosen_rewards = beta * (pi_chosen_logps - ref_chosen_logps)
     rejected_rewards = beta * (pi_rejected_logps - ref_rejected_logps)
     
+    # --- 4. Calculate the final loss ---
+    # This is -log_sigmoid(r_chosen - r_rejected)
+    loss = -F.logsigmoid(chosen_rewards - rejected_rewards).mean()
+
+    # --- 5. Backpropagation ---
+    loss.backward()
+    optimizer.step()
+
+    # (Optional) For logging, calculate the accuracy of the rewards
+    reward_accuracies = (chosen_rewards > rejected_rewards).float()
+    return loss.item(), reward_accuracies.mean().item()
+```
+
+#### A Full Numerical Walkthrough
+
+Let's trace a single preference pair through this function to see every number come to life. We'll use our familiar example.
+
+*   **Prompt:** "Capital of France?"
+*   **Chosen `y_w`:** " is Paris"
+*   **Rejected `y_l`:** " is Lyon"
+*   **`beta`:** 0.1
+
+**Step 1 & 2: Get Log-Probabilities**
+Our `get_sequence_log_probs` function is called four times. Let's assume it returns the following values. Notice how the policy is more confident in the chosen response than the reference is, and less confident in the rejected one.
+
+| Log-Probability | `pi_logps` (Policy) | `ref_logps` (Reference) |
+| :--- | :--- | :--- |
+| **Chosen (`y_w`)** | -10.0 | -12.0 |
+| **Rejected (`y_l`)**| -15.0 | -14.0 |
+
+**Step 3: Calculate the DPO Rewards**
+The code now calculates the robust DPO reward for both responses.
+
+*   **`chosen_rewards` ($r_w$):**
+    `0.1 * (-10.0 - (-12.0)) = 0.1 * (2.0) = 0.2`
+*   **`rejected_rewards` ($r_l$):**
+    `0.1 * (-15.0 - (-14.0)) = 0.1 * (-1.0) = -0.1`
+
