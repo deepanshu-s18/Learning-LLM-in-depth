@@ -50,3 +50,30 @@ Here is exactly how we will do it, presented as the code changes we are going to
 @@ -23,17 +23,26 @@
          self.c_proj = nn.Linear(config.n_embd, config.n_embd)
          self.resid_drop = nn.Dropout(config.dropout)
+         self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size)).view(1, 1, config.block_size, config.block_size))
+-    def forward(self, x):
+-        B, T, C = x.size()
++
++    def forward(self, x, past_kv=None):
++        B, T, C = x.size() # T is the new sequence length (usually 1)
+         qkv = self.c_attn(x)
+         q, k, v = qkv.split(self.n_embd, dim=2)
+         head_dim = C // self.n_head
+         q = q.view(B, T, self.n_head, head_dim).transpose(1, 2)
+         k = k.view(B, T, self.n_head, head_dim).transpose(1, 2)
+         v = v.view(B, T, self.n_head, head_dim).transpose(1, 2)
++
++        if past_kv is not None:
++            past_k, past_v = past_kv
++            k = torch.cat((past_k, k), dim=-2)
++            v = torch.cat((past_v, v), dim=-2)
++
++        present_kv = (k, v)
++        T_total = k.size(-2)
++
+         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(head_dim))
+-        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
++        att = att.masked_fill(self.bias[:, :, T_total-T:T_total, :T_total] == 0, float("-inf"))
+         att = F.softmax(att, dim=-1)
+         y = att @ v
+         y = y.transpose(1, 2).contiguous().view(B, T, C)
