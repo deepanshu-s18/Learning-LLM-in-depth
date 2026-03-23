@@ -103,3 +103,30 @@ def generate(self, idx, max_new_tokens):
         last_token_logits = logits[:, -1, :]
         
         # 3. Sample a new token
+        probs = F.softmax(last_token_logits, dim=-1)
+        next_token = torch.multinomial(probs, num_samples=1)
+        
+        # 4. Append the new token and repeat
+        idx = torch.cat((idx, next_token), dim=1)
+    return idx
+```
+
+Second, the attention mechanism. This is where the actual computation happens when the model is called.
+
+```python
+# The original, stateless CausalSelfAttention.forward method
+def forward(self, x):
+    B, T, C = x.size() # T is the full sequence length
+    
+    # 1. We project the entire input sequence `x` to get Q, K, and V
+    qkv = self.c_attn(x)
+    q, k, v = qkv.split(self.n_embd, dim=2)
+    
+    # ... (rest of the attention calculation)
+    # The key is that q, k, and v are re-calculated from scratch every time.
+    # ...
+    return y
+```
+
+The inefficiency arises from the interaction between these two pieces of code. The loop repeatedly calls the attention module with a sequence that is almost identical to the previous one, forcing the attention module to redo almost all of its work.
+
