@@ -156,3 +156,30 @@ The `generate` loop begins its second iteration.
 
 1.  **Input:** The model is called with the **new, longer** sequence: `idx` of shape `(1, 3)`, containing `[10, 3, 8]`.
 2.  **Inside `CausalSelfAttention.forward`:**
+    *   The input `x` (embeddings for "A cat sat") has a shape of `(B=1, T=3, C=768)`.
+    *   The line `q, k, v = qkv.split(...)` executes **again**.
+    *   The variable `k` is now a tensor of shape `(1, 3, 768)`. Its contents are:
+        `k = [ k_vector("A"), k_vector("cat"), k_vector("sat") ]`
+    *   Similarly, `v` contains:
+        `v = [ v_vector("A"), v_vector("cat"), v_vector("sat") ]`
+
+This is the moment the inefficiency becomes clear. **We just re-calculated `k_vector("A")` and `k_vector("cat")`.** We already computed these in the previous step, but because our `forward` function is stateless, it doesn't remember them. It threw them away and did the expensive matrix multiplication all over again.
+
+#### Visualizing the Waste with a Grid
+
+Let's visualize this redundant work over several generation steps. We'll use "✅" to mark a Key/Value vector that is newly computed and "🔄" to mark one that was wastefully re-computed.
+
+| Token     | Step 1 (Gen "sat") <br/> `T=2` | Step 2 (Gen "on") <br/> `T=3` | Step 3 (Gen "the") <br/> `T=4` | Step 4 (Gen "mat") <br/> `T=5` |
+| :-------- | :--------------------------: | :-------------------------: | :--------------------------: | :--------------------------: |
+| K/V("A")  |              ✅              |       🔄 **Waste**        |       🔄 **Waste**         |       🔄 **Waste**         |
+| K/V("cat")|              ✅              |       🔄 **Waste**        |       🔄 **Waste**         |       🔄 **Waste**         |
+| K/V("sat")|                              |             ✅              |       🔄 **Waste**         |       🔄 **Waste**         |
+| K/V("on") |                              |                             |              ✅              |       🔄 **Waste**         |
+| K/V("the")|                              |                             |                              |              ✅              |
+
+This grid makes the problem painfully obvious. At each step, we only need to compute the K/V pair for the newest token. All the previous ones are redundant work. The amount of waste grows linearly with each new token.
+
+To generate the `T`-th token, we are performing `T-1` unnecessary computations for the Key and `T-1` for the Value. Over the course of generating a long sequence, this adds up to a quadratic O(T²) complexity. This is why generation starts fast and gets progressively slower.
+
+Now that we have pinpointed the exact source of the waste, we can design a solution. The solution is simple: what if, instead of throwing away the Key and Value vectors at the end of each `forward` pass, we just... saved them? This is the core idea of the KV Cache.
+
