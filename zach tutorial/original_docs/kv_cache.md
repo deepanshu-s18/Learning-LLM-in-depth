@@ -341,3 +341,30 @@ The `generate` loop calls our new `forward` method. It has already processed "A 
 
 1.  `x`: The embeddings for the **single new token** we are processing. Let's call it "sat".
     *   Shape of `x`: `(B=1, T=1, C=4)`.
+2.  `past_kv`: A tuple containing the Key and Value tensors for the **previous two tokens** ("A cat").
+    *   Shape of `past_k`: `(B=1, n_head=2, T=2, head_dim=2)`.
+    *   Shape of `past_v`: `(B=1, n_head=2, T=2, head_dim=2)`.
+
+```python
+def forward(self, x, past_kv=None):
+    B, T, C = x.size() # B=1, T=1, C=4
+```
+
+---
+
+#### Step 2: Calculating Q, K, V for the New Token
+
+The model performs the projection, but only on our tiny `T=1` input.
+
+```python
+    qkv = self.c_attn(x)
+    q, k, v = qkv.split(self.n_embd, dim=2)
+    # ... reshape and transpose ...
+```
+
+*   The `q`, `k`, and `v` tensors are for the token "sat" only.
+*   Shape of `q`: `(1, 2, 1, 2)` i.e., `(B, n_h, T, h_d)`
+*   Shape of new `k`: `(1, 2, 1, 2)`
+*   Shape of new `v`: `(1, 2, 1, 2)`
+
+---
