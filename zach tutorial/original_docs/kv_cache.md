@@ -183,3 +183,29 @@ To generate the `T`-th token, we are performing `T-1` unnecessary computations f
 
 Now that we have pinpointed the exact source of the waste, we can design a solution. The solution is simple: what if, instead of throwing away the Key and Value vectors at the end of each `forward` pass, we just... saved them? This is the core idea of the KV Cache.
 
+## **Chapter 2: The Solution - A Simple Caching Idea**
+
+The problem is redundant computation. The solution, therefore, is to stop re-computing things. Instead of throwing away the Key and Value tensors after every generation step, we will save them in a **cache**. This cache will act as the memory for our `CausalSelfAttention` layer.
+
+#### The New, Efficient Workflow
+
+With a cache, our generation process for each new token transforms from "re-compute everything" to "compute only what's new". Here is the new step-by-step logic:
+
+1.  **Minimal Input:** At each step, we only pass the **single newest token** into the model. The input sequence length `T` will always be 1.
+2.  **Minimal Computation:** Inside the attention layer, we compute the Query, Key, and Value vectors for **only this one new token**.
+3.  **Retrieve from Cache:** We retrieve the Key and Value tensors from all the previous steps, which we have saved in our `past_kv` cache.
+4.  **Concatenate:** We append the newly computed Key and Value vectors to the cached ones.
+    *   `K_full = concatenate(K_past, K_new)`
+    *   `V_full = concatenate(V_past, V_new)`
+5.  **Attend:** We perform the attention calculation using the query from our new token (`Q_new`) and the full, combined Key and Value tensors (`K_full`, `V_full`).
+6.  **Update Cache:** We save the full `K_full` and `V_full` tensors as the new cache, ready for the next generation step.
+
+Let's revisit our "A cat sat..." example with this new workflow.
+
+*   **Prompt:** "A cat" (`idx = [10, 3]`)
+*   **Initial Cache:** `past_kv` contains the `K` and `V` tensors for "A cat".
+    *   `K_past = [ k("A"), k("cat") ]`
+    *   `V_past = [ v("A"), v("cat") ]`
+
+**Step 1: Generating the 3rd token ("sat")**
+
