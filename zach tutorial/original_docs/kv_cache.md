@@ -262,3 +262,29 @@ graph TD
 
 ```
 
+With this clear logical blueprint, we are now ready to translate this efficient workflow into PyTorch code. In the next chapter, we will modify the `CausalSelfAttention` module to implement this caching mechanism.
+
+## **Chapter 3: Code Implementation - Modifying Self-Attention**
+
+The heart of our change lies within the `CausalSelfAttention` module. This is where the Key and Value tensors are created, and therefore, it's where they must be cached. We will modify its `forward` method to become *stateful*—it will now accept the cache from the previous step and return an updated cache for the next.
+
+#### The Code Diff: Before and After
+
+Here is a complete diff of the `CausalSelfAttention` class. The code on the left (marked with `-`) is our original, stateless implementation. The code on the right (marked with `+`) is our new, cache-aware implementation.
+
+```diff
+class CausalSelfAttention(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        assert config.n_embd % config.n_head == 0
+        self.n_head, self.n_embd = config.n_head, config.n_embd
+        self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd)
+        self.c_proj = nn.Linear(config.n_embd, config.n_embd)
+        self.resid_drop = nn.Dropout(config.dropout)
+        self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size)).view(1, 1, config.block_size, config.block_size))
+
+-   def forward(self, x):
++   def forward(self, x, past_kv=None):
+-       B, T, C = x.size()
++       B, T, C = x.size() # Note: T is the new sequence length, usually 1 during generation
+        qkv = self.c_attn(x)
