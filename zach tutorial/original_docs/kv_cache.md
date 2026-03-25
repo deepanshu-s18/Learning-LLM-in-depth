@@ -421,3 +421,29 @@ This correctly selects the **3rd row** of our 3x3 causal mask `[[1,0,0], [1,1,0]
 
 The rest of the calculation proceeds as normal. The final output `y` will have shape `(B=1, T=1, C=4)`.
 
+```python
+    y = att @ v 
+    # Shape of att: (1, 2, 1, 3)
+    # Shape of v: (1, 2, 3, 2)
+    # Shape of y before reshape: (1, 2, 1, 2)
+    
+    y = y.transpose(1, 2).contiguous().view(B, T, C) # Final y shape: (1, 1, 4)
+
+    return self.resid_drop(self.c_proj(y)), present_kv
+```
+
+The function returns two things:
+1.  The final output vector `y` for the token "sat".
+2.  The `present_kv` cache, which contains the Key and Value tensors for the full "A cat sat" sequence. This will become the `past_kv` for the *next* generation step.
+
+| Variable             | Shape in this Step `(B, n_h, T, h_d)` | Contains Info For... |
+| :------------------- | :------------------------------------ | :------------------- |
+| `x` (input)          | `(1, -, 1, -)`                        | "sat"                |
+| `past_k` (input cache) | `(1, 2, 2, 2)`                        | "A cat"              |
+| `q`, new `k`, new `v`| `(1, 2, 1, 2)`                        | "sat"                |
+| full `k` (after cat) | `(1, 2, 3, 2)`                        | "A cat sat"          |
+| `y` (output)         | `(1, -, 1, -)`                        | "sat" (context-aware)|
+| `present_k` (output cache)| `(1, 2, 3, 2)`                        | "A cat sat"          |
+
+We have successfully modified the core engine and understand how the KV cache works within the attention mechanism.
+
