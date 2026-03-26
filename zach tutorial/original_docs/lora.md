@@ -189,3 +189,30 @@ $\Delta W = 2 \times \begin{pmatrix} 1 & 0 & 2 \\ 0 & 0 & 0 \\ 0 & 6 & 0 \\ 1 & 
 
 This $\Delta W$ matrix is the total change that our LoRA parameters will apply to the frozen weights.
 
+**Step 3: The "Merge" for Inference**
+
+After training is done, we can create the final, effective weight matrix by adding the frozen weights and the LoRA update.
+
+$W_{eff} = W_{frozen} + \Delta W = \begin{pmatrix} 1 & 1 & 1 \\ 2 & 2 & 2 \\ 3 & 3 & 3 \\ 4 & 4 & 4 \end{pmatrix} + \begin{pmatrix} 2 & 0 & 4 \\ 0 & 0 & 0 \\ 0 & 12 & 0 \\ 2 & 6 & 4 \end{pmatrix} = \begin{pmatrix} 3 & 1 & 5 \\ 2 & 2 & 2 \\ 3 & 15 & 3 \\ 6 & 10 & 8 \end{pmatrix}$
+
+This final $W_{eff}$ matrix is what you would use for deployment. **Crucially, this merge calculation happens only once after training.** For inference, it's just a standard linear layer, adding zero extra latency.
+
+#### The Forward Pass (How it works during training)
+
+During training, we never compute the full $\Delta W$. That would be inefficient. Instead, we use the decomposed form, which is much faster. The forward pass is:
+
+$y = W_{frozen}x + \frac{\alpha}{r} B(Ax)$
+
+Let's compute this with an input $x = \begin{pmatrix} 1 \\ 2 \\ 3 \end{pmatrix}$:
+
+1.  **LoRA Path (right side):**
+    *   `Ax =` $\begin{pmatrix} 1 & 0 & 2 \\ 0 & 3 & 0 \end{pmatrix} \begin{pmatrix} 1 \\ 2 \\ 3 \end{pmatrix} = \begin{pmatrix} (1*1+0*2+2*3) \\ (0*1+3*2+0*3) \end{pmatrix} = \begin{pmatrix} 7 \\ 6 \end{pmatrix}$
+    *   `B(Ax) =` $\begin{pmatrix} 1 & 0 \\ 0 & 0 \\ 0 & 2 \\ 1 & 1 \end{pmatrix} \begin{pmatrix} 7 \\ 6 \end{pmatrix} = \begin{pmatrix} (1*7+0*6) \\ (0*7+0*6) \\ (0*7+2*6) \\ (1*7+1*6) \end{pmatrix} = \begin{pmatrix} 7 \\ 0 \\ 12 \\ 13 \end{pmatrix}$
+    *   `Scale it: 2 *` $\begin{pmatrix} 7 \\ 0 \\ 12 \\ 13 \end{pmatrix} = \begin{pmatrix} 14 \\ 0 \\ 24 \\ 26 \end{pmatrix}$
+
+2.  **Frozen Path (left side):**
+    *   `W_frozen * x =` $\begin{pmatrix} 1 & 1 & 1 \\ 2 & 2 & 2 \\ 3 & 3 & 3 \\ 4 & 4 & 4 \end{pmatrix} \begin{pmatrix} 1 \\ 2 \\ 3 \end{pmatrix} = \begin{pmatrix} (1+2+3) \\ (2+4+6) \\ (3+6+9) \\ (4+8+12) \end{pmatrix} = \begin{pmatrix} 6 \\ 12 \\ 18 \\ 24 \end{pmatrix}$
+
+3.  **Final Output:**
+    *   `y =` $\begin{pmatrix} 6 \\ 12 \\ 18 \\ 24 \end{pmatrix} + \begin{pmatrix} 14 \\ 0 \\ 24 \\ 26 \end{pmatrix} = \begin{pmatrix} 20 \\ 12 \\ 42 \\ 50 \end{pmatrix}$
+
