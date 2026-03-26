@@ -107,3 +107,30 @@ Weight (W):
 Bias (b): tensor([0.7000, 0.8000], grad_fn=<CopySlices>)
 
 Output (y): tensor([[2.1000, 4.7000]], grad_fn=<AddmmBackward0>)
+```
+The final output is the tensor `[[2.1, 4.7]]`.
+
+**4. Manual Verification: Step-by-Step**
+
+Let's prove this result. The calculation is `x @ W.T + b`.
+
+*   **First, the matrix multiplication `x @ W.T`:**
+    *   `[1, 2, 3] @ [[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]]`
+    *   `output[0] = (1*0.1) + (2*0.2) + (3*0.3) = 0.1 + 0.4 + 0.9 = 1.4`
+    *   `output[1] = (1*0.4) + (2*0.5) + (3*0.6) = 0.4 + 1.0 + 1.8 = 3.2`
+    *   Result: `[1.4, 3.2]`
+
+*   **Second, add the bias `+ b`:**
+    *   `[1.4, 3.2] + [0.7, 0.8]`
+    *   Result: `[2.1, 4.7]`
+
+The manual calculation matches the PyTorch output exactly. This is all a linear layer does.
+
+#### The Scaling Problem
+
+This seems trivial. So where is the problem? The problem is scale.
+
+*   **Our Toy Layer (`3x2`):**
+    *   Weight parameters: `3 * 2 = 6`
+    *   Bias parameters: `2`
+    *   **Total:** `8` trainable parameters.
