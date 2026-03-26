@@ -79,3 +79,31 @@ Now we have known values for everything.
 
 *   **Input `x`:** `[1., 2., 3.]`
 *   **Weight `W`:** `[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]`
+*   **Bias `b`:** `[0.7, 0.8]`
+
+**3. The Forward Pass and Its Output:**
+
+When you call `layer(input_tensor)`, PyTorch computes the result.
+
+```python
+# The forward pass
+output_tensor = layer(input_tensor)
+
+print("--- PyTorch Calculation ---")
+print("Input (x):", input_tensor)
+print("Weight (W):\n", layer.weight)
+print("Bias (b):", layer.bias)
+print("\nOutput (y):", output_tensor)
+```
+
+This will print:
+
+```text
+--- PyTorch Calculation ---
+Input (x): tensor([[1., 2., 3.]])
+Weight (W):
+ tensor([[0.1000, 0.2000, 0.3000],
+        [0.4000, 0.5000, 0.6000]], grad_fn=<CopySlices>)
+Bias (b): tensor([0.7000, 0.8000], grad_fn=<CopySlices>)
+
+Output (y): tensor([[2.1000, 4.7000]], grad_fn=<AddmmBackward0>)
