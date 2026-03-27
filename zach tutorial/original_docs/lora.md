@@ -298,3 +298,30 @@ class LoRALinear(nn.Module):
 #### Applying LoRA to a Model
 
 Now we need a helper function to swap out the `nn.Linear` layers in any given model with our new `LoRALinear` layer.
+
+```python
+def apply_lora(model: nn.Module, r: int, alpha: float = 16.0):
+    """
+    Replaces all nn.Linear layers in a model with LoRALinear layers.
+    """
+    for name, module in list(model.named_modules()):
+        if isinstance(module, nn.Linear):
+            # Find the parent module to replace the child
+            parent_name, child_name = name.rsplit('.', 1)
+            parent_module = model.get_submodule(parent_name)
+
+            # Replace the original linear layer
+            setattr(parent_module, child_name, LoRALinear(module, r=r, alpha=alpha))
+```
+
+#### Minimal End-to-End Demo
+
+Let's see it all work together.
+
+**1. Create a toy model:**
+```python
+model = nn.Sequential(
+    nn.Linear(128, 256),
+    nn.ReLU(),
+    nn.Linear(256, 10) # e.g., for classification
+)
