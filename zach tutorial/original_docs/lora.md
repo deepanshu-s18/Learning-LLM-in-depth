@@ -216,3 +216,30 @@ Let's compute this with an input $x = \begin{pmatrix} 1 \\ 2 \\ 3 \end{pmatrix}$
 3.  **Final Output:**
     *   `y =` $\begin{pmatrix} 6 \\ 12 \\ 18 \\ 24 \end{pmatrix} + \begin{pmatrix} 14 \\ 0 \\ 24 \\ 26 \end{pmatrix} = \begin{pmatrix} 20 \\ 12 \\ 42 \\ 50 \end{pmatrix}$
 
+#### The Astonishing Savings
+
+This math is why LoRA works. Let's return to the realistic LLM layer (`4096x4096`) to see the impact.
+
+| Method | Trainable Parameters | Calculation | Parameter Reduction |
+| :--- | :--- | :--- | :--- |
+| **Full Fine-Tuning** | 16,777,216 | `4096 * 4096` | 0% |
+| **LoRA (r=8)** | **65,536** | `(8 * 4096) + (4096 * 8)` | **99.61%** |
+
+By performing the efficient forward pass during training, we only need to store and update the parameters for the tiny `A` and `B` matrices, achieving a >99% parameter reduction while still being able to modify the behavior of the massive base layer.
+
+## **Chapter 5: The Main Event - Implementing LoRA in PyTorch**
+
+We will now translate the math from the previous chapter into a reusable PyTorch `nn.Module`. Our goal is to create a `LoRALinear` layer that wraps a standard `nn.Linear` layer, freezes it, and adds the trainable `A` and `B` matrices.
+
+#### The `LoRALinear` Module
+
+Here is the complete implementation, followed by a breakdown of each part.
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+
+class LoRALinear(nn.Module):
+    def __init__(self, base: nn.Linear, r: int, alpha: float = 16.0):
