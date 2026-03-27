@@ -270,3 +270,31 @@ class LoRALinear(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # 1. The original, frozen path
+        base_output = self.base(x)
+
+        # 2. The efficient LoRA path: B(A(x))
+        # F.linear(x, self.lora_A) computes x @ A.T
+        # F.linear(..., self.lora_B) computes (x @ A.T) @ B.T
+        lora_update = F.linear(F.linear(x, self.lora_A), self.lora_B) * self.scaling
+
+        # 3. Return the combined output
+        return base_output + lora_update
+```
+
+**Breakdown:**
+
+1.  **`__init__(self, base, r, alpha)`**:
+    *   It accepts the original `nn.Linear` layer (`base`) that we want to adapt.
+    *   `self.base.weight.requires_grad_(False)`: This is the critical **"freezing"** step. We tell PyTorch's autograd engine not to compute gradients for the original weights, so they will never be updated by the optimizer.
+    *   `nn.Parameter(...)`: We register `lora_A` and `lora_B` as official trainable parameters of the module. Their shapes are derived directly from the base layer and the rank `r`.
+    *   `nn.init.zeros_(self.lora_B)`: This is a crucial initialization detail. By starting `B` as a zero matrix, the entire LoRA update (`B @ A`) is zero at the beginning of training. This means our `LoRALinear` layer initially behaves exactly like the original frozen layer, and the model learns the "change" from a stable starting point.
+
+2.  **`forward(self, x)`**:
+    *   This is a direct translation of the formula: $y = W_{frozen}x + \frac{\alpha}{r} B(Ax)$
+    *   We compute the output of the frozen path and the LoRA path separately.
+    *   The nested `F.linear` calls are a highly efficient PyTorch way to compute `(x @ A.T) @ B.T` without ever forming the full $\Delta W$ matrix.
+    *   Finally, we add them together.
+
+#### Applying LoRA to a Model
+
+Now we need a helper function to swap out the `nn.Linear` layers in any given model with our new `LoRALinear` layer.
