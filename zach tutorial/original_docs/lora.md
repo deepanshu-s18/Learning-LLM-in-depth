@@ -325,3 +325,30 @@ model = nn.Sequential(
     nn.ReLU(),
     nn.Linear(256, 10) # e.g., for classification
 )
+```
+
+**2. Inject LoRA layers:**
+```python
+apply_lora(model, r=8, alpha=16.0)
+print(model)
+```
+The output will show that our `nn.Linear` layers have been replaced by `LoRALinear`.
+
+**3. Isolate the Trainable Parameters:**
+This is the most important step. We create an optimizer that *only* sees the LoRA weights.
+
+```python
+# Filter for parameters that require gradients (only lora_A and lora_B)
+trainable_params = [p for p in model.parameters() if p.requires_grad]
+trainable_param_names = [name for name, p in model.named_parameters() if p.requires_grad]
+
+print("\nTrainable Parameters:")
+for name in trainable_param_names:
+    print(name)
+
+# Create an optimizer that only updates the LoRA weights
+optimizer = torch.optim.AdamW(trainable_params, lr=1e-4)
+```
+
+**Output:**
+```text
