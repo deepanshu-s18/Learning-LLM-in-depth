@@ -243,3 +243,30 @@ import math
 
 class LoRALinear(nn.Module):
     def __init__(self, base: nn.Linear, r: int, alpha: float = 16.0):
+        super().__init__()
+        # --- Store hyperparameters ---
+        self.r = r
+        self.alpha = alpha
+        self.scaling = self.alpha / self.r
+
+        # --- Store and freeze the original linear layer ---
+        self.base = base
+        self.base.weight.requires_grad_(False)
+        # Also freeze the bias if it exists
+        if self.base.bias is not None:
+            self.base.bias.requires_grad_(False)
+
+        # --- Create the trainable LoRA matrices A and B ---
+        # A has shape [r, in_features]
+        # B has shape [out_features, r]
+        self.lora_A = nn.Parameter(torch.empty(r, self.base.in_features))
+        self.lora_B = nn.Parameter(torch.empty(self.base.out_features, r))
+
+        # --- Initialize the weights ---
+        # A is initialized with a standard method
+        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
+        # B is initialized with zeros
+        nn.init.zeros_(self.lora_B)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # 1. The original, frozen path
