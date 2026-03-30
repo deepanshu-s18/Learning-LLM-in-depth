@@ -167,3 +167,45 @@ OUTPUT: argmin_{x1,x2} f(x1,x2)
 
 FOR 100 iterations:
   ∂f/∂x1 = calculate x1-gradient at current point
+  ∂f/∂x2 = calculate x2-gradient at current point
+  x1 = x1 - η × ∂f/∂x1
+  x2 = x2 - η × ∂f/∂x2
+RETURN (x1,x2)
+```
+
+Each variable gets its own update rule, but we apply them all simultaneously!
+
+#### **Step-by-Step Example: 2D Gradient Descent**
+
+**What we're minimizing:** f(x1,x2) = x1²+2x2² where (x1,x2) are the **independent variables** (we control them) and f(x1,x2) is the **dependent variable** (depends on our choices).
+
+Let's trace the algorithm starting at (x1₀,x2₀) = (3,2) with η = 0.1:
+
+| Iter | x1 | x2 | f(x1,x2)=x1²+2x2² | ∂f/∂x1=2x1 | ∂f/∂x2=4x2 | x1-η×∂f/∂x1 | x2-η×∂f/∂x2 | New (x1,x2) |
+|------|---|---|------------|----------|----------|-----------|-----------|-----------|
+| 0 | 3.00 | 2.00 | **17.00** | 6.00 | 8.00 | 3.00-0.6 | 2.00-0.8 | **(2.40, 1.20)** |
+| 1 | 2.40 | 1.20 | **8.64** | 4.80 | 4.80 | 2.40-0.48 | 1.20-0.48 | **(1.92, 0.72)** |
+| 2 | 1.92 | 0.72 | **4.72** | 3.84 | 2.88 | 1.92-0.384 | 0.72-0.288 | **(1.54, 0.43)** |
+| 3 | 1.54 | 0.43 | **2.74** | 3.08 | 1.72 | 1.54-0.308 | 0.43-0.172 | **(1.23, 0.26)** |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |
+| 10 | 0.40 | 0.03 | **0.162** | 0.80 | 0.12 | 0.40-0.08 | 0.03-0.012 | **(0.32, 0.018)** |
+
+**What you'd see on the graph:**
+- **Red dot** starts at (3,2,17) on the bowl surface [since f(3,2) = 9+8 = 17]
+- Each iteration: dot slides toward center (0,0,0) 
+- **Two gradient arrows** at each point show the x-slope and y-slope
+- Dot spirals down to the bottom at (0,0,0)
+
+Both x and y converge toward 0 simultaneously! The algorithm finds the minimum of our 2D bowl automatically.
+
+This is the fundamental technique we use to update every single weight in a neural network. We calculate each weight's individual contribution to the total error using partial derivatives, then nudge each weight in the right direction.
+
+The magic: each variable gets its own gradient, but they all work together to find the minimum. Scale this up to millions of variables, and you have neural network training!
+
+
+## Part 3: Chain Rule - The Backpropagation Secret
+
+**THE MASTERSTROKE:**
+```
+dy/dx = (dy/du) × (du/dx)
+```
