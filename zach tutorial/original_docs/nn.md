@@ -40,3 +40,45 @@ FOR 100 iterations:
   gradient = f'(x)
   x = x - η × gradient
 RETURN x
+```
+
+This algorithm is the beating heart of every AI system you've ever heard of. ChatGPT, image recognition, self-driving cars - they all use this exact loop to learn.
+
+**Here's the thing:** Every neural network is trying to learn by minimizing its "error" - the difference between what it predicts and what's actually correct. This algorithm is the key process that guides the network toward perfection by systematically reducing that error.
+
+**The intuition is simple:** Imagine you're lost in thick fog on a hill, trying to reach the valley floor. You can't see ahead, but you can feel the slope under your feet. So you repeatedly: (1) feel which way is steepest, (2) take a small step in the opposite direction (downhill), (3) repeat until the ground is flat.
+
+That's exactly what our algorithm does mathematically.
+
+#### **The Math Behind It**
+
+Let's make this concrete with the function **f(x) = x²** - a perfect U-shaped valley.
+
+The **gradient** (also called derivative) f'(x) tells us the slope at any point x. For our function: **f'(x) = 2x**
+
+This means:
+- At x=3: slope = 6 (steep uphill to the right)
+- At x=-2: slope = -4 (steep uphill to the left)  
+- At x=0: slope = 0 (perfectly flat - the minimum!)
+
+Our update rule `x = x - η × f'(x)` automatically moves us opposite to the slope, toward the minimum.
+
+#### **Step-by-Step Example**
+
+**What we're minimizing:** f(x) = x² where x is the **independent variable** (we can control it) and f(x) is the **dependent variable** (depends on our choice of x).
+
+Let's trace the algorithm starting at x₀ = 3 with learning rate η = 0.1:
+
+| Iteration | Current x | f(x) = x² | Gradient f'(x) = 2x | Update: x - 0.1×f'(x) | New x |
+|-----------|-----------|-----------|---------------------|----------------------|-------|
+| 0 | 3.000 | **9.000** | 6.000 | 3.000 - 0.6 | **2.400** |
+| 1 | 2.400 | **5.760** | 4.800 | 2.400 - 0.48 | **1.920** |
+| 2 | 1.920 | **3.686** | 3.840 | 1.920 - 0.384 | **1.536** |
+| 3 | 1.536 | **2.359** | 3.072 | 1.536 - 0.307 | **1.229** |
+| 4 | 1.229 | **1.510** | 2.458 | 1.229 - 0.246 | **0.983** |
+| ... | ... | ... | ... | ... | ... |
+| 10 | 0.322 | **0.104** | 0.644 | 0.322 - 0.064 | **0.258** |
+
+**What you'd see on the graph:**
+- **Red dot** starts at (3, 9) on the parabola
+- Each iteration: dot slides leftward down the curve
