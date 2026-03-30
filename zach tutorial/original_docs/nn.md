@@ -124,3 +124,46 @@ This is the core engine of ALL machine learning. Everything else is just calcula
 
 Up next, we'll see what happens when our valley has more than one dimension.
 
+
+## Part 2: Partial Derivatives - The Multi-Dimensional Secret
+
+**THE BREAKTHROUGH:**
+```
+∂f/∂x = how steep in x-direction (treat y as constant)
+∂f/∂y = how steep in y-direction (treat x as constant)
+```
+
+**The challenge:** Neural networks have millions of parameters. How do we figure out which direction to adjust each one? Partial derivatives let us calculate the effect of each parameter individually.
+
+**Think of it like adjusting a soundboard - focus on one knob at a time while keeping everything else locked.**
+
+#### **What Are Partial Derivatives?**
+
+Remember gradients from Part 1? For f(x), we wrote f'(x) to get the slope. But what if our function depends on multiple variables?
+
+Let's upgrade our simple valley. Instead of f(x) = x², consider:
+
+**f(x1,x2) = x1² + 2x2²** 
+
+This creates a 3D bowl-shaped valley. The minimum is at (0,0) where f(0,0) = 0.
+
+Now we need TWO slopes:
+- **∂f/∂x1:** How steep is the slope if we move in the x1-direction? 
+- **∂f/∂x2:** How steep is the slope if we move in the x2-direction?
+
+**The magic rule:** To find ∂f/∂x1, **TREAT x2 AS CONSTANT!!** (like it's just the number 5), then take the normal derivative with respect to x1.
+
+**For our function f(x1,x2) = x1² + 2x2²:**
+- ∂f/∂x1 = 2x1 (the 2x2² term disappears because x2 is "constant")
+- ∂f/∂x2 = 4x2 (the x1² term disappears because x1 is "constant")
+
+#### **Now The 2D Algorithm**
+
+With partial derivatives understood, here's gradient descent for multiple variables:
+
+```
+INPUT: function f(x1,x2), starting point (x1₀,x2₀)
+OUTPUT: argmin_{x1,x2} f(x1,x2)
+
+FOR 100 iterations:
+  ∂f/∂x1 = calculate x1-gradient at current point
