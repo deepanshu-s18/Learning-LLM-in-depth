@@ -82,3 +82,45 @@ Let's trace the algorithm starting at x₀ = 3 with learning rate η = 0.1:
 **What you'd see on the graph:**
 - **Red dot** starts at (3, 9) on the parabola
 - Each iteration: dot slides leftward down the curve
+- **Blue tangent line** at each dot shows the slope
+- Dot finally settles at (0, 0) - the bottom!
+
+The algorithm discovers the minimum purely by following mathematical slopes. Brilliant!
+
+#### **The Big Limitation: What About Bumpy Hills?**
+
+Here's the catch: gradient descent has tunnel vision. It only sees the slope right under its feet.
+
+**Example: A Function with a Trap**
+
+Let's see this in action with f(x) = x⁴ - 4x² + x + 1. This creates a landscape with two valleys:
+
+**(Scene: Show a curve with two dips - a shallow one on the left at x≈-1, and a deeper one on the right at x≈1.5)**
+
+- **Local minimum** at x ≈ -1 (shallow valley, f(x) ≈ -1) 
+- **Global minimum** at x ≈ 1.5 (deep valley, f(x) ≈ -2.8)
+
+**What happens:**
+- Start at x = -0.5 → Gradient descent gets trapped in the shallow valley at x ≈ -1
+- Start at x = 0.5 → Finds the true deep valley at x ≈ 1.5
+
+**On a smooth valley:** ✓ Finds the bottom perfectly
+**On a jagged landscape:** ✗ Gets trapped wherever it starts
+
+Same algorithm, different outcomes based on starting point!
+
+**What about neural networks?**
+
+Here's the surprising truth: large neural networks trained with gradient descent DO hit local minima, but they very rarely get trapped in bad ones.
+
+**Why this works in practice:**
+- **High dimensions are weird:** With millions of parameters, most "local minima" are actually good solutions
+- **Many paths to success:** There are typically millions of different weight combinations that work well
+- **Local minima cluster:** The "bad" local minima tend to be rare compared to the "good enough" ones
+
+**The mystery:** We still don't fully understand why, but empirically, gradient descent finds excellent solutions for neural networks despite the theoretical trap problem. It's one of the luckiest coincidences in AI!
+
+This is the core engine of ALL machine learning. Everything else is just calculating f'(x) for complex networks.
+
+Up next, we'll see what happens when our valley has more than one dimension.
+
