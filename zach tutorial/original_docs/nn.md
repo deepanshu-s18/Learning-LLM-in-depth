@@ -378,3 +378,45 @@ Remember from Part 3 how we handled complex nested functions? Neural networks ar
 | Tool: Chain rule + Gradient descent | Tool: Chain rule + Gradient descent |
 
 **Question: What are the variables in our neural network?**
+
+Let's see what we have:
+- 2 inputs (x1, x2)
+- 2 neurons in Layer 1  
+- 1 neuron in Layer 2
+- 5 weights to learn (w1, w2, w3, w4, w5)
+
+**Answer:** x1, x2? **WRONG!** 
+
+The inputs (x1, x2) are **given** to us in the training data. We can't change them.
+
+**The variables we control are the weights:** w1, w2, w3, w4, w5
+
+**Updated comparison:**
+
+| Complex Functions (Part 3) | Neural Networks (Part 4) |
+|----------------------------|---------------------------|
+| Variables: x1, x2 | Variables: w1, w2, w3, w4, w5 |
+| Goal: Minimize f(x1,x2) | Goal: Minimize Error(w1,w2,w3,w4,w5) |
+
+**The breakthrough:** We already know how to minimize complex nested functions! Neural networks are just another nested function - same tools, same approach.
+
+We use gradient descent to find the weights that minimize the error, just like we found x1,x2 values that minimized functions in Parts 1-3!
+
+Time to play the "blame game" we learned in Part 3! We'll trace backward from the error to find how much each weight is responsible for the mistake.
+
+#### **The Network Architecture**
+
+Let's recap our network with our example: x1=3, x2=2, y_true=24, prediction=37.
+
+```
+Layer 1:
+  Input:
+    constant: x1, x2
+    variable: w1, w2
+  Output:
+    neuron 1: h1 = (x1 + w1×x2)² = (3 + 1×2)² = 25
+    neuron 2: h2 = w2×x1×x2 = 2×3×2 = 12
+
+Layer 2:
+  Input:
+    variable: h1, h2, w3, w4, w5
