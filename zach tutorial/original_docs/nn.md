@@ -505,3 +505,45 @@ Layer 1 gradients:
   ∂h2/∂w2 = x1×x2 = 6
 ```
 
+Now we multiply along each weight's path:
+
+```
+w5: ∂Error/∂w5 = ∂Error/∂y_pred × ∂y_pred/∂w5 = 26 × 1 = 26
+w4: ∂Error/∂w4 = ∂Error/∂y_pred × ∂y_pred/∂w4 = 26 × 12 = 312  
+w3: ∂Error/∂w3 = ∂Error/∂y_pred × ∂y_pred/∂w3 = 26 × 25 = 650
+w2: ∂Error/∂w2 = ∂Error/∂y_pred × ∂y_pred/∂h2 × ∂h2/∂w2 = 26 × 1 × 6 = 156
+w1: ∂Error/∂w1 = ∂Error/∂y_pred × ∂y_pred/∂h1 × ∂h1/∂w1 = 26 × 1 × 20 = 520
+```
+
+#### **Gradient Descent Update**
+
+Now we use these gradients to update our weights. Using learning rate η = 0.0001:
+
+| Weight | Old Value | Gradient | Update | New Value |
+|--------|-----------|----------|--------|-----------|
+| w5 | 0 | 26 | 0 - 0.0001×26 | **-0.0026** |
+| w4 | 1 | 312 | 1 - 0.0001×312 | **0.9688** |
+| w3 | 1 | 650 | 1 - 0.0001×650 | **0.935** |
+| w2 | 2 | 156 | 2 - 0.0001×156 | **1.9844** |
+| w1 | 1 | 520 | 1 - 0.0001×520 | **0.948** |
+
+**What just happened?** We used the chain rule to trace responsibility backward from the error to each weight, then nudged each weight in the direction that reduces the error. This is backpropagation!
+
+**Time for the moment of truth!** Let's run our network again with the updated weights to see if it learned anything.
+
+#### **Forward Pass with New Weights**
+
+Using our updated weights: w1=0.948, w2=1.9844, w3=0.935, w4=0.9688, w5=-0.0026
+
+**Layer 1:**
+- h1 = (x1 + w1×x2)² = (3 + 0.948×2)² = (3 + 1.896)² = (4.896)² = **23.97**
+- h2 = w2×x1×x2 = 1.9844×3×2 = **11.91**
+
+**Layer 2:**
+- y_pred = w3×h1 + w4×h2 + w5 = 0.935×23.97 + 0.9688×11.91 + (-0.0026)
+- y_pred = 22.41 + 11.54 - 0.0026 = **33.95**
+
+#### **Before vs After**
+
+| | Before Learning | After Learning | Target |
+|---|---|---|---|
