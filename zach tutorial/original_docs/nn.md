@@ -463,3 +463,45 @@ We already know ∂Error/∂y_pred = 26. Let's find the other pieces:
 
 Therefore: **∂Error/∂w1 = 26 × 1 × 20 = 520**
 
+#### **The Pattern: Look at the Overlap!**
+
+Let's write out the full formulas we just calculated:
+
+```
+∂Error/∂w5 = ∂Error/∂y_pred × ∂y_pred/∂w5 = 26 × 1 = 26
+
+∂Error/∂w1 = ∂Error/∂y_pred × ∂y_pred/∂h1 × ∂h1/∂w1 = 26 × 1 × 20 = 520
+```
+
+Wait! Notice that **∂Error/∂y_pred = 26** appears in both calculations! 
+
+**Key insight!!** These intermediate computations are shared! Every weight's gradient includes ∂Error/∂y_pred. This means we can:
+
+1. **Compute once**: Calculate ∂Error/∂y_pred = 26
+2. **Reuse everywhere**: Use this value for all weight gradients
+3. **Propagate backward**: Work layer by layer, reusing computations
+
+This is the essence of backpropagation - we propagate the error gradient backward through the network, reusing shared computations!
+
+#### **Systematic Approach: All Weights at Once**
+
+Now let's systematically compute all weight gradients using our shared computation:
+
+First, we compute all the individual derivatives we need:
+
+```
+Error gradients:
+  ∂Error/∂y_pred = 26
+
+Layer 2 gradients:
+  ∂y_pred/∂w5 = 1
+  ∂y_pred/∂w4 = h2 = 12  
+  ∂y_pred/∂w3 = h1 = 25
+  ∂y_pred/∂h1 = w3 = 1
+  ∂y_pred/∂h2 = w4 = 1
+
+Layer 1 gradients:
+  ∂h1/∂w1 = 2×(x1 + w1×x2)×x2 = 20
+  ∂h2/∂w2 = x1×x2 = 6
+```
+
