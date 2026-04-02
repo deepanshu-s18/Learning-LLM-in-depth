@@ -105,3 +105,30 @@ Because to get *consistently good* at this task across billions of examples, the
 
 What must the model learn to accurately predict the word `French`?
 
+1.  **It needs to understand grammar:** It recognizes that the verb "is" will likely be followed by a noun or adjective.
+2.  **It needs to handle long-distance context:** It must connect the end of the sentence back to the subject, "Paris," which appeared many words earlier.
+3.  **It needs to learn facts about the world:** It must know that Paris is the capital of France, and that the language spoken in France is French.
+4.  **It needs to ignore distractors:** It must realize that the word "primary" is less important than "France" for determining the language.
+
+The only way for the model to minimize its prediction error across trillions of examples like this is to develop a rich internal model of concepts, facts, and the relationships between them. It's not memorizing; it's learning the underlying patterns of reality as reflected in human language.
+
+#### Connecting to Reality: The Power of Scale
+
+This self-supervised approach caused a paradigm shift in the scale of AI.
+
+| Era | Dataset Example | Size | Parameters | Human Labeling? |
+| :--- | :--- | :--- | :--- | :--- |
+| **Traditional ML** | MNIST Digits | ~60,000 images (Megabytes) | 1-10 Million | **Yes** |
+| **Deep Learning** | ImageNet | 14 Million images (Gigabytes) | 25-150 Million | **Yes** |
+| **GPT-2 Era** | WebText | 40GB of text (~8M pages) | **1.5 Billion** | **No** |
+
+The leap is staggering. A single 2,000-word Wikipedia article is automatically converted into **1,999** individual training examples. Scale that across the 40GB of text GPT-2 was trained on, and you have **billions** of learning opportunities, all for free.
+
+We've solved the data problem by turning the internet into an infinitely large, self-labeling textbook.
+
+Now that we understand the *task*, let's tackle the next critical step: how do we turn these words into numbers our neural network can actually process? This is where we move to **Tokenization**.
+
+## **Part 2: Tokenization - Turning Language into LEGO Bricks**
+
+We've established our learning task: predict the next piece of text. But our neural network doesn't understand "text"; it understands numbers. The process of converting raw text into a list of numbers the model can process is called **Tokenization**.
+
