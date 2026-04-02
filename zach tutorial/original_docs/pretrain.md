@@ -78,3 +78,30 @@ FOR k FROM 1 TO n-1:
 
 RETURN output_set
 ```
+
+#### Step-by-Step Example: Slicing a Sentence
+
+Let's see this algorithm in action. Take the simple sentence: **"The cat sat on the mat."**
+
+The training process doesn't see this sentence just once. It systematically slides a window across it, turning one sentence into a full curriculum.
+
+| | Input Sequence (What the model sees) | Target Output (What it must predict) |
+| :--- | :--- | :--- |
+| **Example 1** | ["The"] | `cat` |
+| **Example 2** | ["The", "cat"] | `sat` |
+| **Example 3** | ["The", "cat", "sat"] | `on` |
+| **Example 4** | ["The", "cat", "sat", "on"] | `the` |
+| **Example 5** | ["The", "cat", "sat", "on", "the"]| `mat` |
+
+One sentence just generated five high-quality, perfectly labeled training examples for free.
+
+#### Why Does Predicting the Next Word Create Intelligence?
+
+At first, this seems too simple. How can guessing the next word teach a model to reason, write code, or explain science?
+
+Because to get *consistently good* at this task across billions of examples, the model is forced to build a deep, internal understanding of the world. Imagine the model is given the following input text and must predict the single next word:
+
+**"In Paris, the capital of France, the primary language spoken is..."**
+
+What must the model learn to accurately predict the word `French`?
+
