@@ -159,3 +159,30 @@ Let's see how a real subword tokenizer might handle our examples:
 *   The word "quickly" is broken into two common pieces: `["quick", "##ly"]`
 *   The word "jumping" becomes two familiar parts: `["jump", "##ing"]`
 
+The `##` is a special symbol that simply means "this token is attached to the previous one." This elegant solution solves all of our earlier problems:
+
+1.  **It Creates an Efficient Vocabulary:** Instead of needing separate entries for `jump`, `jumps`, `jumping`, and `jumper`, the tokenizer only needs to know the common stem `jump` and the common subwords `##s`, `##ing`, and `##er`. This keeps the vocabulary size manageable (GPT-2 uses about 50,000 tokens).
+2.  **It Eliminates Unknown Words:** How does it handle a new, complex word like "hyper-threading"? It can build it from its LEGO bricks: `["hyper", "-", "thread", "##ing"]`. What about a typo like "awesommmme"? It might break it down into `["awesome", "##m", "##m", "##e"]`. The model can represent **any** word by breaking it down into a combination of known subwords and, in the worst case, individual characters.
+
+#### The Final Output: Integer IDs
+
+After the text is broken into these subword tokens, the tokenizer looks up each token in its vocabulary to get a unique integer ID. These IDs are what actually get fed into our model as the **Input Tokens** in our architecture diagram.
+
+Let's imagine a small part of a learned vocabulary:
+
+| Token | Token ID |
+| :--- | :---: |
+| "The" | 5 |
+| "cat" | 8 |
+| "quick" | 73 |
+| "##ly" | 152 |
+| "jump" | 311 |
+| "##ed" | 94 |
+
+The full tokenization process for "The cat quickly jumped" would look like this:
+
+1.  **Input Text:** "The cat quickly jumped"
+2.  **Subword Splitting:** `["The", "cat", "quick", "##ly", "jump", "##ed"]`
+3.  **Final Output (Token IDs):** `[5, 8, 73, 152, 311, 94]`
+
+This final list of numbers is what represents our sentence. But these numbers are just labels. ID `73` doesn't have any mathematical relationship to ID `8`. They are just arbitrary pointers.
