@@ -213,3 +213,30 @@ This is why language models can write beautiful poetry about strawberries but mi
 Now that we've turned our text into a clean sequence of token IDs, we need to convert these meaningless IDs into rich, meaningful vectors that our neural network can actually understand. This is the **Embeddings** layer, the input to the Transformer model itself. Let's now jump past the model's internal workings and see how it produces an output.
 
 ## **Part 3: The Output - From Probabilities to Actual Words**
+
+We've turned our text into token IDs and fed them through the massive neural network. Now comes the moment of truth: the model must make a prediction. This is where we see the final, elegant math that drives both learning and creativity.
+
+#### Critical Distinction: Training vs. Generation
+
+Here is what 90% of people misunderstand about how these models work. There are two distinct processes:
+
+1.  **During Training,** the model's goal is to output a **probability distribution** over all 50,257 possible tokens. This distribution is then compared to the single correct answer to calculate an error (loss), which is used to update the model's weights. The goal is to get better.
+2.  **During Generation** (when you use ChatGPT or an API), the model still produces this probability distribution, but instead of calculating error, it **samples** from this distribution to pick the next word. The goal is to create new text.
+
+Let's break down each step, starting with the part they have in common.
+
+---
+
+### **Section 1: Making a Prediction - The Softmax Function**
+
+After all the complex internal calculations, the model's final layer produces a raw output score—a **logit**—for every single token in its vocabulary. For GPT-2, with its 50,257-token vocabulary, you get 50,257 logits.
+
+These are just raw numbers. They aren't probabilities yet.
+
+*   They can be positive or negative.
+*   They don't sum to 1.
+
+For example, after seeing "The cat sat on the", the logits might look like this:
+
+`{"mat": 3.2, "rug": 1.3, "floor": 0.5, "moon": -2.1, ... (and 50,253 other scores)}`
+
