@@ -240,3 +240,30 @@ For example, after seeing "The cat sat on the", the logits might look like this:
 
 `{"mat": 3.2, "rug": 1.3, "floor": 0.5, "moon": -2.1, ... (and 50,253 other scores)}`
 
+To turn these messy logits into clean probabilities, we use a crucial function called **Softmax**.
+
+The Softmax formula is:
+`probability_of_token_i = exponent(logit_i) / sum_of_all_exponentiated_logits`
+
+For each token, we raise *e* to the power of its logit, and then divide that by the sum of all the exponentiated logits. This operation guarantees two things:
+1.  Every probability will be between 0 and 1.
+2.  All the probabilities will sum to exactly 100%.
+
+Let's see this in action with our simplified example vocabulary:
+
+| Token | Step 1: Logit Score | Step 2: Exponentiate (e^logit) | Step 3: Divide by Sum (28.32) | Final Probability |
+| :--- | :---: | :---: | :---: | :---: |
+| "mat" | **3.2** | 24.53 | 24.53 / 28.32 | **86.6%** |
+| "rug" | **1.3** | 3.67 | 3.67 / 28.32 | **13.0%** |
+| "moon"| **-2.1**| 0.12 | 0.12 / 28.32 | **0.4%** |
+| **Total**| | **28.32** | | **100%** |
+
+The model's official prediction is now a clean probability distribution. We've reached the **Output Probabilities** stage in our diagram. Now, what we do with this depends on whether we are training or generating.
+
+---
+
+### **Section 2: The Learning Process (Training Only)**
+
+During training, we know the correct answer was "mat". Our model assigned an 86.6% probability to it. Was that good? How do we turn this into a single error number to drive learning?
+
+We use a loss function called **Cross-Entropy**.
