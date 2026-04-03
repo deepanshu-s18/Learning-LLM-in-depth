@@ -294,3 +294,30 @@ This single loss number is the starting point for backpropagation. When combined
 
 ---
 
+### **Section 3: Creating Text (Generation Only)**
+
+When you actually use ChatGPT or call the OpenAI API, you're not training—you're generating text. The model produces the same probabilities, but instead of calculating loss, it has to pick a single word.
+
+Simply picking the word with the highest probability every time would lead to deterministic, boring, and repetitive text. To create interesting and creative output, the model **samples** from the probability distribution, and we can control this sampling with parameters.
+
+Here is a typical API call:
+```python
+import openai
+
+response = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "The weather today is"}],
+    temperature=0.7,      # Controls randomness
+    top_p=0.9,            # Controls diversity
+)
+```
+
+What do these parameters actually do?
+
+**Temperature (Range: 0 to 2)**
+*   **Intuition:** Controls the "creativity" or randomness of the output.
+*   **Mechanism:** It modifies the logits *before* the Softmax function: `adjusted_logits = logits / temperature`.
+    *   `temperature < 1.0` (e.g., 0.5): Divides by a smaller number, making the gap between logits larger. This *sharpens* the probabilities, making the model more confident and deterministic. Good for factual answers.
+    *   `temperature > 1.0` (e.g., 1.5): Divides by a larger number, shrinking the gap between logits. This *flattens* the probabilities, increasing the chance of picking a less likely, more "creative" word.
+
+**Top-p (Nucleus Sampling) (Range: 0 to 1)**
