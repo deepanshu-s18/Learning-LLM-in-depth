@@ -321,3 +321,30 @@ What do these parameters actually do?
     *   `temperature > 1.0` (e.g., 1.5): Divides by a larger number, shrinking the gap between logits. This *flattens* the probabilities, increasing the chance of picking a less likely, more "creative" word.
 
 **Top-p (Nucleus Sampling) (Range: 0 to 1)**
+*   **Intuition:** Controls the diversity of the output by preventing the model from picking truly nonsensical words.
+*   **Mechanism:** Instead of considering all 50,257 tokens, it samples from the smallest possible set of tokens whose cumulative probability exceeds the `top_p` value.
+    *   `top_p = 0.1`: Only sample from the most likely tokens that make up the top 10% of the probability mass. This is very focused and safe.
+    *   `top_p = 0.9`: Sample from a much wider "nucleus" of plausible tokens. This allows for more diversity without considering the garbage tokens in the long tail of the distribution.
+
+Let's see how temperature changes the output for the prompt "The weather today is":
+
+| Token | Base Prob. (temp=1.0) | Prob. at temp=0.5 (Sharper) | Prob. at temp=2.0 (Flatter) |
+| :--- | :---: | :---: | :---: |
+| `sunny` | 40% | **~63%** | ~25% |
+| `cloudy`| 30% | ~28% | ~22% |
+| `rainy` | 20% | ~7% | ~19% |
+| `beautiful`| 10% | ~2% | ~14% |
+
+As you can see, lowering the temperature makes "sunny" an almost certain choice. Raising it makes the probabilities more even, giving a creative word like "beautiful" a real chance to be selected.
+
+And that is the complete output pipeline: from raw logits to the probabilities that drive both self-correction during training and creative text generation during inference.
+
+## **Conclusion: From Raw Knowledge to a Useful Assistant**
+
+You have now mastered the fundamentals of **pre-training**. You've journeyed through the entire pipeline, from a raw text file on the internet to a sophisticated model capable of predicting the next token with remarkable accuracy.
+
+Let's recap the core concepts:
+
+1.  **The Self-Supervised Engine:** We started by solving the biggest problem in AI: the need for expensive, human-labeled data. By framing the task as simple **next-token prediction**, we turned the vast, unlabeled text of the internet into an infinite, free source of training examples.
+2.  **The Language-to-Number Bridge:** We saw how **subword tokenization** acts like a set of LEGO bricks, efficiently breaking down any word into manageable pieces that the model can process, represented as a simple list of integer IDs.
+3.  **The Learning and Generation Loop:** Finally, we deconstructed the model's output. We learned how the **Softmax** function creates clean probabilities from raw logits, how **Cross-Entropy Loss** uses those probabilities to calculate a "surprise" score that drives learning, and how sampling parameters like **Temperature** and **Top-p** use the very same probabilities to generate creative and coherent text.
