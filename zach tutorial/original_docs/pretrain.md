@@ -348,3 +348,30 @@ Let's recap the core concepts:
 1.  **The Self-Supervised Engine:** We started by solving the biggest problem in AI: the need for expensive, human-labeled data. By framing the task as simple **next-token prediction**, we turned the vast, unlabeled text of the internet into an infinite, free source of training examples.
 2.  **The Language-to-Number Bridge:** We saw how **subword tokenization** acts like a set of LEGO bricks, efficiently breaking down any word into manageable pieces that the model can process, represented as a simple list of integer IDs.
 3.  **The Learning and Generation Loop:** Finally, we deconstructed the model's output. We learned how the **Softmax** function creates clean probabilities from raw logits, how **Cross-Entropy Loss** uses those probabilities to calculate a "surprise" score that drives learning, and how sampling parameters like **Temperature** and **Top-p** use the very same probabilities to generate creative and coherent text.
+
+You started this journey seeing language models as magic. But now you know the truth. It's a cascade of brilliant, interconnected ideas, all powered by the simple, elegant process of learning from mistakes on an astronomical scale.
+
+But our journey isn't over. This pre-trained model is a raw engine of knowledge, not a helpful assistant. This leads to the two crucial questions of what comes next.
+
+#### What's Next 1: Opening the Black Box - The Transformer
+
+Throughout this tutorial, we've treated the core of the network—the part that turns input tokens into output logits—as a "black box."
+
+*   *How* does the model actually remember the word "Paris" from ten tokens ago to correctly predict "French"?
+*   *How* does it weigh the importance of different words in a sentence to understand the true context?
+
+In the next tutorial, we will finally open that box and explore the revolutionary **Transformer architecture** and its core mechanism: **Self-Attention**. This is the engine that truly understands context, and it's the final piece of the architectural puzzle.
+
+#### What's Next 2: From Predictor to Assistant - Post-Training
+
+A next-token predictor is not a chatbot. If you give our pre-trained model the prompt, "What is the capital of France?", its training on internet text might lead it to complete the sentence with another common question, like "...and what is its population?". It's completing a pattern, not answering a question.
+
+How do we turn this powerful but raw model into a helpful assistant that can follow instructions, answer questions, and refuse to perform harmful tasks?
+
+That requires a second, crucial stage called **Post-Training**. This involves techniques like:
+*   **Supervised Fine-Tuning (SFT):** Training the model on a smaller, high-quality dataset of human-written instructions and their ideal responses.
+*   **Reinforcement Learning from Human Feedback (RLHF):** Allowing humans to rank the model's different answers, teaching it what "helpfulness" and "safety" actually mean through trial and error.
+
+This is the process that aligns the model with human values—the topic for a future tutorial.
+
+You now have a solid foundation in how these incredible models are built. The magic has been replaced by understanding, and you're ready to explore the deeper layers of modern artificial intelligence.
