@@ -572,3 +572,85 @@ selected_values = torch.gather(data, dim=1, index=indices_to_select)
 
 print(f"Selected Values:\n {selected_values}")
 ```
+**Output:**
+```
+Selected Values:
+ tensor([[12],  # From row 0, we gathered the element at index 2
+        [20],  # From row 1, we gathered the element at index 0
+        [33]]) # From row 2, we gathered the element at index 3
+```
+This single, optimized operation avoids a slow Python `for` loop and is a cornerstone of many advanced model architectures.
+
+---
+
+We have now learned a powerful set of verbs for calculation, aggregation, and selection. We have all the tools we need.
+
+It's time to put them together. Let's start building our neural network from scratch. Let's move on to **Part 5: The Forward Pass - Manually Making a Prediction**.
+
+## Part 5: The Forward Pass - Manually Making a Prediction
+
+The **"Forward Pass"** is the process of taking input data and passing it *forward* through the model's layers to get an output, or prediction. It's the first step in our five-step training loop.
+
+**The Analogy:** Think of the forward pass as the model's "guess." We show it a problem (the input `X`) and it gives us its current best answer (the prediction `ŷ`).
+
+Our goal is to implement a simple linear regression model's forward pass from scratch, using only the raw tensor operations we've already learned.
+
+### 5.1. The Model: Simple Linear Regression
+
+Our model's job is to learn the relationship between one input variable (`x`) and one output variable (`y`). The formula from linear algebra is our blueprint:
+
+`ŷ = XW + b`
+
+Where:
+*   `X` is our input data.
+*   `W` is the **weight** parameter.
+*   `b` is the **bias** parameter.
+*   `ŷ` (pronounced "y-hat") is our model's **prediction**.
+
+Our goal is to find the best `W` and `b` to make `ŷ` as close to the true `y` as possible.
+
+### 5.2. The Setup: Creating Our Data
+
+We don't have a real dataset, so let's create a synthetic one. We'll generate data that follows a clear pattern, and then see if our model can learn it. Let's create data that follows the line `y = 2x + 1`, with a little bit of random noise added.
+
+```python
+# We'll create a "batch" of 10 data points
+N = 10
+# Each data point has 1 feature
+D_in = 1
+# The output for each data point is a single value
+D_out = 1
+
+# Create our input data X
+# Shape: (10 rows, 1 column)
+X = torch.randn(N, D_in)
+
+# Create our true target labels y by applying the "true" function
+# and adding some noise for realism
+true_W = torch.tensor([[2.0]])
+true_b = torch.tensor(1.0)
+y_true = X @ true_W + true_b + torch.randn(N, D_out) * 0.1 # Add a little noise
+
+print(f"Input Data X (first 3 rows):\n {X[:3]}\n")
+print(f"True Labels y_true (first 3 rows):\n {y_true[:3]}")
+```
+**Output:**
+```
+Input Data X (first 3 rows):
+ tensor([[-0.5186],
+        [-0.2582],
+        [-0.3378]])
+
+True Labels y_true (first 3 rows):
+ tensor([[-0.1030],
+        [ 0.4491],
+        [ 0.3340]])
+```
+
+### 5.3. The Parameters: The Model's "Brain"
+
+Now, we create the parameters `W` and `b` that our model will learn. We initialize them with random values. Most importantly, we set `requires_grad=True` to tell PyTorch's Autograd engine to start tracking them.
+
+```python
+# Initialize our parameters with random values
+# Shapes must be correct for matrix multiplication: X(10,1) @ W(1,1) -> (10,1)
