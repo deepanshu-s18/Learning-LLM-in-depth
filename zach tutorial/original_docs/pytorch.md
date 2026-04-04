@@ -490,3 +490,85 @@ The Boolean Mask (x > 3):
 
 Selected elements: tensor([4, 5, 6, 7])
 ```
+**Note:** Boolean selection always returns a 1D tensor, as it pulls out only the matching values.
+
+### 4.3. Conditional Creation: `torch.where()`
+
+This is the tensor equivalent of a ternary `if/else` statement. It creates a **new tensor** by choosing values from two other tensors based on a condition. The syntax is `torch.where(condition, value_if_true, value_if_false)`.
+
+```python
+x = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+# Create a new tensor: if a value in x is > 4, use -1, otherwise use the original value
+y = torch.where(x > 4, -1, x)
+
+print(f"Original Tensor: {x}")
+print(f"Result of where: {y}")
+```
+**Output:**
+```
+Original Tensor: tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+Result of where: tensor([ 0,  1,  2,  3,  4, -1, -1, -1, -1, -1])
+```
+
+### 4.4. Primitives for Finding the "Best" Items
+
+After a model makes a prediction, we often need to find the item with the highest score.
+*   `torch.argmax()`: Finds the **index** of the single maximum value.
+*   `torch.topk()`: Finds the `k` largest **values and their indices**.
+
+```python
+scores = torch.tensor([
+    [10, 0, 5, 20, 1],  # Scores for item 0
+    [1, 30, 2, 5, 0]   # Scores for item 1
+])
+
+# Find the index of the best score for each item
+best_indices = torch.argmax(scores, dim=1)
+# For row 0, max is 20 at index 3. For row 1, max is 30 at index 1.
+print(f"Argmax indices: {best_indices}\n")
+
+# Find the top 3 scores and their indices for each item
+top_values, top_indices = torch.topk(scores, k=3, dim=1)
+print(f"Top 3 values:\n {top_values}\n")
+print(f"Top 3 indices:\n {top_indices}")
+```
+**Output:**
+```
+Argmax indices: tensor([3, 1])
+
+Top 3 values:
+ tensor([[20, 10,  5],
+        [30,  5,  2]])
+
+Top 3 indices:
+ tensor([[3, 0, 2],
+        [1, 3, 2]])
+```
+
+### 4.5. Primitive for Dynamic Lookups: `torch.gather()`
+
+This is the most advanced and powerful selection tool.
+
+**The Problem:** Standard indexing is for *uniform* selection (e.g., "get column 2 for *all* rows"). But what if you need to select a **different column for each row**?
+*   From row 0, get the element at column 2.
+*   From row 1, get the element at column 0.
+*   From row 2, get the element at column 3.
+
+**The Solution:** `torch.gather()` is purpose-built for this "dynamic lookup." You provide an `index` tensor that acts as a personalized list of which element to grab from each row.
+
+```python
+data = torch.tensor([
+    [10, 11, 12, 13],  # row 0
+    [20, 21, 22, 23],  # row 1
+    [30, 31, 32, 33]   # row 2
+])
+
+# Our "personalized list" of column indices to select from each row
+indices_to_select = torch.tensor([[2], [0], [3]])
+
+# Gather from `data` along dim=1 (the column dimension)
+selected_values = torch.gather(data, dim=1, index=indices_to_select)
+
+print(f"Selected Values:\n {selected_values}")
+```
