@@ -162,3 +162,85 @@ Let's break these down:
 *   **`.shape`**: This is a tuple that describes the dimensions of the tensor. `torch.Size([2, 3])` tells us it's a 2D tensor with 2 rows and 3 columns. This is the most important attribute for debugging your models. Mismatched shapes are the #1 source of errors in PyTorch.
 *   **`.device`**: This tells you where the tensor's data is physically stored. By default, it's on the `cpu`. If you have a compatible GPU, you can move it there (`.to("cuda")`) for massive speedups.
 *   **`.dtype`**: This describes the data type of the numbers inside the tensor. Notice it defaulted to `torch.float32`. This is not an accident, and it's critically important.
+
+#### A Quick but Critical Note on `dtype`
+Why `torch.float32` and not just regular integers (`int64`)? The answer is **gradients**.
+
+Gradient descent, the engine of deep learning, works by making tiny, continuous adjustments to a model's weights. These adjustments are fractional numbers (like `-0.0012`), which require a floating-point data type. You can't nudge a parameter from `3` to `3.001` if your data type only allows whole numbers.
+
+**Key Takeaway:**
+*   Model parameters (weights and biases) **must** be a float type (`float32` is the standard).
+*   Data that represents categories or counts (like word IDs) can be integers (`int64`).
+
+---
+
+We now know what a `torch.Tensor` is and how to create one using three common patterns. We've essentially learned about the raw material.
+
+Now, let's explore the single most important switch that turns this simple data container into a core component of a dynamic learning machine. Let's move on to **Part 2: The Engine of Autograd**.
+
+## Part 2: The Engine of Autograd - `requires_grad`
+
+In Part 1, we learned that tensors are containers for numbers. But their real power comes from a system called **Autograd**, which stands for automatic differentiation. This is PyTorch's built-in gradient calculator.
+
+**The Analogy:** If a tensor is the "noun" in PyTorch, then Autograd is the "nervous system." It connects all the operations and allows signals (gradients) to flow backward through the system, enabling learning.
+
+Our goal here is to understand the *one simple switch* that activates this nervous system.
+
+### 2.1. The "Magic Switch": `requires_grad=True`
+
+By default, PyTorch assumes a tensor is just static data. To tell it that a tensor is a learnable parameter (like a model's weight or bias), you must set its `requires_grad` attribute to `True`.
+
+This is the most important setting in all of PyTorch. It tells Autograd:
+> "This is a parameter my model will learn. From now on, track every single operation that happens to it."
+
+```python
+# A standard data tensor (we don't need to calculate gradients for our input data)
+x_data = torch.tensor([[1., 2.], [3., 4.]])
+print(f"Data tensor requires_grad: {x_data.requires_grad}\n")
+
+# A parameter tensor (we need to learn this, so we need gradients)
+w = torch.tensor([[1.0], [2.0]], requires_grad=True)
+print(f"Parameter tensor requires_grad: {w.requires_grad}")
+```
+**Output:**
+```
+Data tensor requires_grad: False
+
+Parameter tensor requires_grad: True
+```
+
+### 2.2. The Computation Graph: How PyTorch Remembers
+
+Once you set `requires_grad=True`, PyTorch starts building a **computation graph** behind the scenes. Think of it as a history of all the operations. Every time you perform an operation on a tensor that requires gradients, PyTorch adds a new node to this graph.
+
+Let's build a simple one. We'll compute `z = x * y` where `y = a + b`.
+
+```python
+# Three parameter tensors that we want to learn
+a = torch.tensor(2.0, requires_grad=True)
+b = torch.tensor(3.0, requires_grad=True)
+x = torch.tensor(4.0, requires_grad=True)
+
+# First operation: y = a + b
+y = a + b
+
+# Second operation: z = x * y
+z = x * y
+
+print(f"Result of a + b: {y}")
+print(f"Result of x * y: {z}")
+```
+**Output:**
+```
+Result of a + b: 5.0
+Result of x * y: 20.0
+```
+The math is simple. But behind the scenes, PyTorch has built a graph connecting `a`, `b`, `x`, `y`, and `z`.
+
+### 2.3. Peeking Under the Hood: The `.grad_fn` Attribute
+
+How can we prove this graph exists? Every tensor that is the result of an operation on a `requires_grad` tensor will have a special attribute called `.grad_fn`. This attribute is a "breadcrumb" that points to the function that created it.
+
+Let's inspect the tensors from our previous example.
+
+```python
