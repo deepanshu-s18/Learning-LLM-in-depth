@@ -326,3 +326,85 @@ Element-wise Product (a * b):
 This is the standard matrix product from linear algebra. It's the core operation of every `Linear` layer in a neural network. For `m1 @ m2`, the number of columns in `m1` must equal the number of rows in `m2`.
 
 ```python
+m1 = torch.tensor([[1, 2, 3], [4, 5, 6]])   # Shape: (2, 3)
+m2 = torch.tensor([[7, 8], [9, 10], [11, 12]]) # Shape: (3, 2)
+
+# Calculation for the first element: (1*7) + (2*9) + (3*11) = 58
+matrix_product = m1 @ m2 # Resulting shape: (2, 2)
+
+print(f"Matrix 1 (shape {m1.shape}):\n {m1}\n")
+print(f"Matrix 2 (shape {m2.shape}):\n {m2}\n")
+print(f"Matrix Product (m1 @ m2):\n {matrix_product}")
+```
+**Output:**
+```
+Matrix 1 (shape torch.Size([2, 3])):
+ tensor([[1, 2, 3],
+        [4, 5, 6]])
+
+Matrix 2 (shape torch.Size([3, 2])):
+ tensor([[ 7,  8],
+        [ 9, 10],
+        [11, 12]])
+
+Matrix Product (m1 @ m2):
+ tensor([[ 58,  64],
+        [139, 154]])
+```
+
+### 3.2. Reduction Operations
+
+A "reduction" is any operation that reduces the number of elements in a tensor, often by aggregating them. Examples include `sum()`, `mean()`, `max()`, and `min()`.
+
+```python
+scores = torch.tensor([[10., 20., 30.], [5., 10., 15.]])
+
+# By default, reductions apply to the entire tensor
+total_sum = scores.sum()
+average_score = scores.mean()
+
+print(f"Scores Tensor:\n {scores}\n")
+# Calculation: 10 + 20 + 30 + 5 + 10 + 15 = 90
+print(f"Total Sum: {total_sum}")
+# Calculation: 90 / 6 = 15
+print(f"Overall Mean: {average_score}")
+```
+**Output:**
+```
+Scores Tensor:
+ tensor([[10., 20., 30.],
+        [ 5., 10., 15.]])
+
+Total Sum: 90.0
+Overall Mean: 15.0
+```
+
+### 3.3. The `dim` Argument: The Most Important Detail
+
+This is where reductions become powerful. The `dim` argument tells the function which dimension to **collapse**.
+
+A simple rule of thumb for 2D tensors:
+*   `dim=0`: Collapses the **rows** (operates "vertically" ⬇️).
+*   `dim=1`: Collapses the **columns** (operates "horizontally" ➡️).
+
+Let's use our `scores` tensor (2 students, 3 assignments) to see this.
+
+```python
+scores = torch.tensor([[10., 20., 30.], [5., 10., 15.]])
+
+# To get the sum FOR EACH ASSIGNMENT, we collapse the student dimension (dim=0)
+# Calculation: [10+5, 20+10, 30+15]
+sum_per_assignment = scores.sum(dim=0)
+
+# To get the sum FOR EACH STUDENT, we collapse the assignment dimension (dim=1)
+# Calculation: [10+20+30, 5+10+15]
+sum_per_student = scores.sum(dim=1)
+
+print(f"Original Scores:\n {scores}\n")
+print(f"Sum per assignment (dim=0): {sum_per_assignment}")
+print(f"Sum per student (dim=1):    {sum_per_student}")
+```
+**Output:**
+```
+Original Scores:
+ tensor([[10., 20., 30.],
