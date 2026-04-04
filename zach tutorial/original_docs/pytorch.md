@@ -80,3 +80,85 @@ This is extremely common when building models. You don't know the exact values f
 *   `torch.randn()`: Fills the tensor with random numbers from a standard normal distribution. **This is the standard way to initialize a model's weights.**
 
 ```python
+# Input: A shape tuple (2 rows, 3 columns)
+shape = (2, 3)
+
+# Create tensors with this shape
+ones = torch.ones(shape)
+zeros = torch.zeros(shape)
+random = torch.randn(shape)
+
+print(f"Ones Tensor:\n {ones}\n")
+print(f"Zeros Tensor:\n {zeros}\n")
+print(f"Random Tensor:\n {random}")
+```
+**Output:**
+```
+Ones Tensor:
+ tensor([[1., 1., 1.],
+        [1., 1., 1.]])
+
+Zeros Tensor:
+ tensor([[0., 0., 0.],
+        [0., 0., 0.]])
+
+Random Tensor:
+ tensor([[ 0.3815, -0.9388,  1.6793],
+        [-0.3421,  0.5898,  0.3609]])
+```
+
+---
+
+#### **Pattern 3: Creation by Mimicking Another Tensor's Properties**
+Often, you have an existing tensor and you need to create a new one that has the *exact same shape, data type, and is on the same device*. Instead of manually copying these properties, PyTorch provides handy `_like` functions.
+
+```python
+# Input: A 'template' tensor
+template = torch.tensor([[1, 2], [3, 4]])
+
+# Create new tensors with the same properties as the template
+ones_like = torch.ones_like(template)
+rand_like = torch.randn_like(template, dtype=torch.float) # dtype can be overridden
+
+print(f"Template Tensor:\n {template}\n")
+print(f"Ones_like Tensor:\n {ones_like}\n")
+print(f"Randn_like Tensor:\n {rand_like}")
+```
+**Output:**
+```
+Template Tensor:
+ tensor([[1, 2],
+        [3, 4]])
+
+Ones_like Tensor:
+ tensor([[1, 1],
+        [1, 1]])
+
+Randn_like Tensor:
+ tensor([[-1.1713, -0.2032],
+        [ 0.3391, -0.8267]])
+```
+
+### 1.2. What's Inside a Tensor? Shape, Type, and Device
+
+Every tensor has attributes that describe its metadata. The three you will use constantly are `.shape`, `.dtype`, and `.device`.
+
+```python
+# Let's create a tensor to inspect
+tensor = torch.randn(2, 3)
+
+print(f"Shape of tensor: {tensor.shape}")
+print(f"Datatype of tensor: {tensor.dtype}")
+print(f"Device tensor is stored on: {tensor.device}")
+```
+**Output:**
+```
+Shape of tensor: torch.Size([2, 3])
+Datatype of tensor: torch.float32
+Device tensor is stored on: cpu
+```
+
+Let's break these down:
+*   **`.shape`**: This is a tuple that describes the dimensions of the tensor. `torch.Size([2, 3])` tells us it's a 2D tensor with 2 rows and 3 columns. This is the most important attribute for debugging your models. Mismatched shapes are the #1 source of errors in PyTorch.
+*   **`.device`**: This tells you where the tensor's data is physically stored. By default, it's on the `cpu`. If you have a compatible GPU, you can move it there (`.to("cuda")`) for massive speedups.
+*   **`.dtype`**: This describes the data type of the numbers inside the tensor. Notice it defaulted to `torch.float32`. This is not an accident, and it's critically important.
