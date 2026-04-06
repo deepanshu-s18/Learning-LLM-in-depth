@@ -737,3 +737,85 @@ print(f"Prediction (first 3):\n {y_hat[:3]}\n")
 print(f"Truth (first 3):\n {y_true[:3]}\n")
 print(f"Loss (a single number): {loss}")
 ```
+**Output:**
+```
+Prediction (first 3):
+ tensor([[ 0.0737],
+        [ 0.1812],
+        [ 0.1485]], grad_fn=<SliceBackward0>)
+
+Truth (first 3):
+ tensor([[-0.1030],
+        [ 0.4491],
+        [ 0.3340]])
+
+Loss (a single number): 1.6322047710418701
+```
+We now have a single number, `1.6322`, that quantifies our model's total error. Our goal is to make this number as small as possible. Notice that the `loss` tensor also has a `grad_fn`, because it's the result of operations on our parameters. It's the root of our computation graph.
+
+### 6.2. The Magic Command: `loss.backward()`
+
+This is where the magic of Autograd happens. With a single command, we tell PyTorch to send a signal backward from the `loss` through the entire computation graph it built during the forward pass.
+
+This command calculates the gradient of the `loss` with respect to every single parameter that has `requires_grad=True`. In our case, it will compute:
+*   `∂L/∂W` (the gradient of the Loss with respect to our Weight `W`)
+*   `∂L/∂b` (the gradient of the Loss with respect to our Bias `b`)
+
+```python
+# The backward pass
+loss.backward()
+```
+**Output:**
+*(There is no direct output, but something very important has happened in the background.)*
+
+PyTorch has now populated the `.grad` attribute for our `W` and `b` tensors.
+
+### 6.3. Inspecting the Result: The `.grad` Attribute
+
+The `.grad` attribute now holds the gradient for each parameter. This is the "signal" that tells us how to adjust our knobs.
+
+```python
+# The gradients are now stored in the .grad attribute of our parameters
+print(f"Gradient for W (∂L/∂W):\n {W.grad}\n")
+print(f"Gradient for b (∂L/∂b):\n {b.grad}")
+```
+**Output:**
+```
+Gradient for W (∂L/∂W):
+ tensor([[-1.0185]])
+
+Gradient for b (∂L/∂b):
+ tensor([-2.0673])
+```
+
+#### **How to Interpret These Gradients:**
+
+*   **`W.grad` is -1.0185:** The negative sign is key. It means that if we were to *increase* `W`, the loss would *decrease*. The gradient points in the direction of the steepest *increase* in loss, so we'll want to move in the opposite direction.
+*   **`b.grad` is -2.0673:** Similarly, this tells us that increasing `b` will also decrease the loss.
+
+We now have everything we need to improve our model:
+1.  A way to measure error (the loss).
+2.  The exact direction to turn our parameter "knobs" to reduce that error (the gradients).
+
+We have completed the analysis. The final step is to actually *act* on this information—to update our weights and biases.
+
+This leads us to the heart of the training process. Let's move on to **Part 7: The Training Loop - Gradient Descent in Action**.
+
+## Part 7: The Training Loop - Gradient Descent From Scratch
+
+This is the heart of the entire deep learning process. The **Training Loop** repeatedly executes the forward and backward passes, incrementally updating the model's parameters to minimize the loss. This process is called **Gradient Descent**.
+
+**The Analogy:** We're standing on a foggy mountain (the loss landscape) and want to get to the lowest valley (minimum loss). We can't see the whole map, but we can feel the slope of the ground beneath our feet (the gradients). The training loop is the process of taking a small step downhill, feeling the slope again, taking another step, and repeating until we reach the bottom.
+
+Our goal is to implement this "step-by-step" descent from scratch.
+
+### 7.1. The Algorithm: Gradient Descent
+
+The core update rule for gradient descent was promised in the very beginning, and now we can finally implement it:
+
+`θ_t+1 = θ_t - η * ∇_θ L`
+
+Let's translate this from math to our context:
+*   `θ`: Represents all our parameters, `W` and `b`.
+*   `η` (eta): The **learning rate**, a small number that controls how big of a step we take.
+*   `∇_θ L`: The gradient of the loss with respect to our parameters, which we now have in `W.grad` and `b.grad`.
