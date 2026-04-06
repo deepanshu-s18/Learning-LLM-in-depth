@@ -983,3 +983,85 @@ relu = torch.nn.ReLU()
 # Let's create some sample data with positive and negative values
 sample_data = torch.tensor([-2.0, -0.5, 0.0, 0.5, 2.0])
 
+# Apply the activation
+activated_data = relu(sample_data)
+
+print(f"Original Data:      {sample_data}")
+print(f"Data after ReLU:    {activated_data}")
+```
+**Output:**
+```
+Original Data:      tensor([-2.0000, -0.5000,  0.0000,  0.5000,  2.0000])
+Data after ReLU:    tensor([0.0000, 0.0000, 0.0000, 0.5000, 2.0000])
+```
+As you can see, all negative inputs were clamped to zero, while positive inputs remained unchanged.
+
+---
+
+#### **`nn.GELU` (Gaussian Error Linear Unit)**
+
+This is the modern standard for high-performance models, especially Transformers like BERT and GPT. It's a smoother, "probabilistic" version of ReLU. Instead of a hard "off" switch at zero, it smoothly de-weights inputs based on their magnitude.
+
+*   **Formula:** The exact formula is `GELU(x) = x * Φ(x)`, where `Φ(x)` is the Cumulative Distribution Function (CDF) of the standard normal distribution. A common approximation is:
+    $$ \text{GELU}(x) \approx 0.5x \left(1 + \tanh\left[\sqrt{\frac{2}{\pi}}\left(x + 0.044715x^3\right)\right]\right) $$
+*   **Behavior:** It acts like ReLU for large positive values, but it smoothly curves to zero for negative values, allowing some gradient to flow through even for negative inputs.
+*   **Learnable Parameters:** No. It's a fixed mathematical function.
+
+```python
+# Create a GELU activation function layer
+gelu = torch.nn.GELU()
+
+# Use the same sample data
+sample_data = torch.tensor([-2.0, -0.5, 0.0, 0.5, 2.0])
+
+# Apply the activation
+activated_data = gelu(sample_data)
+
+print(f"Original Data:      {sample_data}")
+print(f"Data after GELU:    {activated_data}")
+```
+**Output:**
+```
+Original Data:      tensor([-2.0000, -0.5000,  0.0000,  0.5000,  2.0000])
+Data after GELU:    tensor([-0.0455, -0.1545,  0.0000,  0.3455,  1.9545])
+```
+Notice the difference from ReLU: the negative inputs are not zero but are "squashed" towards zero. This smoother behavior has been shown to lead to better performance in state-of-the-art models.
+
+---
+
+#### **`nn.Softmax`**
+
+Softmax is a special activation function used almost exclusively on the **final output layer of a classification model**. Its job is to take a vector of raw, unbounded scores (called **logits**) and convert them into a probability distribution.
+
+*   **Formula:** For a vector of logits `z = [z_1, z_2, ..., z_K]`, the Softmax of the i-th element is:
+    $$ \text{Softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}} $$
+*   **Behavior:** It exponentiates every logit (making them all positive) and then normalizes them by dividing by the sum of all exponentiated logits. The result is a vector where:
+    1.  Every element is between 0 and 1.
+    2.  All elements sum to 1.
+*   **Learnable Parameters:** It has **no learnable parameters**. It's a fixed normalization function. The model learns by adjusting the *logits* that are fed *into* the Softmax.
+
+```python
+# Softmax must be told which dimension contains the scores to be normalized.
+# For a batch of predictions, this is typically the last dimension (dim=-1 or dim=1).
+softmax = torch.nn.Softmax(dim=-1)
+
+# Let's create some sample logits for a batch of 2 items, with 4 possible classes
+# A higher number means the model is more confident in that class.
+logits = torch.tensor([
+    [1.0, 3.0, 0.5, 1.5],  # Logits for item 1
+    [-1.0, 2.0, 1.0, 0.0]   # Logits for item 2
+])
+
+# Apply the softmax
+probabilities = softmax(logits)
+
+print(f"Original Logits:\n {logits}\n")
+print(f"Output Probabilities:\n {probabilities}\n")
+print(f"Sum of probabilities for item 1: {probabilities[0].sum()}")
+print(f"Sum of probabilities for item 2: {probabilities[1].sum()}")
+```
+**Output:**
+```
+Original Logits:
+ tensor([[ 1.0000,  3.0000,  0.5000,  1.5000],
+        [-1.0000,  2.0000,  1.0000,  0.0000]])
