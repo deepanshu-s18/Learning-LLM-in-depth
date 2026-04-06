@@ -901,3 +901,85 @@ This table is the most beautiful thing in deep learning. We can see:
 
 It works! We have successfully implemented the entire gradient descent algorithm from scratch using raw PyTorch tensors and Autograd. We have built a machine that learns.
 
+---
+
+This "from scratch" approach gave us deep insight into the mechanics. However, it's also verbose and error-prone. What if we had 50 layers? Manually updating each parameter and zeroing its gradient would be a nightmare.
+
+This is why PyTorch provides professional abstractions. Let's start exploring them by looking at pre-built layers. Let's move on to **Part 8: Professional Building Blocks - `torch.nn` Layers**.
+
+## Part 8: Professional Building Blocks - `torch.nn` Layers
+
+Manually creating and managing weights (`W`) and biases (`b`) is great for understanding the fundamentals, but it doesn't scale. As models get more complex, we need a better way to organize our parameters.
+
+This is where the `torch.nn` module comes in. It's a library of pre-built layers and tools that form the backbone of virtually all PyTorch models.
+
+**The Analogy:** If raw tensors are like clay, `torch.nn` layers are like pre-made, standardized LEGO bricks. You can still build anything you want, but the process is faster, more robust, and easier to understand.
+
+Our goal is to learn about the most essential "bricks" in this toolkit, especially those relevant for building LLMs.
+
+### 8.1. The Workhorse: `torch.nn.Linear`
+
+The `torch.nn.Linear` layer does exactly what our manual `X @ W + b` operation did. It's a container that holds the `W` and `b` tensors for a linear transformation and performs the operation for us.
+
+Let's see how it replaces our manual setup.
+
+```python
+# The input to our model has 1 feature (D_in=1)
+# The output of our model is 1 value (D_out=1)
+D_in = 1
+D_out = 1
+
+# Create a Linear layer
+linear_layer = torch.nn.Linear(in_features=D_in, out_features=D_out)
+
+# You can inspect the randomly initialized parameters inside
+print(f"Layer's Weight (W): {linear_layer.weight}\n")
+print(f"Layer's Bias (b): {linear_layer.bias}\n")
+
+# You use it just like a function. Let's pass our data X through it.
+# This performs the forward pass: X @ W.T + b
+# (Note: nn.Linear stores W as (D_out, D_in), so it uses a transpose)
+y_hat_nn = linear_layer(X)
+
+print(f"Output of nn.Linear (first 3 rows):\n {y_hat_nn[:3]}")
+```
+**Output:**
+```
+Layer's Weight (W): Parameter containing:
+tensor([[-0.9238]], requires_grad=True)
+
+Layer's Bias (b): Parameter containing:
+tensor([0.7699], requires_grad=True)
+
+Output of nn.Linear (first 3 rows):
+ tensor([[1.2494],
+        [1.0089],
+        [1.0827]], grad_fn=<SliceBackward0>)
+```
+Notice that `linear_layer.weight` and `linear_layer.bias` are of type `Parameter`. This is a special kind of tensor that automatically has `requires_grad=True` and tells PyTorch, "This is a parameter that belongs to an `nn.Module`."
+
+### 8.2. Introducing Non-Linearity: Activation Functions
+
+Linear models are powerful, but they are fundamentally limited: stacking multiple linear layers on top of each other is mathematically the same as just having one larger linear layer. They can only learn linear relationships.
+
+To learn complex, real-world patterns, neural networks need to introduce "kinks" or non-linearities between these linear layers. This is the job of an **activation function**.
+
+Let's explore the three most important ones.
+
+---
+
+#### **`nn.ReLU` (Rectified Linear Unit)**
+
+This is the most common activation function for general-purpose neural networks. Its rule is incredibly simple: if the input `x` is negative, the output is `0`. If the input `x` is positive, the output is `x`.
+
+*   **Formula:** `ReLU(x) = max(0, x)`
+*   **Behavior:** It "turns off" neurons that have a negative activation.
+*   **Learnable Parameters:** No. It's a fixed mathematical function.
+
+```python
+# Create a ReLU activation function layer
+relu = torch.nn.ReLU()
+
+# Let's create some sample data with positive and negative values
+sample_data = torch.tensor([-2.0, -0.5, 0.0, 0.5, 2.0])
+
