@@ -654,3 +654,86 @@ Now, we create the parameters `W` and `b` that our model will learn. We initiali
 ```python
 # Initialize our parameters with random values
 # Shapes must be correct for matrix multiplication: X(10,1) @ W(1,1) -> (10,1)
+W = torch.randn(D_in, D_out, requires_grad=True)
+b = torch.randn(1, requires_grad=True)
+
+print(f"Initial Weight W:\n {W}\n")
+print(f"Initial Bias b:\n {b}")
+```
+**Output:**
+```
+Initial Weight W:
+ tensor([[0.4137]], requires_grad=True)
+
+Initial Bias b:
+ tensor([0.2882], requires_grad=True)
+```
+Our model's current "knowledge" is that the weight is `0.4137` and the bias is `0.2882`. This is completely random and wrong, but it's a starting point.
+
+### 5.4. The Implementation: From Math to Code
+
+Now for the main event. We translate our mathematical formula `ŷ = XW + b` directly into a single line of PyTorch code.
+
+```python
+# Perform the forward pass to get our first prediction
+y_hat = X @ W + b
+
+print(f"Shape of our prediction y_hat: {y_hat.shape}\n")
+print(f"Prediction y_hat (first 3 rows):\n {y_hat[:3]}\n")
+print(f"True Labels y_true (first 3 rows):\n {y_true[:3]}")
+```
+**Output:**
+```
+Shape of our prediction y_hat: torch.Size([10, 1])
+
+Prediction y_hat (first 3 rows):
+ tensor([[ 0.0737],
+        [ 0.1812],
+        [ 0.1485]], grad_fn=<AddBackward0>)
+
+True Labels y_true (first 3 rows):
+ tensor([[-0.1030],
+        [ 0.4491],
+        [ 0.3340]])
+```
+Notice two things:
+1.  The shape of `y_hat` is `(10, 1)`, which perfectly matches the shape of `y_true`. This is crucial.
+2.  `y_hat` has a `grad_fn=<AddBackward0>`. This is Autograd at work! PyTorch has already built the computation graph, remembering that `y_hat` was created by adding the bias `b` to the result of the matrix multiplication `X @ W`.
+
+As expected, our initial predictions are terrible. They're nowhere near the true labels. This is because our `W` and `b` are random.
+
+We've successfully made a guess. The next logical question is: **how do we measure exactly *how wrong* our guess is?**
+
+This leads us directly to the concept of the loss function. Let's move on to **Part 6: The Backward Pass - Manually Calculating Gradients**.
+
+## Part 6: The Backward Pass - Calculating Gradients
+
+If the forward pass was the model's "guess," the backward pass is the "post-mortem analysis." We compare the guess to the truth, calculate how wrong we were, and then determine *exactly how to change each parameter* to be less wrong next time.
+
+**The Analogy:** Imagine you're tuning a complex radio with two knobs (`W` and `b`) to get a clear signal (the true `y`). The forward pass is listening to the current static (`y_hat`). The backward pass is figuring out which direction to turn each knob (`W.grad` and `b.grad`) to reduce the static.
+
+Our goal is to quantify our model's error and then use Autograd's magic to calculate the gradients—the direction of steepest ascent of the error.
+
+### 6.1. Defining Error: The Loss Function
+
+We need a single number that tells us how "wrong" our predictions are. This is called the **Loss**. For regression, the most common loss function is the **Mean Squared Error (MSE)**.
+
+The formula is simple:
+`L = (1/N) * Σ(ŷ_i - y_i)²`
+
+In plain English: "For every data point, find the difference between the prediction and the truth, square it, and then take the average of all these squared differences."
+
+Let's translate this directly into PyTorch code, using the `y_hat` from Part 5.
+
+```python
+# y_hat is our prediction from the forward pass
+# y_true is the ground truth
+# Let's calculate the loss manually
+error = y_hat - y_true
+squared_error = error ** 2
+loss = squared_error.mean()
+
+print(f"Prediction (first 3):\n {y_hat[:3]}\n")
+print(f"Truth (first 3):\n {y_true[:3]}\n")
+print(f"Loss (a single number): {loss}")
+```
