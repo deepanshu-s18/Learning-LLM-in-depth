@@ -1147,3 +1147,85 @@ Output Word Vectors (shape torch.Size([1, 4, 3])):
 
 **The Math:** For an input vector **x** within a single data sample, LayerNorm performs the following steps:
 1.  Calculate the mean `μ` and variance `σ²` of the elements in **x**.
+    $$ \mu = \frac{1}{H}\sum_{i=1}^{H} x_i \quad \quad \sigma^2 = \frac{1}{H}\sum_{i=1}^{H} (x_i - \mu)^2 $$
+2.  Normalize **x** to have a mean of 0 and a variance of 1. A small `ε` (epsilon) is added for numerical stability to avoid division by zero.
+    $$ \hat{x}_i = \frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}} $$
+3.  Scale and shift the normalized output using two learnable parameters, **γ** (gamma, the weight) and **β** (beta, the bias).
+    $$ y_i = \gamma \hat{x}_i + \beta $$
+
+**Learnable Parameters:** Yes. **γ** and **β** are learnable. They allow the network to learn the optimal scale and shift for the normalized activations. It can even learn to undo the normalization if that's what the task requires.
+
+**The Code:**
+
+```python
+# --- nn.LayerNorm ---
+# LayerNorm needs to know the shape of the features it's normalizing.
+# Our word vectors from the embedding example have a feature dimension of 3.
+feature_dim = 3
+norm_layer = torch.nn.LayerNorm(normalized_shape=feature_dim)
+
+# Input: A batch of feature vectors. Let's create one.
+input_features = torch.tensor([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]]) # Shape (1, 2, 3)
+
+# Apply the normalization
+normalized_features = norm_layer(input_features)
+
+# Let's check the mean and standard deviation of the output
+output_mean = normalized_features.mean(dim=-1)
+output_std = normalized_features.std(dim=-1)
+
+print(f"Input Features:\n {input_features}\n")
+print(f"Normalized Features:\n {normalized_features}\n")
+print(f"Mean of each output vector (should be ~0): {output_mean}")
+print(f"Std Dev of each output vector (should be ~1): {output_std}")
+```
+
+**Output:**
+```
+Input Features:
+ tensor([[[1., 2., 3.],
+         [4., 5., 6.]]])
+
+Normalized Features:
+ tensor([[[-1.2247,  0.0000,  1.2247],
+         [-1.2247,  0.0000,  1.2247]]], grad_fn=<NativeLayerNormBackward0>)
+
+Mean of each output vector (should be ~0): tensor([[-0.0000, -0.0000]], grad_fn=<MeanBackward1>)
+Std Dev of each output vector (should be ~1): tensor([[1.2247, 1.2247]], grad_fn=<StdBackward0>)
+```
+
+**What's Going On:** LayerNorm operated on the last dimension (the feature dimension of size 3). For the first vector `[1, 2, 3]`, it calculated its mean (2.0) and standard deviation (~0.816), then normalized it to get `[-1.22, 0.0, 1.22]`. This new vector now has a mean of 0 and a standard deviation of 1 (ignoring small floating point inaccuracies). The same independent process happened for the second vector `[4, 5, 6]`. Note that the std dev is 1.2247 not 1, because it's sample standard deviation, not population standard deviation.
+
+---
+
+#### **`nn.Dropout`**
+
+**Concept:** Dropout is a simple but remarkably effective regularization technique to prevent overfitting. During training, it randomly sets a fraction of the input tensor's elements to zero at each forward pass. This forces the network to learn redundant representations and prevents it from becoming too reliant on any single neuron. It's like forcing a team to practice with random members missing, making the whole team more robust and collaborative.
+
+**The Math:** During training, for each element `x_i` in the input tensor:
+$$
+y_i =
+\begin{cases}
+  0 & \text{with probability } p \\
+  \frac{x_i}{1-p} & \text{with probability } 1-p
+\end{cases}
+$$
+The scaling by `1 / (1-p)` is crucial. It ensures that the expected sum of the outputs remains the same as the sum of the inputs, so subsequent layers don't have to adjust their learning based on whether dropout is on or off.
+
+**Learnable Parameters:** No. It's a random process controlled by a fixed hyperparameter `p`.
+
+**The Code:**
+
+```python
+# --- nn.Dropout ---
+# Create a dropout layer that will zero out 50% of its inputs
+dropout_layer = torch.nn.Dropout(p=0.5)
+
+# Input: A simple tensor of ones so we can see the effect clearly.
+input_tensor = torch.ones(1, 10) # Shape (1, 10)
+
+# IMPORTANT: Dropout is only active during training. You must tell the layer
+# it's in training mode with .train() or evaluation mode with .eval().
+dropout_layer.train() # Activate dropout
+output_during_train = dropout_layer(input_tensor)
+
