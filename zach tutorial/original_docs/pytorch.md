@@ -1229,3 +1229,85 @@ input_tensor = torch.ones(1, 10) # Shape (1, 10)
 dropout_layer.train() # Activate dropout
 output_during_train = dropout_layer(input_tensor)
 
+dropout_layer.eval() # Deactivate dropout
+output_during_eval = dropout_layer(input_tensor)
+
+print(f"Input Tensor:\n {input_tensor}\n")
+print(f"Output during training (randomly zeroed and scaled):\n {output_during_train}\n")
+print(f"Output during evaluation (identity function):\n {output_during_eval}")
+```
+**Output:** (Your random zeros will be in different positions)
+```
+Input Tensor:
+ tensor([[1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]])
+
+Output during training (randomly zeroed and scaled):
+ tensor([[0., 2., 2., 0., 0., 0., 2., 2., 0., 2.]])
+
+Output during evaluation (identity function):
+ tensor([[1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]])
+```
+
+**What's Going On:**
+*   During training, roughly half (p=0.5) of the elements were set to `0`. The remaining elements were scaled up from `1.0` to `2.0` (which is `1.0 / (1 - 0.5)`).
+*   During evaluation, the dropout layer acted as an "identity" function, passing the input through unchanged. This is critical—you want to use your full, trained network to make predictions, not a randomly disabled one.
+
+---
+We have now done a deep dive into the professional LEGO bricks provided by `torch.nn`. We are ready to assemble them into a coherent structure. Let's move on to **Part 9: Assembling Models & The Professional Training Loop**.
+
+## Part 9: Assembling Models & The Professional Training Loop
+
+In Part 7, our "model" was just a loose collection of tensors (`W`, `b`) and our training loop was a manual, step-by-step procedure. This is not sustainable. PyTorch provides two core abstractions to solve this: `nn.Module` to organize our model architecture and `torch.optim` to automate the optimization process.
+
+**The Analogy:** If `nn.Linear` and other layers are the LEGO bricks, then `nn.Module` is the **instruction booklet and the baseplate**. It provides a standard structure for defining how your bricks connect. `torch.optim` is the **skilled builder** who knows exactly how to adjust the bricks (parameters) according to the instructions (gradients).
+
+Our goal is to refactor our entire "from scratch" code into the clean, standard, and scalable PyTorch style.
+
+### 9.1. The Model Blueprint: `class MyModel(nn.Module)`
+
+Every PyTorch model is a Python class that inherits from `torch.nn.Module`. This base class provides a huge amount of functionality, like tracking all nested layers and their parameters. You only need to define two special methods:
+
+1.  `__init__(self)`: The **constructor**. This is where you **define and initialize** all the layers your model will use (e.g., `nn.Linear`, `nn.ReLU`). These layers are stored as attributes of the class (e.g., `self.layer1`).
+2.  `forward(self, x)`: The **data flow director**. This is where you define how the input data `x` flows *through* the layers you defined in `__init__`. You call the layers like functions. The `forward` method is what gets executed when you call `model(input_data)`.
+
+Let's refactor our simple linear regression model into this professional structure.
+
+```python
+import torch.nn as nn
+
+# Inherit from nn.Module
+class LinearRegressionModel(nn.Module):
+    def __init__(self, in_features, out_features):
+        # Call the constructor of the parent class (nn.Module)
+        super().__init__()
+        # Define the single layer we will use
+        self.linear_layer = nn.Linear(in_features, out_features)
+
+    def forward(self, x):
+        # Define the forward pass: just pass the input through our one layer
+        return self.linear_layer(x)
+
+# Instantiate the model
+# D_in = 1 feature, D_out = 1 output
+model = LinearRegressionModel(in_features=1, out_features=1)
+
+# nn.Module automatically finds all the parameters for you!
+print("Model Architecture:")
+print(model)
+print("\nModel Parameters:")
+for name, param in model.named_parameters():
+    print(f"{name}: {param.data}")
+```
+**Output:**
+```
+Model Architecture:
+LinearRegressionModel(
+  (linear_layer): Linear(in_features=1, out_features=1, bias=True)
+)
+
+Model Parameters:
+linear_layer.weight: tensor([[-0.5186]])
+linear_layer.bias: tensor([0.4820])
+```
+Look how clean that is! All our parameters are neatly organized inside the model object.
+
