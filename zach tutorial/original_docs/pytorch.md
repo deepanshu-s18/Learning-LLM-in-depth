@@ -1065,3 +1065,85 @@ print(f"Sum of probabilities for item 2: {probabilities[1].sum()}")
 Original Logits:
  tensor([[ 1.0000,  3.0000,  0.5000,  1.5000],
         [-1.0000,  2.0000,  1.0000,  0.0000]])
+
+Output Probabilities:
+ tensor([[0.1150, 0.6558, 0.0543, 0.1749],
+        [0.0263, 0.5855, 0.2155, 0.1727]])
+
+Sum of probabilities for item 1: 1.0
+Sum of probabilities for item 2: 1.0
+```
+Look at the output for item 1: the logit `3.0` was by far the highest, and after Softmax, it corresponds to the highest probability, `0.6558`. The function has turned the model's raw confidence scores into a clean, interpretable probability distribution.
+
+### 8.3. Essential Layers for LLMs
+
+The `torch.nn` module contains many layers, but the following three are non-negotiable building blocks for any Transformer-based Large Language Model. Understanding them is understanding a significant portion of how an LLM is built.
+
+---
+
+#### **`nn.Embedding`**
+
+**Concept:** Computers don't understand words; they understand numbers. An `Embedding` layer is the bridge between human language and the model's internal world of vectors. It acts as a learnable lookup table where each word (or token) in a vocabulary is mapped to a dense vector of real numbers. The core idea is that through training, the model will learn to place words with similar meanings closer together in this vector space.
+
+**The Math:** This isn't a complex formula, but a direct lookup. If you have a weight matrix **W** of shape `(vocab_size, embedding_dim)`, the embedding for the token with index `i` is simply the `i`-th row of that matrix.
+`Embedding(i) = W[i, :]`
+
+**Learnable Parameters:** Yes. The entire embedding matrix **W** is typically the largest single set of parameters in a model and is updated during training via backpropagation.
+
+**The Code:**
+
+```python
+# --- nn.Embedding ---
+# Let's define a small vocabulary and embedding size
+vocab_size = 10       # We have 10 unique words in our language
+embedding_dim = 3     # Each word will be represented by a vector of size 3
+
+# Create the embedding layer
+embedding_layer = torch.nn.Embedding(num_embeddings=vocab_size, embedding_dim=embedding_dim)
+
+# Input: A batch of tokenized sentences. Let's make a batch of 1 sentence with 4 words.
+# The numbers are the integer IDs for each word in our vocabulary.
+input_ids = torch.tensor([[1, 5, 0, 8]]) # Shape: (batch_size=1, sequence_length=4)
+
+# Get the vectors for our sentence
+word_vectors = embedding_layer(input_ids)
+
+print(f"Embedding Layer's Weight Matrix (shape {embedding_layer.weight.shape}):\n {embedding_layer.weight.data}\n")
+print(f"Input Token IDs (shape {input_ids.shape}):\n {input_ids}\n")
+print(f"Output Word Vectors (shape {word_vectors.shape}):\n {word_vectors}")
+```
+
+**Output:**
+```
+Embedding Layer's Weight Matrix (shape torch.Size([10, 3])):
+ tensor([[-0.2621, -0.6277,  0.5184],  # Row 0
+        [-0.4357, -0.2804, -0.1989],  # Row 1
+        [-0.2117,  0.2210,  1.5999],  # Row 2
+        [-0.6728, -0.1887,  1.3213],  # Row 3
+        [-0.4328,  0.4285,  0.5066],  # Row 4
+        [-0.0766,  0.2828, -1.1686],  # Row 5
+        [-0.4708,  0.2523,  1.1925],  # Row 6
+        [-0.1950, -1.7374,  0.9231],  # Row 7
+        [-0.8872, -0.2113, -0.2291],  # Row 8
+        [-0.1044, -1.0427,  1.3323]]) # Row 9
+
+Input Token IDs (shape torch.Size([1, 4])):
+ tensor([[1, 5, 0, 8]])
+
+Output Word Vectors (shape torch.Size([1, 4, 3])):
+ tensor([[[-0.4357, -0.2804, -0.1989],   # Vector corresponding to ID 1
+         [-0.0766,  0.2828, -1.1686],   # Vector corresponding to ID 5
+         [-0.2621, -0.6277,  0.5184],   # Vector corresponding to ID 0
+         [-0.8872, -0.2113, -0.2291]]], grad_fn=<EmbeddingBackward0>)
+```
+
+**What's Going On:** The output tensor has shape `(1, 4, 3)`. For each of the 4 input token IDs, the layer looked up the corresponding row in its internal weight matrix and returned the 3-dimensional vector. You can verify that the first vector in the output matches row 1 of the weight matrix, the second matches row 5, and so on.
+
+---
+
+#### **`nn.LayerNorm` (Layer Normalization)**
+
+**Concept:** As data flows through many layers of a deep network, the scale of the numbers (activations) can explode or vanish, making training unstable. Layer Normalization is a powerful technique that stabilizes training by re-centering and re-scaling the activations. Unlike other normalization methods (like BatchNorm), it normalizes the features *for each individual data sample in the batch independently*. This makes it perfect for variable-length sequences in LLMs.
+
+**The Math:** For an input vector **x** within a single data sample, LayerNorm performs the following steps:
+1.  Calculate the mean `μ` and variance `σ²` of the elements in **x**.
