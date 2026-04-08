@@ -55,3 +55,32 @@ Putting it all together, `3.5` in FP32 is:
 (1 bit) (8 bits) (23 bits)
 
 #### The Problem: FP32 is Too Big
+
+This representation is precise but inefficient for inference.
+*   **Memory Cost:** Each parameter takes 32 bits, or 4 bytes. For a 7-billion parameter model:
+    `7,000,000,000 parameters * 4 bytes/parameter = 28,000,000,000 bytes = 28 GB of VRAM.`
+*   **Bandwidth Cost:** The GPU is starved waiting for these 28 GB of weights to be moved from VRAM to the compute cores. This memory transfer is often the true bottleneck.
+
+#### The Solution: Mapping to a Simpler Format (INT8)
+
+Our goal is to convert these complex 32-bit structures into simple **8-bit signed integers (INT8)**. An INT8 is just a standard 8-bit number, representing a direct integer value from `-128` to `127`. For example, the integer `44` is simply `00101100`. There is no sign, exponent, or mantissa.
+
+This is a **4x reduction** in size. The challenge is to create a mathematical map from the FP32 world to the INT8 world without losing critical information.
+
+#### Building Intuition: Scale and Zero-Point
+
+Imagine you have a small tensor of weights that fall within the range `[-3.5, 3.5]`.
+
+`weights_fp32 = [1.2, -3.5, 0.8, 2.1, -1.9, 3.5]`
+
+Our task is to represent these numbers using INT8, which can only hold values between `[-128, 127]`. How do we map every possible number from `-3.5` to `3.5` onto one of the 256 available integer "buckets"?
+
+1.  **Calculate the Scale (S):** The scale is our "step size." It tells us how many float units correspond to a single integer unit.
+    *   The total span of our float values is `3.5 - (-3.5) = 7.0`.
+    *   The total span of our INT8 values is `127 - (-128) = 255`.
+    *   **Scale (S) = Float Range / Integer Range = 7.0 / 255 ≈ 0.02745**
+
+    This means for every step we take in the integer world (e.g., from 10 to 11), we are moving approximately `0.02745` in the float world.
+
+2.  **Calculate the Zero-Point (Z):** The zero-point is an offset or "shift." It ensures that the floating-point value `0.0` maps correctly to an integer. Since our float range `[-3.5, 3.5]` is perfectly symmetric around zero, we can align its zero with the integer zero.
+    *   **Zero-Point (Z) = 0**
