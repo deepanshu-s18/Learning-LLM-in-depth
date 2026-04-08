@@ -141,3 +141,32 @@ def symmetric_quantize_int8(fp32_tensor):
 # --- Input ---
 weights_fp32 = np.array([1.2, -3.5, 0.8, 2.1, -1.9, 3.5], dtype=np.float32)
 
+# --- Output ---
+quantized_weights, scale = symmetric_quantize_int8(weights_fp32)
+print(f"Original FP32: {weights_fp32}")
+print(f"Scale (S): {scale:.4f}")
+print(f"Quantized INT8: {quantized_weights}")
+dequantized_weights = quantized_weights.astype(np.float32) * scale
+print(f"Dequantized FP32: {np.round(dequantized_weights, 4)}")
+```
+
+#### Mapping Table
+
+Here is how our original weights map to the INT8 format.
+
+| Original Float (x) | Calculation (x / S) | Rounded Int (q) | Dequantized Float (x̂) | Error (x - x̂) |
+| :--- | :--- | :--- | :--- | :--- |
+| 1.2 | 1.2 / 0.0275 = 43.56 | 44 | 1.21 | -0.01 |
+| -3.5 | -3.5 / 0.0275 = -127.0 | -127 | -3.49 | -0.01 |
+| 0.8 | 0.8 / 0.0275 = 29.03 | 29 | 0.80 | 0.00 |
+| 2.1 | 2.1 / 0.0275 = 76.22 | 76 | 2.09 | +0.01 |
+| -1.9 | -1.9 / 0.0275 = -68.96 | -69 | -1.90 | 0.00 |
+| 3.5 | 3.5 / 0.0275 = 127.0 | 127 | 3.49 | +0.01 |
+
+The core idea is simple: find a scale factor to stretch or shrink the float range to fit the integer range. The error introduced is called **quantization error**. Our next task is to understand how this is applied inside a real model and the trade-offs involved.
+
+## 2. Weights-Only Quantization & Mixed Precision
+
+We've mastered the algorithm for compressing numbers. Now, where do we apply it inside a real neural network? A neural network layer primarily does one simple thing: it performs a matrix multiplication.
+
+`Output = MatMul(Input_Data, Weights)`
