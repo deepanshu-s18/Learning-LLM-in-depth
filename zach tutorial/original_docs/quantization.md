@@ -256,3 +256,32 @@ Now, let's quantize it using the same method as before.
 1.  **Find the Absolute Maximum:** The `abs_max` is now `1000.0`.
 2.  **Calculate the Scale (S):**
     `S = abs_max / q_max = 1000.0 / 127 ≈ 7.87`
+3.  **Apply Quantization (`q = round(x / S)`):**
+    *   For `x = 1.2`: `round(1.2 / 7.87) = round(0.15) = 0`.
+    *   For `x = -3.5`: `round(-3.5 / 7.87) = round(-0.44) = 0`.
+    *   For `x = 0.8`: `round(0.8 / 7.87) = round(0.10) = 0`.
+
+**The disaster is clear:** The single outlier `1000.0` has inflated the scale factor so much that all the other smaller, important values are "squashed" into the integer `0`. We have effectively erased their information. This is a catastrophic loss of precision.
+
+#### The Solution: Finer Granularity
+
+The problem is not the quantization algorithm itself, but the **scope** over which we apply it. Using one scale factor for an entire tensor is too coarse. The solution is to use multiple scale factors for smaller chunks of the tensor. This concept is called **granularity**.
+
+There are three common levels of granularity.
+
+**1. Per-Tensor Quantization (The Flawed Baseline)**
+This is what we have been doing. We calculate a single scale factor for the entire weight matrix.
+*   **Pros:** Simplest method, minimal overhead (only one scale factor to store).
+*   **Cons:** Extremely sensitive to outliers, often leading to significant quality loss.
+
+```
+Diagram: Per-Tensor Quantization
+
+A large square represents a weight matrix (e.g., 4096x4096).
+Next to it, there is a single scale value: S
+The entire matrix shares this one scale.
+```
+
+**2. Per-Channel Quantization (The INT8 Standard)**
+Instead of one scale for the whole matrix, we calculate a separate scale factor for each **row**. In a linear layer, each row of the weight matrix corresponds to the connections for a single output neuron or "channel." This is the most common method for INT8 quantization.
+*   **Pros:** Effectively isolates outliers. An outlier in one row only affects the precision of that single row, leaving all other rows untouched.
