@@ -227,3 +227,32 @@ A diagram illustrating the mixed-precision matrix multiplication process.
 --------------------------------------------------------------------------------------------------
 | Box 2: GPU Core (Fast, Small On-Chip Cache)                                                    |
 |                                                                                                |
+|   1. [Operation] On-the-fly Dequantization                                                     |
+|      Input: Weights (INT8), Scale (FP16)                                                       |
+|      Output: Dequantized Weights (FP16) -> This is temporary!                                  |
+|                                                                                                |
+|   2. [Operation] Matrix Multiplication                                                         |
+|      Input A: Activations (FP16)                                                               |
+|      Input B: Dequantized Weights (FP16)                                                       |
+|      Output: Result (FP16)                                                                     |
+|                                                                                                |
+--------------------------------------------------------------------------------------------------
+```
+
+This hardware-fused process gives us the best of both worlds: a **4x reduction in memory footprint** from INT8 storage, and the **full numerical accuracy of FP16** for the actual computation. We have successfully reduced the memory required for our weights without significantly affecting the mathematical outcome. However, this ideal scenario has a hidden weakness: outliers.
+
+## 3. Handling Outliers: The Power of Granularity
+
+We are now at the most critical concept for preserving model quality: managing outliers. The symmetric quantization method we've used so far has a fatal flaw. It assumes that weight values are evenly distributed, but in reality, neural networks often contain a few "specialist" weights with extremely large magnitudes.
+
+#### The Flaw: One Giant Value Destroys Precision
+
+Let's revisit our simple tensor, but this time we'll add a single, massive outlier value.
+
+`weights_fp32 = [1.2, -3.5, 0.8, 2.1, -1.9, 1000.0]`
+
+Now, let's quantize it using the same method as before.
+
+1.  **Find the Absolute Maximum:** The `abs_max` is now `1000.0`.
+2.  **Calculate the Scale (S):**
+    `S = abs_max / q_max = 1000.0 / 127 ≈ 7.87`
