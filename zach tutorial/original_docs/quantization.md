@@ -428,3 +428,32 @@ print(f"Second number (4) is 0b{second_num:04b}")
 print(f"Packed byte (decimal): {packed_byte}")
 print(f"Packed byte (binary): 0b{packed_byte:08b}")
 ```
+**Output:**
+```
+First number (10) is 0b1010
+Second number (4) is 0b0100
+Packed byte (decimal): 74
+Packed byte (binary): 0b01001010
+```
+**The Point:** We have successfully stored the information of two numbers in a single 8-bit byte (`74`). This is the mechanism that achieves the final 2x memory compression over INT8. A real model is just a giant array of these packed bytes, plus a smaller array of scale factors for each group.
+
+## 5. Deployment Strategy: PTQ vs. QAT
+
+We have mastered the mechanics of quantization. The final step is to understand *when* to apply this process. There are two primary strategies for converting a high-precision model to a quantized one. The choice between them depends on the trade-off between accuracy, cost, and complexity.
+
+#### 1. PTQ (Post-Training Quantization): The Industry Standard
+
+**PTQ is the default and most widely used method for quantizing Large Language Models.** The strategy is simple: you take a fully trained, high-precision model and apply the quantization algorithm to it as a separate, final step.
+
+*   **The Workflow:**
+    1.  **Load:** Start with your trained FP16 model.
+    2.  **Calibrate:** Feed a small, representative sample of data (e.g., 100-1000 examples) through the model. This step is not for training; it's to observe the activation ranges and calculate the most accurate scale factors ($S$) for the weights.
+    3.  **Quantize:** Use the calculated scales to convert the model's weights to INT8 or INT4.
+    4.  **Save:** Store the new, quantized model weights and their corresponding scale factors.
+
+*   **Why It's the Standard:**
+    *   **Fast and Efficient:** The entire process is extremely fast, often taking just minutes on a single GPU. It does not require an expensive, multi-day training run.
+    *   **No Original Training Data Needed:** It does not require access to the massive, often proprietary dataset the model was originally trained on.
+    *   **Sufficiently Accurate:** For modern LLMs, using the techniques we've discussed (per-channel for INT8, group-wise for INT4) makes PTQ so effective that the loss in model quality is often negligible or zero.
+
+*   **Limitation:** The model cannot adapt to the quantization error. If a crucial weight value is changed by rounding, the model has no way to compensate. In practice, this is rarely a significant problem for large models.
