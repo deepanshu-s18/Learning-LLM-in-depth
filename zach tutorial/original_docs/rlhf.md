@@ -271,3 +271,72 @@ class GPT(nn.Module):
             x = block(x)
         x = self.transformer.ln_f(x)
         
+        # --- The key part for generation ---
+        # Project the final hidden states to vocabulary size
+        logits = self.lm_head(x) # Shape: (Batch, SeqLen, VocabSize)
+        return logits
+```
+
+**Key takeaway:** The standard GPT model takes token IDs as input and outputs a tensor of `logits` with shape `(Batch, SequenceLength, VocabSize)`. Each vector at the end represents the model's prediction for the *next token* at that position.
+
+**The Modification: From Language Model to Judge**
+
+Our RM doesn't need to predict the next word. It needs to read an entire sequence (`prompt + response`) and output a *single number* representing its quality. To achieve this, we perform two surgical steps:
+
+1.  **Remove the Language Model Head (`lm_head`):** We don't need to map to the vocabulary anymore. This part of the "brain" is no longer needed.
+2.  **Add a Scalar Head:** We attach a new, much simpler `nn.Linear` layer that takes the final hidden state and projects it down to a single scalar value.
+
+Here is the code for our new `RewardModel`. Notice how it reuses the entire `transformer` body from our original `GPT` class but replaces the head.
+
+```python
+# reward_model.py
+import torch
+import torch.nn as nn
+
+class RewardModel(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.config = config
+        
+        # Reuse the entire body of the GPT model
+        self.transformer = GPT(config).transformer
+        
+        # Add a new 'value head' for the scalar reward
+        self.reward_head = nn.Linear(config.n_embd, 1)
+
+    def forward(self, idx: torch.Tensor) -> torch.Tensor:
+        # Standard transformer forward pass
+        B, T = idx.size()
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device).unsqueeze(0)
+        tok_emb = self.transformer.wte(idx)
+        pos_emb = self.transformer.wpe(pos)
+        x = self.transformer.drop(tok_emb + pos_emb)
+        for block in self.transformer.h:
+            x = block(x)
+        x = self.transformer.ln_f(x)
+        
+        # --- The key part for reward modeling ---
+        # We only care about the hidden state of the *last* token
+        last_token_hidden_state = x[:, -1, :] # Shape: (Batch, N_Embd)
+        
+        # Project this final hidden state to a single scalar
+        reward = self.reward_head(last_token_hidden_state) # Shape: (Batch, 1)
+        return reward
+```
+
+**Architectural Comparison**
+
+The architectural change is conceptually simple but profound.
+
+```mermaid
+graph TD
+    subgraph SG1["Standard GPT (for Generation)"]
+        A[Input Tokens] --> B[Transformer Body]
+        B --> C["Final Hidden States<br/>(Batch, SeqLen, N_Embd)"]
+        C --> D["LM Head<br/>Linear(N_Embd, VocabSize)"]
+        D --> E["Output Logits<br/>(Batch, SeqLen, VocabSize)"]
+    end
+    
+    subgraph SG2["Reward Model (for Judging)"]
+        A2[Input Tokens] --> B2[Transformer Body]
+        B2 --> C2["Final Hidden States<br/>(Batch, SeqLen, N_Embd)"]
