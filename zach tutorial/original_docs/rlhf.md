@@ -134,3 +134,72 @@ This efficiency gap means we can collect preference data at a much larger scale 
 
 **Building the Preference Dataset**
 
+This insight leads to a new data collection pipeline.
+
+1.  Take a prompt from our dataset.
+2.  Use our SFT model (the apprentice from Chapter 1) to generate several different responses (e.g., Response A, B, C, D).
+3.  Present these responses to a human labeler and ask them to **rank** them from best to worst. For example, the labeler might decide `B > A > D > C`.
+4.  This single ranking is then broken down into a set of pairwise comparisons. From the ranking `B > A > D > C`, we can derive several data points:
+    *   `(prompt, chosen: B, rejected: A)`
+    *   `(prompt, chosen: B, rejected: D)`
+    *   `(prompt, chosen: B, rejected: C)`
+    *   `(prompt, chosen: A, rejected: D)`
+    *   ...and so on.
+
+The final result is a large dataset, let's call it `D_prefs`, full of tuples of the form: `(x, y_w, y_l)`, where `x` is the prompt, `y_w` is the "winner" (chosen) response, and `y_l` is the "loser" (rejected) response.
+
+**Two Paths Forward**
+
+Now that we have this powerful new dataset, we arrive at a fork in the road. There are two modern, competing philosophies on how to use this preference data to improve our SFT model.
+
+| Path | **Direct Preference Optimization (DPO)** | **Reinforcement Learning from Human Feedback (RLHF)** |
+| :--- | :--- | :--- |
+| **Philosophy** | Use preferences to **directly** adjust the policy's probabilities. It's an elegant, single-stage process. | Use preferences to first train a separate **Reward Model**, then use that model as a reward function to train the policy with RL. It's a more complex, multi-stage process. |
+| **Analogy** | A language coach gives you specific edits: "Instead of saying X, say Y." | You hire a judge who gives a score to every speech you make. You then practice relentlessly to maximize your score from that judge. |
+| **Our Focus** | (Mentioned for context, but not our focus). | **This is the path we will explore in this tutorial.** It is the method used by the original InstructGPT and early versions of ChatGPT. |
+
+Both DPO and RLHF are powerful techniques that start from the same core insight of using preference data. For this tutorial, we will follow the RLHF path, as it was the pioneering method that demonstrated the incredible power of aligning models with human feedback at scale.
+
+Our next step on this path is clear: if we want to use a "judge" to train our model, we first need to build that judge. In the next part of our journey, we will dive into training the **Reward Model**.
+---
+
+## **Step 2: Training the Reward Model**
+
+We've made a crucial decision: instead of directly teaching our SFT model with preference data, we're going to build an automated "judge" that learns to mimic the human labeler. This judge is called the **Reward Model (RM)**. Its sole purpose is to take any `(prompt, response)` pair and output a single scalar score that represents "quality" or "human preference."
+
+**Why We Need an Automated Judge**
+
+You might ask, "Why the extra step? Why not just use the human feedback directly?"
+
+The answer is **scalability and speed**. During the final Reinforcement Learning stage, our policy model will generate tens of thousands, or even millions, of responses. We can't ask a human to score every single one in real-time. That would be incredibly slow and prohibitively expensive.
+
+The Reward Model solves this. Once trained, it acts as a fast and cheap proxy for the human labeler. It can score a batch of a thousand responses in a fraction of a second, providing the near-instant feedback signal required for efficient RL training.
+
+**The Mathematics: Bradley-Terry Model**
+
+The goal is to train a model, let's call its parameters `θ`, that produces a scalar score `r_θ(x, y)`. How do we use our preference dataset `D_prefs` of `(x, y_w, y_l)` tuples to train this model?
+
+We rely on a simple but powerful idea from statistics: the **Bradley-Terry model**. It provides a way to model the probability of one item being preferred over another based on their underlying scores.
+
+1.  **The Core Assumption:** We assume that for any given prompt `x`, every possible response `y` has a latent, hidden "quality score" given by our reward model `r_θ(x, y)`. When a human prefers `y_w` over `y_l`, it's because the true score of `y_w` is higher than the true score of `y_l`.
+
+2.  **Modeling the Probability:** The Bradley-Terry model states that the probability of a human preferring `y_w` over `y_l` is proportional to the *difference* in their scores. We can formalize this using the sigmoid function (`σ`), which neatly squashes any real number into a probability between 0 and 1.
+
+    $$ P(y_w \succ y_l | x) = \sigma(r_\theta(x, y_w) - r_\theta(x, y_l)) $$
+
+    Let's break this down:
+    *   If `r_θ(x, y_w)` is much larger than `r_θ(x, y_l)`, the difference is a large positive number. `σ(large_positive)` is close to 1. Our model is confident that `y_w` is the winner.
+    *   If `r_θ(x, y_w)` is roughly equal to `r_θ(x, y_l)`, the difference is near zero. `σ(0)` is 0.5. Our model is uncertain, predicting a 50/50 chance.
+    *   If `r_θ(x, y_w)` is much smaller than `r_θ(x, y_l)`, the difference is a large negative number. `σ(large_negative)` is close to 0. Our model is confident it has the scores backwards for this pair.
+
+**Converting Preferences to Loss**
+
+Now that we can model this probability, training the Reward Model is straightforward. We want to adjust the parameters `θ` to maximize the probability of the human judgments we actually observed in our dataset. This is a classic maximum likelihood problem, which we can solve by minimizing the **Negative Log-Likelihood**.
+
+For a single preference pair `(x, y_w, y_l)`, the loss is:
+
+$$ \text{loss} = -\log \left( P(y_w \succ y_l | x) \right) $$
+
+Substituting our Bradley-Terry formula, we get the final loss function for the Reward Model, which is averaged over the entire preference dataset `D_prefs`:
+
+$$ \mathcal{L}(\theta) = -\mathbb{E}_{(x, y_w, y_l) \sim D_{prefs}} \left[ \log \sigma(r_\theta(x, y_w) - r_\theta(x, y_l)) \right] $$
