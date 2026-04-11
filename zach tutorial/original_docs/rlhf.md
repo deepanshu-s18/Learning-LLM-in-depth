@@ -340,3 +340,71 @@ graph TD
     subgraph SG2["Reward Model (for Judging)"]
         A2[Input Tokens] --> B2[Transformer Body]
         B2 --> C2["Final Hidden States<br/>(Batch, SeqLen, N_Embd)"]
+        C2 --> F["Select Last Token's State<br/>(Batch, N_Embd)"]
+        F --> G["Reward Head<br/>Linear(N_Embd, 1)"]
+        G --> H["Output Score<br/>(Batch, 1)"]
+    end
+```
+
+The code for the RM's training step directly implements the loss function from the previous chapter.
+
+```python
+# rm_training_step.py
+
+def compute_rm_loss(reward_model, chosen_ids, rejected_ids):
+    """
+    Computes the loss for a Reward Model on a batch of preference pairs.
+    """
+    # Get the scores for the chosen and rejected sequences
+    # Input shapes: (Batch, SeqLen)
+    chosen_rewards = reward_model(chosen_ids)     # Shape: (Batch, 1)
+    rejected_rewards = reward_model(rejected_ids) # Shape: (Batch, 1)
+
+    # The core of the loss function from Chapter 3
+    # log(sigmoid(chosen - rejected))
+    loss = -torch.log(torch.sigmoid(chosen_rewards - rejected_rewards)).mean()
+    
+    return loss
+
+reward_model = RewardModel(config)
+optimizer = torch.optim.Adam(reward_model.parameters())
+
+for batch in preference_dataloader:
+    optimizer.zero_grad()
+    # batch['chosen_ids'] and batch['rejected_ids'] are tokenized inputs
+    loss = compute_rm_loss(reward_model, batch['chosen_ids'], batch['rejected_ids'])
+    loss.backward()
+    optimizer.step()
+```
+
+We have now successfully built and trained our automated judge. It is ready to provide the critical feedback signal we need for the final and most complex stage of our journey: improving our SFT model with reinforcement learning.
+
+---
+## **Step 3: Reinforcement Learning with PPO**
+
+We've reached the final and most exciting stage. We have two key components ready:
+
+1.  **The Apprentice (SFT Model):** A capable model that knows how to follow instructions but can be improved.
+2.  **The Judge (Reward Model):** An automated proxy for human preference that can score any response.
+
+Our goal is to use the judge's feedback to iteratively improve the apprentice. This is no longer a supervised learning problem; there's no single "correct" answer to imitate. Instead, the model needs to *explore* different ways of responding and learn from the judge's scores. This trial-and-error learning process is the domain of **Reinforcement Learning (RL)**.
+
+#### RL Concepts in the LLM Context
+
+To understand how RL applies here, let's start with a classic analogy: training a dog to sit.
+
+| RL Concept | Dog Training Analogy | Language Model (RLHF) |
+| :--- | :--- | :--- |
+| **Agent** | The dog, the entity that is learning. | The **SFT Model** we are fine-tuning. This is also called the **Policy** or **Actor**. |
+| **Action** | The dog can choose to sit, bark, or run. | **Generating the next token**. A full response is a sequence of actions. |
+| **Environment** | The living room and the trainer giving a command. | The context provided by a **prompt**. The environment is static; a new "episode" starts with each new prompt. |
+| **Reward** | A tasty treat given for sitting. | The **scalar score** from our trained **Reward Model** for the complete response. |
+| **Value (`V`)** | The dog's expectation: "How good do treats usually taste when the trainer says 'sit'?" | The **Value Model's prediction**: "What reward do I typically expect from this type of prompt?" |
+| **Policy (`π`)** | The dog's internal "brain" or strategy that decides what to do. | The **LLM itself**. It's a probability distribution over the entire vocabulary for the next token, given the context. |
+
+The core loop of RL is simple: the **Agent** (LLM Policy) takes an **Action** (generates a response) in an **Environment** (prompt), and receives a **Reward** (RM score). The goal of the learning algorithm is to update the Agent's **Policy** to take actions that maximize its expected future reward.
+
+#### Why the Naive Approach Fails
+
+Let's imagine the simplest learning objective: generate a response `y`, get a reward `r(x,y)`, and use gradient ascent to maximize `r(x,y)`. To do this, we would need to backpropagate the gradient of the reward through the entire generation process, all the way back to the model's weights `θ`.
+
