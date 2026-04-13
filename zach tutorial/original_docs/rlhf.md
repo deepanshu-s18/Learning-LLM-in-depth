@@ -682,3 +682,71 @@ To measure how far the policy has stretched, we use **Kullback-Leibler (KL) Dive
     The true KL-Divergence between our two policies at a given step is a sum over the *entire vocabulary* (`V`):
     $$ \text{KL}(\pi_{RL} || \pi_{SFT}) = \sum_{\text{token } w \in V} \pi_{RL}(w|\text{context}) \log \left( \frac{\pi_{RL}(w|\text{context})}{\pi_{SFT}(w|\text{context})} \right) $$
     This formula gives us a precise measure of the "distance" between the two probability distributions.
+
+*   **The Practical Problem:** Calculating this is computationally impossible during training. Our vocabulary has ~50,000 tokens. We cannot afford to compute and sum 50,000 log-probabilities for every single token the model generates.
+
+*   **The Sample-Based Estimation:**
+    Luckily, we can use a very simple, cheap, and effective estimate. Instead of looking at the whole distribution, we only look at the difference in log-probabilities for the *one token that was actually sampled*. For a generated token `t`, our estimate is:
+    $$ \text{KL}_{\text{estimate}}(t) \approx \log \pi_{RL}(t|\text{context}) - \log \pi_{SFT}(t|\text{context}) $$
+    This single value tells us a lot. If it's a large positive number, our new policy is much more confident about this token than the SFT model was—it's stretching the rubber band. If it's a large negative number, it's become much *less* confident—it's also stretching the rubber band, just in a different way.
+
+#### Building the Augmented Reward (`R_aug`)
+
+We now have all the pieces to construct our final reward signal for each timestep `t`:
+
+$$ R_{\text{aug}}(t) = - \beta \cdot \text{KL}_{\text{estimate}}(t) + R_{\text{RM}}(t) $$
+
+Where:
+*   `β` (beta) is a small hyperparameter (e.g., 0.1) that controls the **strength** of the rubber band.
+*   `R_RM(t)` is the score from the Reward Model. This is **zero for all tokens except the very last one**.
+
+Let's see this in action with a more complex example.
+
+#### Concrete Example: A 3-Token Generation
+
+Imagine our model is responding to the prompt: **"The old dog is..."**
+It generates the 3-token response: **"very, very, sleepy"**.
+
+*   Our KL strength `β` is set to **0.1**.
+*   The final Reward Model score for "very, very, sleepy" is `r_θ = 5.0`.
+
+Here is the step-by-step calculation of the augmented reward for each token.
+
+**Step 1: Generating "very"**
+The model generates its first token, "very". We get the log-probabilities from both our learning policy and our frozen SFT reference.
+
+| Model | `log π("very" \| "The old dog is...")` |
+| :--- | :--- |
+| `π_RL` (Learning) | -0.9 |
+| `π_SFT` (Reference) | -1.5 |
+
+*   **KL Estimate:** Our learning model is *more confident* than the SFT model.
+    `KL_est = -0.9 - (-1.5) = 0.6`
+*   **KL Penalty:** We multiply by `β`.
+    `Penalty = 0.1 * 0.6 = 0.06`
+*   **Augmented Reward:** Since this is not the last token, the reward is just the negative penalty.
+    `R_aug(t=1) = -0.06`
+    *Intuition: The model stretched the rubber band by being overconfident. It gets a small penalty.*
+
+**Step 2: Generating the second "very"**
+Now the context is "The old dog is very...". The model generates "very" again.
+
+| Model | `log π("very" \| "The old dog is very...")` |
+| :--- | :--- |
+| `π_RL` (Learning) | -2.5 |
+| `π_SFT` (Reference) | -1.0 |
+
+*   **KL Estimate:** This time, our learning model is *less confident* than the SFT model.
+    `KL_est = -2.5 - (-1.0) = -1.5`
+*   **KL Penalty:** The penalty itself is negative.
+    `Penalty = 0.1 * (-1.5) = -0.15`
+*   **Augmented Reward:** The reward is the negative of the penalty.
+    `R_aug(t=2) = -(-0.15) = +0.15`
+    *Intuition: The model diverged by being underconfident. The rubber band gives it a small positive reward to pull it back toward the SFT model's confidence level.*
+
+**Step 3: Generating "sleepy"**
+The context is "The old dog is very very...". The model generates the final token, "sleepy".
+
+| Model | `log π("sleepy" \| "The old dog is very very...")` |
+| :--- | :--- |
+| `π_RL` (Learning) | -0.5 |
