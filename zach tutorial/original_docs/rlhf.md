@@ -750,3 +750,72 @@ The context is "The old dog is very very...". The model generates the final toke
 | Model | `log π("sleepy" \| "The old dog is very very...")` |
 | :--- | :--- |
 | `π_RL` (Learning) | -0.5 |
+| `π_SFT` (Reference) | -0.5 |
+
+*   **KL Estimate:** The models agree perfectly.
+    `KL_est = -0.5 - (-0.5) = 0.0`
+*   **KL Penalty:** There is no penalty.
+    `Penalty = 0.1 * 0.0 = 0.0`
+*   **Augmented Reward:** This is the **final token**, so we add the score from the Reward Model!
+    `R_aug(t=3) = -0.0 + 5.0 = +5.0`
+
+#### Final Result: The Per-Token Reward Signal
+
+We started with a single reward of `5.0` that only arrived at the very end. We have now successfully distributed that reward and the KL guidance into a rich, per-token signal that the agent can learn from at every step.
+
+| Timestep (t) | Token Generated | `R_aug(t)` |
+| :--- | :--- | :--- |
+| 1 | `very` | -0.06 |
+| 2 | `very` | +0.15 |
+| 3 | `sleepy`| +5.00 |
+
+This is the final output of Step 1 of our pipeline. This stream of augmented rewards is the raw material that we will now feed into Step 2: the Critic and the Advantage function, which will refine it into an even more stable signal for learning.
+
+## **Section 9: The Second Defense: The Critic and Advantage "Shock Absorber"**
+
+We've successfully crafted our augmented reward signal, `R_aug`, which wisely blends the final goal (the Reward Model's score) with a continuous KL penalty. However, this signal, while rich, is still very noisy. A single lucky or unlucky generation can result in a reward that's wildly different from the average, causing our training to be unstable.
+
+This is where the second defense comes in. We introduce a helper model—the **Critic**—to build a "shock absorber" for our learning process. This allows us to calculate the **Advantage**, a much more stable and powerful signal than the raw reward alone.
+
+| Step | Component Name | The Formula We Compute | The Intuition: "What is its purpose?" |
+| :--- | :--- | :--- | :--- |
+| **1** | **Augmented Reward** `(R_aug)` | $R_{\text{aug}}(t) = R_{\text{KL}}(t) + R_{\text{RM}}$ | **Create the Raw Signal.** We combine the Reward Model's score with the per-token KL penalty. |
+| **▶ 2** | **Advantage** `(A_t)` | $A_t \approx R_{\text{aug}}(t) + \gamma V_{\psi}(s_{t+1}) - V_{\psi}(s_t)$ | **Refine the Signal.** We calculate how much better or worse our raw signal was than what our "Critic" model predicted. This turns a noisy, absolute reward into a stable, relative "surprise" signal. |
+| **3** | **Final Loss** `(L_total)` | $\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{Policy}}(A_t) - c_1 \mathcal{L}_{\text{Value}} + c_2 \mathcal{L}_{\text{Entropy}}$ | **Assemble the Final Product.** We use the refined Advantage signal `A_t` as the core ingredient in our final loss function. |
+
+#### The Critic: A Professional Forecaster
+
+The **Critic** (also known as the **Value Model**, `Vψ`) is a neural network with a simple but vital job: to predict the future. Specifically, at any given point in the text generation, it looks at the state (`s_t` - the prompt and tokens generated so far) and predicts the total discounted future reward it expects to receive from that point until the end of the episode.
+
+Its architecture is typically identical to the Reward Model's: a copy of the SFT model's transformer body with a scalar head on top. It is trained alongside our main policy to get better and better at its forecasts.
+
+#### From Raw Reward to Advantage
+
+The core idea is to shift from judging an action based on its absolute reward to judging it based on how much **better or worse that reward was than the Critic expected**. This "surprise" factor is the **Advantage**.
+
+Think of it like a report card. A grade of 'B' is a fantastic surprise for a student who expected a 'D', but a disappointing surprise for a student who expected an 'A'. The Advantage captures this crucial context.
+
+The simplest form of advantage is the **TD Error (`δ_t`)**, which measures the one-step surprise:
+
+$$ \delta_t = R_{\text{aug}}(t) + \gamma V_{\psi}(s_{t+1}) - V_{\psi}(s_t) $$
+
+Let's break this down:
+*   `R_aug(t) + γ * Vψ(st+1)`: This is the **reality**. It's the immediate reward we *actually* got, plus the discounted value of the state we *actually* landed in.
+*   `Vψ(st)`: This is the **forecast**. It's what the Critic predicted the outcome would be, right before we took the action.
+
+The difference between reality and the forecast is our one-step surprise, `δ_t`.
+
+While simple, this one-step advantage can still be noisy. For text generation, a more robust method called **Generalized Advantage Estimation (GAE)** is used. GAE calculates the advantage at each step by looking at the entire chain of "surprises" that happened after it.
+
+$$ A_t^{\text{GAE}} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l} = \delta_t + \gamma \lambda \delta_{t+1} + (\gamma \lambda)^2 \delta_{t+2} + \dots $$
+
+This looks complex, but it can be calculated efficiently by working backwards from the end of the sequence. Let's make this concrete with our example.
+
+#### Concrete Example: Calculating the Advantage
+
+Let's continue with our 3-token generation: **"very, very, sleepy"**. We already have the `R_aug` for each step from the last chapter. Now, let's add the Critic's predictions (`Vψ`) for each state.
+
+**Hyperparameters:**
+*   `γ` (gamma, discount factor) = **0.9**
+*   `λ` (lambda, GAE factor) = **0.8**
+
