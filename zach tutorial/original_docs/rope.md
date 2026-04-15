@@ -141,3 +141,32 @@ An arc with an arrow shows the counter-clockwise 90-degree rotation from v to v'
 
 Here is the core idea of RoPE: **The angle of rotation is determined by the token's position `m`**.
 
+We define a constant, base "frequency" or angle, `θ`. The total rotation applied to a vector at position `m` is simply `m * θ`.
+
+| Position (`m`) | Total Rotation Angle | What it means |
+| :--- | :--- | :--- |
+| 0 | `0 * θ = 0` | The vector for the first token is **not rotated**. It is our baseline. |
+| 1 | `1 * θ = θ` | The vector for the second token is rotated by a small angle `θ`. |
+| 2 | `2 * θ` | The vector for the third token is rotated by twice that angle. |
+| 3 | `3 * θ` | The vector for the fourth token is rotated by three times that angle. |
+
+This establishes a clear, consistent rule: the further a token is in the sequence, the more its vector is "spun" around the origin.
+
+```
+A 3D visualization.
+The X and Y axes form a 2D plane at the bottom. The Z axis represents the position 'm' and goes upwards.
+At z=0 (position 0), a vector 'v' points from the origin along the positive X-axis.
+At z=1 (position 1), the same vector is shown, but rotated slightly counter-clockwise in the XY plane.
+At z=2 (position 2), the vector is rotated even more.
+At z=3 (position 3), it's rotated further still.
+A dotted line connects the tips of these vectors, forming a spiral or helix shape that winds upwards along the Z-axis.
+This image shows how the vector's direction in the XY plane progressively changes as its position 'm' increases.
+```
+
+We have now established the fundamental principle in a simple 2D world. The next challenge is to figure out how to apply this "rotation" concept to the high-dimensional vectors (e.g., 768 or 4096 dimensions) that are actually used in Large Language Models.
+
+## **Chapter 3: Scaling to High Dimensions: The RoPE Algorithm**
+
+We have a solid principle for 2D vectors, but in a real Transformer, our Query and Key vectors have high dimensions (`d`), for example, `d=128` for a single attention head. How do we "rotate" a 128-dimensional vector?
+
+A single rotation matrix for 128 dimensions would be enormous and complex. RoPE uses a much simpler and more elegant approach.
