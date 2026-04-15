@@ -84,3 +84,31 @@ Before we dive in, let's clarify exactly how RoPE fits into the Transformer:
 | Question | Answer |
 |:---|:---|
 | **Applied to which vectors?** | Only Q and K, not V. We need position in the attention score (`QK^T`), not in the output values. |
+| **Is RoPE itself learned?** | No. The rotation angles are fixed formulas based on position. But the Q and K projection weights (Wq, Wk) *are* learned, and they learn to produce vectors that work well with these rotations. |
+| **Applied in every layer?** | Yes. Every transformer block applies RoPE to its Q and K vectors independently. |
+
+## **Chapter 2: The Core Intuition: Encoding Position via Rotation (in 2D)**
+
+We need a transformation that modifies a vector to encode its position while preserving its original information (its meaning). The key insight of RoPE is that a **rotation** does exactly this.
+
+A rotation changes a vector's direction but, crucially, **it does not change its length (norm)**. We can use the original length to represent the token's meaning and the new direction to represent its position.
+
+#### **The Building Block: 2D Rotation**
+
+Let's start in two dimensions. Imagine a token's meaning is captured by a simple 2D vector, `v = (x, y)`. To rotate this vector by an angle `θ`, we multiply it by the standard 2D rotation matrix:
+
+$$
+R(\theta) = \begin{pmatrix} \cos(\theta) & -\sin(\theta) \\ \sin(\theta) & \cos(\theta) \end{pmatrix}
+$$
+
+The new, rotated vector `v'` is calculated as:
+
+$$
+v' = R(\theta)v = \begin{pmatrix} \cos(\theta) & -\sin(\theta) \\ \sin(\theta) & \cos(\theta) \end{pmatrix} \begin{pmatrix} x \\ y \end{pmatrix}
+$$
+
+#### **A Concrete Example: Rotation by 90 Degrees**
+
+Let's make this tangible. Suppose our vector is `v = (1, 2)` and we want to rotate it by `θ = 90°` (or `π/2` radians).
+
+1.  **The Angle:** We know `cos(90°) = 0` and `sin(90°) = 1`.
