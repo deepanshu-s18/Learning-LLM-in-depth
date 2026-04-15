@@ -1024,3 +1024,72 @@ We have now fully assembled our sophisticated PPO loss function. The theory is c
 The PPO training phase is a carefully choreographed dance between four distinct models. Understanding their origins and roles is crucial.
 
 ```mermaid
+graph TD
+    subgraph Pre-PPO Stages
+        direction LR
+        SFT_Training[SFT Training] --> SFT_Model[SFT Model (π_SFT)]
+        RM_Training[RM Training] --> RM_Model[Reward Model (r_φ)]
+    end
+
+    subgraph "PPO Training Initialization"
+        SFT_Model -- "Copied to initialize" --> Actor[Actor (π_φ)<br/><strong>Status: Learning</strong>]
+        SFT_Model -- "Copied to initialize" --> Critic[Critic (V_ψ)<br/><strong>Status: Learning</strong>]
+        SFT_Model -- "Copied as-is" --> Reference[Reference (π_SFT)<br/><strong>Status: Frozen</strong>]
+        RM_Model -- "Copied as-is" --> Reward[Reward Judge (r_φ)<br/><strong>Status: Frozen</strong>]
+    end
+
+    style Actor fill:#ffdddd
+    style Critic fill:#ddeeff
+    style Reference fill:#ddffdd
+    style Reward fill:#ffffcc
+```
+
+Here is a summary of their roles during the PPO loop:
+
+| Model | Nickname | Origin | Status | Primary Job |
+| :--- | :--- | :--- | :--- | :--- |
+| **Actor (`π_φ`)**| The Student | A copy of the SFT model | **Learning** | Generates text and is the target of `L_Policy` and the Entropy bonus. |
+| **Critic (`V_ψ`)**| The Forecaster| A copy of the SFT model | **Learning** | Predicts expected rewards. Is the target of `L_Value`. |
+| **Reference (`π_SFT`)| The Anchor | A direct copy of the SFT model | **Frozen** | Provides `log π_SFT` for the KL penalty calculation in the augmented reward. |
+| **Reward Judge (`r_φ`)| The Judge | The trained Reward Model | **Frozen** | Provides the final `r_φ(x,y)` score for the augmented reward. |
+
+#### The Flow of Information into the Loss Function
+
+During the **Learning Phase**, data from these models flows into our combined loss function to compute the gradients for the two learning models: the Actor and the Critic.
+
+```mermaid
+graph TD
+    subgraph "Data from Rollout"
+        A[Advantages, A_t]
+        R[Target Rewards, R_target]
+        LP_old[Old Log Probs, log π_φ_old]
+    end
+
+    subgraph "Live Models"
+        Actor[Actor (π_φ)]
+        Critic[Critic (V_ψ)]
+    end
+
+    Actor -- "Generates" --> LP_new[New Log Probs, log π_φ]
+    Critic -- "Predicts" --> V_pred[Predicted Values, V_ψ]
+    
+    LP_new --> L_Policy[Policy Loss (L_Policy)]
+    LP_old --> L_Policy
+    A --> L_Policy
+
+    V_pred --> L_Value[Value Loss (L_Value)]
+    R --> L_Value
+
+    LP_new --> L_Entropy[Entropy Bonus (S)]
+
+    L_Policy --> TotalLoss[Total Loss]
+    L_Value --> TotalLoss
+    L_Entropy --> TotalLoss
+
+    TotalLoss -- "Updates" --> Actor
+    TotalLoss -- "Updates" --> Critic
+
+    style Actor fill:#ffdddd
+    style Critic fill:#ddeeff
+```
+
