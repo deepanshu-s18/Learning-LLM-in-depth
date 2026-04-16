@@ -285,3 +285,31 @@ $$
 
 **Step 2: Apply RoPE to the Key**
 We apply the rotation for position `n`. The rotated key `k'_n` is:
+$$
+k'_n = R(n\theta)k_n = \begin{pmatrix} \cos(n\theta) & -\sin(n\theta) \\ \sin(n\theta) & \cos(n\theta) \end{pmatrix} \begin{pmatrix} k_0 \\ k_1 \end{pmatrix}
+$$
+
+**Step 3: Calculate the Dot Product**
+The attention score for this pair is their dot product, `(q'_m)^T (k'_n)`. Let's write this out using our matrix expressions:
+$$
+\text{Score} = (R(m\theta)q_m)^T (R(n\theta)k_n)
+$$
+Using the transpose property `(AB)^T = B^T A^T`, we get:
+$$
+\text{Score} = q_m^T R(m\theta)^T R(n\theta) k_n
+$$
+
+This is the crucial step. We need to simplify the product of the two rotation matrices in the middle.
+
+**Step 4: The Key Property of Rotation Matrices**
+Rotation matrices have a beautiful property: the transpose of a rotation matrix is the same as the matrix for the inverse rotation.
+$$
+R(\alpha)^T = R(-\alpha) = \begin{pmatrix} \cos(-\alpha) & -\sin(-\alpha) \\ \sin(-\alpha) & \cos(-\alpha) \end{pmatrix} = \begin{pmatrix} \cos(\alpha) & \sin(\alpha) \\ -\sin(\alpha) & \cos(\alpha) \end{pmatrix}
+$$
+Another property is that multiplying two rotation matrices is the same as adding their angles: `R(α)R(β) = R(α+β)`.
+
+Let's apply these properties to our term `R(mθ)^T R(nθ)`:
+$$
+R(m\theta)^T R(n\theta) = R(-m\theta) R(n\theta) = R(n\theta - m\theta) = R((n-m)\theta)
+$$
+
