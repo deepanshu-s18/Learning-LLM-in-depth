@@ -227,3 +227,32 @@ $$
 \begin{pmatrix} x'_{2i} \\ x'_{2i+1} \end{pmatrix} = \begin{pmatrix} \cos\alpha & -\sin\alpha \\ \sin\alpha & \cos\alpha \end{pmatrix} \begin{pmatrix} x_{2i} \\ x_{2i+1} \end{pmatrix}
 $$
 
+Return the rotated vector $x' = (x'_0, x'_1, \ldots, x'_{d-1})$.
+
+**Quick Example:** Let's apply RoPE to a 4-dimensional vector $x = (1.0, 0.5, 0.8, 0.3)$ at position $m = 2$.
+
+**Pair 0:** $(x_0, x_1) = (1.0, 0.5)$
+- $\theta_0 = 10000^{0} = 1.0$
+- $\alpha = 2 \times 1.0 = 2.0$
+- $\cos(2.0) = -0.42, \quad \sin(2.0) = 0.91$
+$$
+\begin{pmatrix} x'_0 \\ x'_1 \end{pmatrix} = \begin{pmatrix} -0.42 & -0.91 \\ 0.91 & -0.42 \end{pmatrix} \begin{pmatrix} 1.0 \\ 0.5 \end{pmatrix} = \begin{pmatrix} -0.42 \times 1.0 + (-0.91) \times 0.5 \\ 0.91 \times 1.0 + (-0.42) \times 0.5 \end{pmatrix} = \begin{pmatrix} -0.87 \\ 0.70 \end{pmatrix}
+$$
+
+**Pair 1:** $(x_2, x_3) = (0.8, 0.3)$
+- $\theta_1 = 10000^{-0.5} = 0.01$
+- $\alpha = 2 \times 0.01 = 0.02$
+- $\cos(0.02) = 1.00, \quad \sin(0.02) = 0.02$
+$$
+\begin{pmatrix} x'_2 \\ x'_3 \end{pmatrix} = \begin{pmatrix} 1.00 & -0.02 \\ 0.02 & 1.00 \end{pmatrix} \begin{pmatrix} 0.8 \\ 0.3 \end{pmatrix} = \begin{pmatrix} 1.00 \times 0.8 + (-0.02) \times 0.3 \\ 0.02 \times 0.8 + 1.00 \times 0.3 \end{pmatrix} = \begin{pmatrix} 0.79 \\ 0.32 \end{pmatrix}
+$$
+
+**Result:** $x' = (-0.87, 0.70, 0.79, 0.32)$
+
+Notice: Pair 0 rotated significantly (fast clock hand), while Pair 1 barely moved (slow clock hand).
+
+This is the entire forward pass of RoPE. It's a deterministic transformation applied to the Query and Key vectors. In the next chapter, we will prove mathematically why this elegant procedure results in the exact relative positioning property we set out to achieve.
+
+## **Chapter 4: The Mathematical Proof: Why RoPE is Relative**
+
+We've built the RoPE algorithm. Now it's time for the payoff. We will prove that this method of rotating vector pairs creates the exact relative positioning property we wanted.
