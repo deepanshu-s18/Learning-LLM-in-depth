@@ -371,3 +371,32 @@ def precompute_rope_embeddings(head_dim: int, max_seq_len: int, base: int = 1000
     # 4. Duplicate frequencies for both elements in each pair
     # [θ0, θ1] -> [θ0, θ0, θ1, θ1] so consecutive elements share the same angle
     # Shape: (max_seq_len, head_dim)
+    emb = freqs.repeat_interleave(2, dim=-1)
+
+    return emb
+
+# --- Example Usage ---
+MAX_LEN = 4
+HEAD_DIM = 4
+emb = precompute_rope_embeddings(HEAD_DIM, MAX_LEN)
+
+print("Angles (m * theta_i) for each position and dimension pair:")
+print(emb)
+print("\nCosines:")
+print(emb.cos())
+print("\nSines:")
+print(emb.sin())
+```
+**Output:**
+```
+Angles (m * theta_i) for each position and dimension pair:
+tensor([[0.0000, 0.0000, 0.0000, 0.0000],   # position 0: no rotation
+        [1.0000, 1.0000, 0.0100, 0.0100],   # position 1: pair 0 gets θ=1.0, pair 1 gets θ=0.01
+        [2.0000, 2.0000, 0.0200, 0.0200],   # position 2: 2x the angles
+        [3.0000, 3.0000, 0.0300, 0.0300]])  # position 3: 3x the angles
+
+Cosines:
+tensor([[ 1.0000,  1.0000,  1.0000,  1.0000],
+        [ 0.5403,  0.5403,  0.9999,  0.9999],
+        [-0.4161, -0.4161,  0.9998,  0.9998],
+        [-0.9900, -0.9900,  0.9996,  0.9996]])
