@@ -199,3 +199,31 @@ RoPE works exactly the same way, but instead of 3 hands, we have `d/2` hands (64
 *   The first pairs rotate **quickly** - like a second hand, sensitive to nearby positions
 *   The last pairs rotate **very slowly** - like an hour hand, tracking long-range position
 
+The rotation speed `θ_i` for the `i`-th pair is:
+$$
+\theta_i = 10000^{-\frac{2i}{d}}
+$$
+
+For a 128-dimensional vector, this gives us 64 "clock hands" with periods ranging from ~6 tokens (fastest) to ~60,000 tokens (slowest). The combination creates a unique signature for each position, and the relative distance between positions is naturally encoded in how much each hand has moved.
+
+#### **The Full RoPE Algorithm**
+
+We can now formalize the complete algorithm for applying RoPE to a single vector $x$ at position $m$.
+
+**Given:**
+- A vector $x = (x_0, x_1, x_2, x_3, \ldots, x_{d-1})$ of dimension $d$
+- A position $m$
+
+**Algorithm:** For each pair $i$ from $0$ to $\frac{d}{2} - 1$:
+
+1. Calculate the frequency:
+$$\theta_i = 10000^{-\frac{2i}{d}}$$
+
+2. Calculate the rotation angle:
+$$\alpha = m \cdot \theta_i$$
+
+3. Apply the 2D rotation to the $i$-th pair:
+$$
+\begin{pmatrix} x'_{2i} \\ x'_{2i+1} \end{pmatrix} = \begin{pmatrix} \cos\alpha & -\sin\alpha \\ \sin\alpha & \cos\alpha \end{pmatrix} \begin{pmatrix} x_{2i} \\ x_{2i+1} \end{pmatrix}
+$$
+
