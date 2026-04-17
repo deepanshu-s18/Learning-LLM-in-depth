@@ -457,3 +457,32 @@ def apply_rotary_pos_emb(x: torch.Tensor, rope_emb: torch.Tensor):
     # x_partner's first element is -x_reshaped's second element, and vice-versa
     x_partner = torch.stack([-x_reshaped[..., 1], x_reshaped[..., 0]], dim=-1)
     
+    # 3. Flatten back to original shape for multiplication
+    # (batch, seq_len, num_heads, head_dim)
+    x_partner = x_partner.flatten(-2)
+    
+    # 4. Perform the rotation using element-wise multiplication
+    rotated_x = x * cos_emb + x_partner * sin_emb
+    
+    return rotated_x.type_as(x)
+
+# --- Example Usage ---
+# Small example: 1 batch, 2 positions, 1 head, 4 dimensions
+rope_emb = precompute_rope_embeddings(head_dim=4, max_seq_len=4)
+x = torch.tensor([[
+    [[1.0, 0.0, 1.0, 0.0]],  # position 0: pairs (1,0) and (1,0)
+    [[1.0, 0.0, 1.0, 0.0]],  # position 1: same vector, different position
+]])  # shape: (1, 2, 1, 4)
+
+rotated = apply_rotary_pos_emb(x, rope_emb)
+print("Input x:\n", x)
+print("\nRotated x:\n", rotated)
+```
+**Output:**
+```
+Input x:                          # Same vector at both positions
+ tensor([[[[1., 0., 1., 0.]],     # position 0
+          [[1., 0., 1., 0.]]]])   # position 1
+
+Rotated x:
+ tensor([[[[1.0000, 0.0000, 1.0000, 0.0000]],   # position 0: no rotation (m=0)
