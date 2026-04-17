@@ -428,3 +428,32 @@ $$
 \begin{pmatrix} x'_0 \\ x'_1 \end{pmatrix} = \begin{pmatrix} x_0 \\ x_1 \end{pmatrix} \odot \begin{pmatrix} \cos\theta \\ \cos\theta \end{pmatrix} + \begin{pmatrix} -x_1 \\ x_0 \end{pmatrix} \odot \begin{pmatrix} \sin\theta \\ \sin\theta \end{pmatrix}
 $$
 
+The trick: create a "partner" vector by swapping and negating: $(x_0, x_1) \rightarrow (-x_1, x_0)$. Then:
+$$
+x' = x \odot \cos + x_{\text{partner}} \odot \sin
+$$
+
+This allows us to perform all rotations in parallel with efficient tensor operations.
+
+```python
+def apply_rotary_pos_emb(x: torch.Tensor, rope_emb: torch.Tensor):
+    # Get the sequence length from the input tensor
+    seq_len = x.shape[1]
+    
+    # Slice the pre-computed embeddings to match the sequence length
+    # Shape: (1, seq_len, 1, head_dim) for broadcasting
+    rope_emb_sliced = rope_emb[:seq_len, :].unsqueeze(0).unsqueeze(2)
+    
+    # Get the cosine and sine components
+    cos_emb = rope_emb_sliced.cos()
+    sin_emb = rope_emb_sliced.sin()
+    
+    # --- The Rotation Trick ---
+    # 1. Reshape x to handle pairs
+    # (batch, seq_len, num_heads, head_dim/2, 2)
+    x_reshaped = x.float().reshape(*x.shape[:-1], -1, 2)
+    
+    # 2. Create the partner vector: (-x_1, x_0, -x_3, x_2, ...)
+    # x_partner's first element is -x_reshaped's second element, and vice-versa
+    x_partner = torch.stack([-x_reshaped[..., 1], x_reshaped[..., 0]], dim=-1)
+    
