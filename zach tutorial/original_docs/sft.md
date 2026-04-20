@@ -99,3 +99,29 @@ Let's make this concrete with a minimal example that you can calculate by hand.
 
 Imagine a tiny model with a vocabulary of only six words.
 
+*   **Vocabulary:** `{"<pad>": 0, "The": 1, "cat": 2, "sat": 3, "on": 4, "mat": 5}`
+*   **Input Sequence (`input_ids`):** "The cat sat" -> `[1, 2, 3]`
+*   **Target Sequence (`labels`):** "cat sat on" -> `[2, 3, 4]`
+
+The model processes the input and produces a vector of raw scores, or **logits**, for each possible next word at each position. Let's assume our model has produced the following logits:
+
+| Position | Input Context | Model's Output Logits (for the next token) |
+| :--- | :--- | :--- |
+| 1 | `[1]` ("The") | `[0.1, 0.2, 2.0, 0.5, 0.3, 0.1]` |
+| 2 | `[1, 2]` ("The cat") | `[0.1, 0.1, 0.2, 2.5, 0.4, 0.2]` |
+| 3 | `[1, 2, 3]` ("The cat sat")| `[0.2, 0.1, 0.1, 0.3, 3.0, 0.5]` |
+
+To calculate the loss, we perform three steps for each position:
+1.  **Softmax:** Convert the raw logits into a probability distribution. $ \text{softmax}(z_i) = \frac{e^{z_i}}{\sum_j e^{z_j}} $.
+2.  **Get Target Probability:** Find the probability the model assigned to the correct target token.
+3.  **Calculate Loss:** Take the negative natural logarithm of that probability. $\text{Loss} = -\log(P_{\text{target}})$.
+
+Let's fill out the table with the math, step-by-step.
+
+| Step | Input Context | Target Token | Model's Logits | Softmax Probabilities | Prob. of Target Token | Loss (-log P) |
+| :-- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1**| "The" | `cat` (idx 2) | `[0.1,..,**2.0**,..]` | `[0.08,..,**0.593**,..]` | `0.593` | `-log(0.593) = 0.522` |
+| **2**| "The cat"| `sat` (idx 3) | `[0.1,..,**2.5**,..]` | `[0.07,..,**0.793**,..]` | `0.793` | `-log(0.793) = 0.232` |
+| **3**| "The cat sat"| `on` (idx 4) | `[0.2,..,**3.0**,..]` | `[0.08,..,**0.773**,..]` | `0.773` | `-log(0.773) = 0.257` |
+| | | | | **Total Loss (Average)** | | | **(0.522+0.232+0.257)/3 = 0.337** |
+
