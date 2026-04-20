@@ -125,3 +125,28 @@ Let's fill out the table with the math, step-by-step.
 | **3**| "The cat sat"| `on` (idx 4) | `[0.2,..,**3.0**,..]` | `[0.08,..,**0.773**,..]` | `0.773` | `-log(0.773) = 0.257` |
 | | | | | **Total Loss (Average)** | | | **(0.522+0.232+0.257)/3 = 0.337** |
 
+The final loss for this sequence is the **average** of the individual token losses, which is **0.337**. This single number tells the optimizer how wrong the model was across the entire sequence, and backpropagation uses it to adjust the model's weights.
+
+In PyTorch, this entire process is handled by a single, highly optimized function: `torch.nn.functional.cross_entropy`. The key is to format our tensors correctly.
+
+```python
+import torch
+import torch.nn.functional as F
+
+# Our model's output logits. These are the *exact same numbers* from the table.
+# Shape: (Batch, Time, Vocab_size) -> (1, 3, 6)
+logits = torch.tensor([[
+    [0.1, 0.2, 2.0, 0.5, 0.3, 0.1],  # Logits for predicting after "The"
+    [0.1, 0.1, 0.2, 2.5, 0.4, 0.2],  # Logits for predicting after "The cat"
+    [0.2, 0.1, 0.1, 0.3, 3.0, 0.5]   # Logits for predicting after "The cat sat"
+]])
+
+# The correct next tokens (our labels)
+# Shape: (Batch, Time) -> (1, 3)
+targets = torch.tensor([[2, 3, 4]]) # "cat", "sat", "on"
+
+# F.cross_entropy expects (N, C) and (N,)
+# So we reshape our tensors to squash the Batch and Time dimensions together.
+logits_flat = logits.view(-1, logits.size(-1)) # Shape: (3, 6)
+targets_flat = targets.view(-1)               # Shape: (3)
+
