@@ -404,3 +404,29 @@ By leveraging a structured chat template and the critical technique of loss mask
 3.  **It Follows Instructions:** Within the domains covered by its training data, the model can now reliably follow instructions, answer questions, and perform tasks.
 
 We have successfully built an **apprentice assistant**. It has learned the rules and can replicate the tasks it was shown. This is the essential first step in creating a useful and safe AI model. SFT is the bedrock upon which all modern alignment is built.
+
+However, SFT has a profound, built-in limitation: it treats all "good" answers as equally and perfectly good. The learning process is binary—it imitates the provided response, and everything else is implicitly wrong. The real world, however, is full of nuance and "shades of gray."
+
+Consider a user prompt: "Summarize the impact of the printing press."
+
+*   **Response A (Good):** "The printing press, invented by Johannes Gutenberg around 1440, allowed for the mass production of books. This made information more accessible and increased literacy rates across Europe."
+*   **Response B (Better):** "Gutenberg's printing press democratized knowledge by drastically lowering the cost of books. This fueled the Renaissance, the Reformation, and the Scientific Revolution by enabling the rapid spread of new ideas and challenging the information monopoly of religious and state authorities."
+
+As humans, we can clearly state a preference: **B is better than A**. It's more insightful, detailed, and provides deeper context.
+
+An SFT model cannot learn this **relative preference**.
+*   If your SFT dataset only contains responses like A, your model will learn to be factually correct but basic.
+*   If your dataset contains both A and B, the model will learn to produce an *average* of the two styles, potentially becoming generic.
+*   It has no mechanism to understand that B is a more desirable output than A. It can only imitate what it is shown.
+
+SFT teaches a model *what* to say, but not how to *judge* or *choose* between multiple good options.
+
+To overcome this limitation, the field of AI alignment developed techniques for **preference tuning**. These methods move beyond simple imitation and teach the model to understand human judgments directly.
+
+This requires a new kind of dataset: `(prompt, chosen_response, rejected_response)`.
+
+Instead of just showing the model one good answer, we show it two answers and tell it which one we prefer. Algorithms like **DPO (Direct Preference Optimization)** and **RLHF (Reinforcement Learning from Human Feedback)** use this preference data to fine-tune the model further. They adjust the model's probabilities so that it learns to assign a higher likelihood to "chosen" responses and a lower likelihood to "rejected" ones.
+
+SFT is not the end of the alignment story; it is the essential first chapter. It transforms the raw base model into something coherent and controllable, creating the perfect starting point for more sophisticated preference tuning.
+
+You now understand the fundamental technique that turns a pattern-mimicking parrot into a true instruction-following assistant. You have mastered the theory, the math, and the code. The entire landscape of LLM alignment starts here.
