@@ -379,3 +379,28 @@ def sft_training_step(policy_model, optimizer, batch):
         labels=batch["labels"]
     )
     loss = outputs.loss # Assuming a Hugging Face-style model output
+
+    loss.backward()
+    optimizer.step()
+    return loss.item()
+
+# Conceptual usage:
+# loss_value = sft_training_step(my_gpt_model, my_optimizer, prepared_batch)
+```
+We have successfully implemented the full SFT pipeline from scratch. We have taught the model *what* a helpful response looks like and how to generate it. The parrot is learning to become an assistant.
+
+However, this method of direct imitation has a crucial weakness. All "good" responses are treated equally. We have no way to tell the model that one good response might be slightly better, more detailed, or safer than another. We've taught the model what to say, but not how to *judge*.
+
+In the final chapter, we will explore this limitation and see where SFT fits into the broader alignment landscape.
+
+## **Chapter 5: Beyond Imitation: The Power and Limits of SFT**
+
+We've completed the journey. Starting with a raw, pre-trained "parrot," we have successfully implemented the theory and code for Supervised Fine-Tuning. Let's recap what we've achieved and, just as importantly, understand what we haven't.
+
+By leveraging a structured chat template and the critical technique of loss masking, we have fundamentally altered the model's behavior. Our model is no longer just a pattern-completion engine.
+
+1.  **It Understands Conversational Structure:** The model now recognizes the roles of `<|user|>` and `<|assistant|>` and knows that its job is to generate text after the assistant token.
+2.  **It Adopts a Persona:** It has learned to imitate the style, tone, and helpfulness of the expert-written responses in its SFT dataset.
+3.  **It Follows Instructions:** Within the domains covered by its training data, the model can now reliably follow instructions, answer questions, and perform tasks.
+
+We have successfully built an **apprentice assistant**. It has learned the rules and can replicate the tasks it was shown. This is the essential first step in creating a useful and safe AI model. SFT is the bedrock upon which all modern alignment is built.
