@@ -302,3 +302,29 @@ def sft_data_collator(batch, tokenizer):
 
         # 3. Tokenize the full text for the model's input.
         input_ids = tokenizer.encode(full_text)
+
+        # 4. Create labels by cloning the input_ids.
+        labels = torch.tensor(input_ids).clone()
+
+        # 5. Apply the mask. This is the core SFT trick.
+        # We set the label for all prompt tokens to -100.
+        labels[:mask_until_idx] = -100
+
+        all_input_ids.append(torch.tensor(input_ids))
+        all_labels.append(labels)
+
+    # In a real implementation, you'd pad all sequences to the same length here.
+    return {
+        "input_ids": torch.stack(all_input_ids),
+        "labels": torch.stack(all_labels)
+    }
+
+# Let's process our batch
+prepared_batch = sft_data_collator(sft_batch, tokenizer)
+```
+
+Let's print the prepared batch to see our loss masking in action. The table below shows the first example from our batch, connecting the theory directly to our code's output.
+
+| Token Text | `input_ids` | `labels` | Loss Calculated? |
+| :--- | :--- | :--- | :--- |
+| `<\|user\|>` | 9 | -100 | **No** |
