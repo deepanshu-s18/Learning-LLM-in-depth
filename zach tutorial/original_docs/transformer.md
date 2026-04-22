@@ -341,3 +341,118 @@ tok_emb = token_embedding_table(idx) # Shape (B, T, C) -> (2, 5, 3)
 # We just need the positions for our current sequence.
 pos = torch.arange(0, T, dtype=torch.long) # Shape (T) -> tensor([0, 1, 2, 3, 4])
 pos_emb = position_embedding_table(pos) # Shape (T, C) -> (5, 3)
+
+# --- Step 3: Combine them via addition ---
+# (B, T, C) + (T, C) --(broadcasts)--> (B, T, C)
+x = tok_emb + pos_emb
+print("Shape of token embeddings:", tok_emb.shape)
+print("Shape of positional embeddings:", pos_emb.shape)
+print("Shape of final combined embeddings:", x.shape)
+```
+
+**Output:**
+```
+Shape of token embeddings: torch.Size([2, 5, 3])
+Shape of positional embeddings: torch.Size([5, 3])
+Shape of final combined embeddings: torch.Size([2, 5, 3])
+```
+
+**Answering a key question: What if the input sequence is shorter than `block_size`?**
+This is the normal case! As you see above, our `block_size` is `8`, but our input sequence length `T` is only `5`. The code `torch.arange(0, T, ...)` handles this perfectly. We only generate and look up the positional embeddings for the sequence length we are currently processing. We never use the full `block_size` unless our input is that long.
+
+We have now prepared the input for the main event. Our tensor `x` contains vectors that are aware of both the token's identity and its absolute position in the sequence.
+
+This is the input that will flow into the stack of Transformer blocks. It's time to build the heart of the machine: Self-Attention.
+
+## **Chapter 4: The Heart of the Transformer: Self-Attention Intuition**
+
+In the last chapter, we established that our model gives the same starting vector to a word regardless of its context. This is a problem for ambiguous words. To make this crystal clear, we'll use simplified sentences.
+
+**The Problem:** Consider the word "**crane**".
+1.  "**Crane** ate fish." (crane = a bird)
+2.  "**Crane** lifted steel." (crane = a machine)
+
+The initial vector for "crane" is identical in both sentences. Self-attention must update this vector based on the neighbors (`ate` vs. `lifted`) to resolve the ambiguity.
+
+Let's see how this works using the attention formula as our map:
+$$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$
+
+#### The Q, K, and V Vector Spaces
+
+Before we jump in, let's clarify what Q, K, and V represent.
+*   **Query (Q) and Key (K) Space:** Think of this as the "matching" or "searching" space. Q is the probe, K is the label. They **must** have the same number of dimensions so we can compute their dot product to get a similarity score.
+*   **Value (V) Space:** Think of this as the "information" or "payload" space. This is the actual substance that gets passed along once a match is found. In our GPT-2 architecture, we set `d_v = d_k = C/n_head` for simplicity. Note that architecturally, `d_v` doesn't have to equal `d_k` - what matters is that after concatenating all heads, the total dimension equals `C` (i.e., `n_head * d_v = C`), ensuring the output has the same dimensions as the input for residual connections.
+
+This raises a crucial question: **We already have an input vector `x` for each token. Why do we need to create a separate Value (`V`) vector? Isn't `x` already the 'information'?**
+
+The answer is that the raw information is not always the best information to share. The `V` vector is a *transformed* version of `x`, specifically packaged for other tokens to consume.
+
+Let's use an analogy. Imagine a token is a professional at a conference.
+
+| Aspect | Input Vector (`x`) | Value Vector (`V`) |
+| :--- | :--- | :--- |
+| **Role** | Raw, Complete Information | Packaged, Consumable Information |
+| **Analogy**| Your entire knowledge & resume | Your prepared "elevator pitch" |
+| **Purpose**| The starting point for computation | The payload to be aggregated by other tokens |
+| **How it's Made**| Output of embedding layers | A **learned transformation** of `x` (`V = x @ W_v`) |
+
+The model *learns* the best "elevator pitch" (`V`) for each word. This gives it the flexibility to emphasize or de-emphasize parts of its raw knowledge (`x`) to be most helpful to its neighbors.
+
+Now, let's proceed with our example. We'll use a 2D space where the dimensions are dead simple:
+*   **Dimension 1:** Represents "Is it an **Animal**?"
+*   **Dimension 2:** Represents "Is it a **Machine**?"
+
+The ambiguous word "crane" will have vectors balanced between these possibilities.
+
+| Token | Q - "I'm looking for..." | K - "I am..." | V - "I offer this info..." |
+| :--- | :--- | :--- | :--- |
+| **ate** | ... | `[0.9, 0.1]` (High Animal) | `[0.9, 0.1]` |
+| **fish** | ... | `[0.9, 0.1]` (High Animal) | `[0.8, 0.2]` |
+| **lifted** | ... | `[0.1, 0.9]` (High Machine)| `[0.1, 0.9]` |
+| **steel** | ... | `[0.1, 0.9]` (High Machine)| `[0.2, 0.8]` |
+| **crane** | **`[0.7, 0.7]`** | **`[0.7, 0.7]`** | **`[0.5, 0.5]`** (Ambiguous)|
+
+---
+**Sentence 1: "Crane ate fish"**
+
+**1. Scoring (`QK^T`):** The `crane` token uses its query `[0.7, 0.7]` to probe all keys in the sentence.
+*   **Score(`crane` -> `crane`):** `[0.7, 0.7] ⋅ [0.7, 0.7]` = 0.49 + 0.49 = **0.98**
+*   **Score(`crane` -> `ate`):**   `[0.7, 0.7] ⋅ [0.9, 0.1]` = 0.63 + 0.07 = **0.70**
+*   **Score(`crane` -> `fish`):**  `[0.7, 0.7] ⋅ [0.9, 0.1]` = 0.63 + 0.07 = **0.70**
+
+**2. Normalizing (`softmax`):** The raw scores `[0.98, 0.70, 0.70]` are converted to percentages.
+*   Attention Weights: `[0.4, 0.3, 0.3]`
+    *This means `crane` will construct its new self by listening 40% to its original self, 30% to `ate`, and 30% to `fish`.*
+
+**3. Aggregating (`...V`):** The new vector for `crane` is a weighted sum of the **Values**.
+*   `New_Vector(crane)` = `0.4*V(crane)` + `0.3*V(ate)` + `0.3*V(fish)`
+*   `New_Vector(crane)` = `0.4*[0.5, 0.5]` + `0.3*[0.9, 0.1]` + `0.3*[0.8, 0.2]`
+*   `New_Vector(crane)` = `[0.20, 0.20]` + `[0.27, 0.03]` + `[0.24, 0.06]` = **`[0.71, 0.29]`**
+
+The result is a new "crane" vector that is heavily skewed towards **Dimension 1 (Animal)**. The context from `ate` and `fish` has resolved the ambiguity. It's a bird.
+
+---
+**Sentence 2: "Crane lifted steel"**
+
+**1. Scoring (`QK^T`):** `crane` uses the *exact same query* `[0.7, 0.7]` on its new neighbors.
+*   **Score(`crane` -> `crane`):** `[0.7, 0.7] ⋅ [0.7, 0.7]` = **0.98**
+*   **Score(`crane` -> `lifted`):** `[0.7, 0.7] ⋅ [0.1, 0.9]` = 0.07 + 0.63 = **0.70**
+*   **Score(`crane` -> `steel`):** `[0.7, 0.7] ⋅ [0.1, 0.9]` = 0.07 + 0.63 = **0.70**
+
+**2. Normalizing (`softmax`):** The raw scores `[0.98, 0.70, 0.70]` are identical to before.
+*   Attention Weights: `[0.4, 0.3, 0.3]`
+    *The percentages are the same, but they now apply to a different set of tokens!*
+
+**3. Aggregating (`...V`):**
+*   `New_Vector(crane)` = `0.4*V(crane)` + `0.3*V(lifted)` + `0.3*V(steel)`
+*   `New_Vector(crane)` = `0.4*[0.5, 0.5]` + `0.3*[0.1, 0.9]` + `0.3*[0.2, 0.8]`
+*   `New_Vector(crane)` = `[0.20, 0.20]` + `[0.03, 0.27]` + `[0.06, 0.24]` = **`[0.29, 0.71]`**
+
+The result is a vector now heavily skewed towards **Dimension 2 (Machine)**. The exact same initial "crane" vector has been transformed into a completely different, context-aware vector because it listened to different dominant neighbors.
+
+This is the power of self-attention. Now that the intuition is solid, we can finally implement it with matrices.
+
+
+## **Chapter 5: Implementing Scaled Dot-Product Attention**
+
+We've built the intuition for self-attention. Now, we will translate that exact process into matrix operations using PyTorch. By the end of this chapter, you will have implemented the core attention formula and encapsulated it into a reusable `nn.Module`.
