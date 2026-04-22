@@ -570,3 +570,118 @@ print(output)
 --- Final Output (Context-Aware Vectors) ---
 torch.Size([1, 4, 2])
 tensor([[[ 0.0652, -0.1691],
+         [ 0.1147, -0.2974],
+         [ 0.0768, -0.1991],
+         [ 0.1005, -0.2607]]])
+```
+
+Here is a summary of the tensor transformations:
+
+| Step | Operation | Input Shapes | Output Shape `(B, T, ...)` | Meaning |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | `q_proj(x)` etc. | `(1, 4, 2)` | `(1, 4, 2)` | Create Q, K, V for each token |
+| 2 | `q @ k.T` | `(1, 4, 2)` & `(1, 2, 4)` | `(1, 4, 4)` | Raw compatibility scores |
+| 3 | `/ sqrt(d_k)` | `(1, 4, 4)` | `(1, 4, 4)` | Stabilized scores |
+| 4 | `softmax` | `(1, 4, 4)` | `(1, 4, 4)` | Attention probabilities |
+| 5 | `att @ v` | `(1, 4, 4)` & `(1, 4, 2)` | `(1, 4, 2)` | Context-aware output vectors|
+
+Success! We have taken our raw input `x` and produced a new tensor `output` of the exact same shape, where each token's vector has been updated with information from its neighbors.
+
+#### Part 2: Encapsulating the Logic in an `nn.Module`
+
+The raw tensor walkthrough is fantastic for understanding the mechanics. In practice, we package this logic into a reusable class. This makes our code clean, organized, and easy to integrate into a larger model.
+
+Here is the complete, encapsulated code for a single attention head. By the end of this section, every single line will be crystal clear.
+
+```python
+# The final, reusable PyTorch module
+class SingleHeadSelfAttention(nn.Module):
+    def __init__(self, config):
+        """
+        Initializes the layers needed for self-attention.
+        """
+        super().__init__()
+        # The single, fused linear layer for Q, K, V
+        self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd, bias=False)
+
+    def forward(self, x):
+        """
+        Defines the data flow through the module.
+        Input x shape: (B, T, C)
+        """
+        B, T, C = x.size()
+
+        # 1. Get Q, K, V from a single projection and split them
+        qkv = self.c_attn(x)
+        q, k, v = qkv.split(C, dim=2)
+        
+        # 2. Calculate attention weights
+        # (B, T, C) @ (B, C, T) -> (B, T, T)
+        scaled_scores = (q @ k.transpose(-2, -1)) / math.sqrt(k.size(-1))
+        attention_weights = F.softmax(scaled_scores, dim=-1)
+        
+        # 3. Aggregate values
+        # (B, T, T) @ (B, T, C) -> (B, T, C)
+        output = attention_weights @ v
+        
+        return output
+```
+
+Now, let's break down how this elegant code achieves the exact same result as our manual, step-by-step process.
+
+**The `__init__` Method: The Fused Linear Layer**
+
+The `__init__` method sets up the building blocks. Here, we only need one.
+
+```python
+self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd, bias=False)
+```
+
+In our manual walkthrough, we used three separate `nn.Linear` layers. This single line is a common and highly efficient optimization that achieves the same goal.
+
+| Our Manual Walkthrough (Conceptually Clear) | Fused Layer (Computationally Efficient) |
+| :--- | :--- |
+| `q_proj = nn.Linear(C, C)` | |
+| `k_proj = nn.Linear(C, C)` | `c_attn = nn.Linear(C, 3*C)` |
+| `v_proj = nn.Linear(C, C)` | |
+
+Instead of three smaller matrix multiplications, the GPU can perform one larger, faster matrix multiplication. The `bias=False` argument is a common simplification used in minimal implementations like NanoGPT. Note that the original GPT-2 implementation does include biases in its linear projections.
+
+**The `forward` Method: From Fused to Final Output**
+
+The `forward` method is the heart of the module, defining the data's journey.
+
+**1. Projection and Splitting**
+```python
+qkv = self.c_attn(x)
+q, k, v = qkv.split(C, dim=2)
+```
+*   `self.c_attn(x)`: We pass our input `x` (shape `B, T, C`) through the fused layer, resulting in a `qkv` tensor of shape `(B, T, 3*C)`.
+*   `qkv.split(C, dim=2)`: This is the clever part. The `.split()` function carves up the tensor. We tell it: "Along dimension 2 (the last dimension), create chunks of size `C`." Since the total dimension is `3*C`, this gives us exactly three tensors, each with the desired shape of `(B, T, C)`, which we assign to `q`, `k`, and `v`.
+
+**2. Calculating Attention Weights**
+```python
+scaled_scores = (q @ k.transpose(-2, -1)) / math.sqrt(k.size(-1))
+attention_weights = F.softmax(scaled_scores, dim=-1)
+```
+This is a direct, one-to-one implementation of the mathematical formula.
+*   `k.transpose(-2, -1)` swaps the `T` and `C` dimensions of the Key tensor to prepare for matrix multiplication.
+*   `q @ ...` performs the dot product, resulting in the raw score matrix of shape `(B, T, T)`.
+*   `/ math.sqrt(k.size(-1))` performs the scaling for stability.
+*   `F.softmax(...)` converts the raw scores into a probability distribution along each row.
+
+**3. Aggregating Values**
+```python
+output = attention_weights @ v
+```
+Finally, we perform the last matrix multiplication. The attention weights `(B, T, T)` are multiplied with the Value vectors `(B, T, C)`, resulting in our final output tensor of shape `(B, T, C)`.
+
+**Proof of Equivalence**
+
+To prove this class is identical to our manual work, we can instantiate it and manually load the weights from our `q_proj`, `k_proj`, and `v_proj` layers into the single `c_attn` layer.
+
+```python
+# Let's verify the logic
+@dataclass
+class GPTConfig: n_embd: int
+model = SingleHeadSelfAttention(GPTConfig(n_embd=C))
