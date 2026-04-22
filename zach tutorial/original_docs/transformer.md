@@ -456,3 +456,117 @@ This is the power of self-attention. Now that the intuition is solid, we can fin
 ## **Chapter 5: Implementing Scaled Dot-Product Attention**
 
 We've built the intuition for self-attention. Now, we will translate that exact process into matrix operations using PyTorch. By the end of this chapter, you will have implemented the core attention formula and encapsulated it into a reusable `nn.Module`.
+
+Our map for this chapter is the formula itself:
+$$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$
+
+First, we will build this with raw tensors to see every number. Then, we will put that logic inside our official `CausalSelfAttention` class.
+
+#### Part 1: The Raw Tensor Walkthrough
+
+Let's use a simple sentence: "**A crane ate fish**". We now have 4 tokens (`T=4`) and our toy embedding dimension is 2 (`C=2`). We'll process one sentence at a time (`B=1`).
+
+**The Input (`x`): Raw, Context-Free Embeddings**
+This is the tensor from our embedding layers. Dim1="Object-like", Dim2="Action-like".
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+from dataclasses import dataclass
+
+B, T, C = 1, 4, 2  # Batch, Time (sequence length), Channels (embedding dim)
+x = torch.tensor([
+    [[0.1, 0.1],   # A
+     [1.0, 0.2],   # crane (mostly object, slightly action)
+     [0.1, 0.9],   # ate (mostly action)
+     [0.8, 0.0]]   # fish (purely object)
+]).float()
+```
+
+**Step 1: Projecting `x` into Q, K, and V**
+To get our Query, Key, and Value vectors, we use **learnable** linear transformations. These `nn.Linear` layers are the "brains" of the operation; their weights are updated during training. For this tutorial, we will set them manually to see the logic clearly.
+
+```python
+# The learnable components
+q_proj = nn.Linear(C, C, bias=False)
+k_proj = nn.Linear(C, C, bias=False)
+v_proj = nn.Linear(C, C, bias=False)
+
+# Manually set weights for this tutorial
+torch.manual_seed(42)
+q_proj.weight.data = torch.randn(C, C)
+k_proj.weight.data = torch.randn(C, C)
+v_proj.weight.data = torch.randn(C, C)
+
+# --- Perform the projections ---
+q = q_proj(x)
+k = k_proj(x)
+v = v_proj(x)
+```
+Let's track our tensor shapes and their meaning.
+
+| Variable | Shape `(B, T, C)` | Meaning |
+| :--- | :--- | :--- |
+| `x` | `(1, 4, 2)` | The batch of raw input vectors. |
+| `q` | `(1, 4, 2)` | The "Query" vector for each of the 4 tokens. |
+| `k` | `(1, 4, 2)` | The "Key" vector for each of the 4 tokens. |
+| `v` | `(1, 4, 2)` | The "Value" vector for each of the 4 tokens. |
+
+**Step 2: Calculate Attention Scores (`q @ k.transpose`)**
+This is the core of the communication. We need to compute the dot product of every token's query with every other token's key. We can do this with a single, efficient matrix multiplication.
+
+*   `q` has shape `(1, 4, 2)`.
+*   `k` has shape `(1, 4, 2)`.
+*   To multiply them, we need to make their inner dimensions match. We use `.transpose(-2, -1)` to swap the last two dimensions of `k`.
+*   `k.transpose(-2, -1)` results in a shape of `(1, 2, 4)`.
+*   The multiplication is `(1, 4, 2) @ (1, 2, 4)`, which results in a `(1, 4, 4)` matrix.
+
+```python
+# --- Score Calculation ---
+scores = q @ k.transpose(-2, -1)
+
+print("--- Raw Scores (Attention Matrix) ---")
+print(scores.shape)
+print(scores)
+```
+**Output:**
+```
+--- Raw Scores (Attention Matrix) ---
+torch.Size([1, 4, 4])
+tensor([[[ 0.0531,  0.4137,  0.1802,  0.2721],   # "A" scores for (A, crane, ate, fish)
+         [ 0.1782,  1.3888,  0.6053,  0.9101],   # "crane" scores for (A, crane, ate, fish)
+         [ 0.0618,  0.4815,  0.2098,  0.3151],   # "ate" scores for (A, crane, ate, fish)
+         [ 0.1260,  0.9822,  0.4280,  0.6433]]])  # "fish" scores for (A, crane, ate, fish)
+```
+This `(4, 4)` matrix holds the raw compatibility scores. For example, the query for "crane" (row 1) has the highest compatibility with the key for "crane" (column 1), which is `1.3888`.
+
+**Step 3 & 4: Scale and Softmax**
+We scale the scores for stability, then use `softmax` to turn them into attention weights that sum to 1 for each row.
+
+```python
+d_k = k.size(-1)
+scaled_scores = scores / math.sqrt(d_k)
+attention_weights = F.softmax(scaled_scores, dim=-1) # Softmax along the rows
+```
+
+**Step 5: Aggregate the Values (`attention_weights @ v`)**
+Now we use our weights to create a weighted average of the `Value` vectors.
+*   `attention_weights` has shape `(1, 4, 4)`.
+*   `v` has shape `(1, 4, 2)`.
+*   The multiplication `(1, 4, 4) @ (1, 4, 2)` produces a final tensor of shape `(1, 4, 2)`.
+
+```python
+# --- Value Aggregation ---
+output = attention_weights @ v
+
+print("\n--- Final Output (Context-Aware Vectors) ---")
+print(output.shape)
+print(output)
+```
+**Output:**
+```
+--- Final Output (Context-Aware Vectors) ---
+torch.Size([1, 4, 2])
+tensor([[[ 0.0652, -0.1691],
