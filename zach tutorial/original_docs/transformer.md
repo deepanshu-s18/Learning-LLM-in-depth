@@ -799,3 +799,118 @@ print("\n--- Final Causal Attention Weights ---")
 print(attention_weights.data.round(decimals=2))
 ```
 **Output:**
+```
+--- Final Causal Attention Weights ---
+tensor([[[1.0000, 0.0000, 0.0000, 0.0000],
+         [0.2995, 0.7005, 0.0000, 0.0000],
+         [0.3129, 0.3807, 0.3064, 0.0000],
+         [0.2186, 0.3999, 0.2445, 0.1370]]])
+```
+This is the "Aha!" moment. The upper-right triangle of our attention matrix is now all zeros.
+*   "A" can only attend to itself (100%).
+*   "crane" attends to "A" (30%) and "crane" (70%).
+*   "ate" attends to "A", "crane", and "ate".
+Information can now only flow from the past to the present.
+
+| Attention Type | "crane" attends to "fish"? | "ate" attends to "fish"? |
+| :--- | :--- | :--- |
+| Unmasked (Ch 5) | Yes | Yes |
+| **Causal (Ch 6)** | **No (0%)** | **No (0%)** |
+
+#### Part 2: Encapsulating in the `nn.Module`
+
+Now, let's add this logic to our `CausalSelfAttention` class from the `gpt2_min.py` file.
+
+**The `__init__` Method: `register_buffer`**
+We need to store our mask as part of the module. We use `register_buffer` for this.
+
+```python
+class CausalSelfAttention(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        # ... (c_attn layer from before)
+
+        # We register the mask as a "buffer"
+        self.register_buffer(
+            "bias", # name of the buffer
+            torch.tril(torch.ones(config.block_size, config.block_size))
+            .view(1, 1, config.block_size, config.block_size)
+        )
+```
+
+**Why `register_buffer`?** A buffer is a tensor that is part of the model's state (like weights), so it gets moved to the GPU with `.to(device)`. However, it is **not** a parameter that gets updated by the optimizer during training. This is perfect for our fixed causal mask.
+
+The `.view(1, 1, ...)` part is to add extra dimensions for broadcasting, which will be essential when we add Multi-Head Attention in the next chapter.
+
+**The `forward` Method: Adding the Masking Step**
+The `forward` pass is updated with one crucial line before the softmax.
+
+```python
+    def forward(self, x):
+        B, T, C = x.size()
+        # ... (get q, k, v as before)
+        
+        scaled_scores = (q @ k.transpose(-2, -1)) / math.sqrt(k.size(-1))
+        
+        # --- THE NEW LINE ---
+        # We slice the stored mask to match the sequence length T of our input
+        scaled_scores = scaled_scores.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
+        
+        attention_weights = F.softmax(scaled_scores, dim=-1)
+        output = attention_weights @ v
+        return output
+```
+
+We have now built a fully functional, **causal**, single-headed attention mechanism. It can learn to find context, but it can no longer cheat by looking into the future.
+
+The final piece of the puzzle is to make it even more powerful by allowing it to have multiple "conversations" at once. This is the goal of our next chapter: Multi-Head Attention.
+
+## **Chapter 7: Many Conversations at Once: Multi-Head Attention**
+
+So far, we have built a single, causal self-attention mechanism. It's like having one person in a meeting who is responsible for figuring out all the relationships between words. This is a lot of pressure. A single attention mechanism has to learn to focus on syntactic relationships ("is this an adjective modifying a noun?"), semantic relationships ("are these words related in meaning?"), and other patterns, all at once.
+
+**The Idea: Parallel Conversations**
+
+What if, instead of one overworked attention mechanism, we could have several working in parallel?
+
+This is the core idea of **Multi-Head Attention**. We will split our embedding dimension `C` into smaller chunks, called "heads". Each head will be its own independent attention mechanism, complete with its own Q, K, and V projections.
+
+*   **Head 1** might learn to focus on verb-object relationships.
+*   **Head 2** might learn to focus on which pronouns refer to which nouns.
+*   **Head 3** might learn to track long-range dependencies in the text.
+*   ...and so on.
+
+Each head conducts its own "conversation" and produces its own context-aware output vector. At the end, we simply concatenate the results from all the heads and pass them through a final linear layer to combine the insights.
+
+#### Part 1: The Raw Tensor Walkthrough
+
+Let's start with our `q`, `k`, and `v` tensors from Chapter 5.
+*   **Shape:** `(B, T, C)` -> `(1, 4, 768)` (Let's use a more realistic `C` for this example).
+*   **`n_head`:** Let's say we want `12` attention heads.
+*   **`head_dim`:** The dimension of each head will be `C / n_head`, which is `768 / 12 = 64`.
+
+**Step 1: Splitting `C` into `n_head` and `head_dim`**
+Our current `q` tensor has shape `(1, 4, 768)`. We need to reshape it so that the 12 heads are explicit. The target shape is `(B, n_head, T, head_dim)` or `(1, 12, 4, 64)`.
+
+This is done with a sequence of `view()` and `transpose()` operations.
+
+```python
+# --- Configuration ---
+B, T, C = 1, 4, 768
+n_head = 12
+head_dim = C // n_head # 768 // 12 = 64
+
+# --- Dummy Q, K, V tensors with realistic shapes ---
+q = torch.randn(B, T, C)
+k = torch.randn(B, T, C)
+v = torch.randn(B, T, C)
+
+# --- Reshaping Q ---
+# 1. Start with q: (B, T, C) -> (1, 4, 768)
+# 2. Reshape to add the n_head dimension
+q_reshaped = q.view(B, T, n_head, head_dim) # (1, 4, 12, 64)
+# 3. Transpose to bring n_head to the front
+q_final = q_reshaped.transpose(1, 2) # (1, 12, 4, 64)
+
+print("Original Q shape:", q.shape)
+print("Final reshaped Q shape:", q_final.shape)
