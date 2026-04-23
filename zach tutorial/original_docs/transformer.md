@@ -914,3 +914,117 @@ q_final = q_reshaped.transpose(1, 2) # (1, 12, 4, 64)
 
 print("Original Q shape:", q.shape)
 print("Final reshaped Q shape:", q_final.shape)
+```
+**Output:**
+```
+Original Q shape: torch.Size([1, 4, 768])
+Final reshaped Q shape: torch.Size([1, 12, 4, 64])
+```
+We do the exact same reshaping for `k` and `v`. Now, PyTorch's broadcasting capabilities will treat the `n_head` dimension as a new "batch" dimension. All our subsequent attention calculations will be performed independently for all 12 heads at once.
+
+**Step 2: Run Attention in Parallel**
+Our attention formula remains the same, but now it operates on tensors with an extra `n_head` dimension.
+
+```python
+# Reshape k and v as well
+k_final = k.view(B, T, n_head, head_dim).transpose(1, 2) # (1, 12, 4, 64)
+v_final = v.view(B, T, n_head, head_dim).transpose(1, 2) # (1, 12, 4, 64)
+
+# --- Attention Calculation ---
+# (B, nh, T, hd) @ (B, nh, hd, T) -> (B, nh, T, T)
+scaled_scores = (q_final @ k_final.transpose(-2, -1)) / math.sqrt(head_dim)
+
+# (We would apply the causal mask here)
+
+attention_weights = F.softmax(scaled_scores, dim=-1)
+
+# (B, nh, T, T) @ (B, nh, T, hd) -> (B, nh, T, hd)
+output_per_head = attention_weights @ v_final
+
+print("Shape of output from each head:", output_per_head.shape)
+```
+**Output:**
+```
+Shape of output from each head: torch.Size([1, 12, 4, 64])
+```
+We now have a `(64-dimensional)` output vector for each of our 4 tokens, from each of our 12 heads.
+
+**Step 3: Merging the Heads**
+The last step is to combine the insights from all 12 heads. We do this by reversing the reshape operation: we concatenate the heads back together into a single `C`-dimensional vector and then pass it through a final linear projection layer (`c_proj`).
+
+```python
+# 1. Transpose and reshape to merge the heads back together
+# (B, nh, T, hd) -> (B, T, nh, hd)
+merged_output = output_per_head.transpose(1, 2).contiguous()
+# The .contiguous() is needed because transpose can mess with memory layout.
+# It creates a new tensor with the elements in the correct memory order.
+
+# (B, T, nh, hd) -> (B, T, C)
+merged_output = merged_output.view(B, T, C)
+
+print("Shape of merged output:", merged_output.shape)
+
+# 2. Pass through the final projection layer
+c_proj = nn.Linear(C, C)
+final_output = c_proj(merged_output)
+
+print("Shape of final output:", final_output.shape)
+```
+**Output:**
+```
+Shape of merged output: torch.Size([1, 4, 768])
+Shape of final output: torch.Size([1, 4, 768])
+```
+We have successfully returned to our original `(B, T, C)` shape. Each token's vector now contains the combined, context-aware information from all 12 attention heads.
+
+| Component | Shape Transformation | Purpose |
+| :--- | :--- | :--- |
+| **Split Heads** | `(B, T, C) -> (B, nh, T, hd)` | Prepare for parallel computation |
+| **Attention** | `(B, nh, T, hd) -> (B, nh, T, hd)` | Each head computes context independently|
+| **Merge Heads** | `(B, nh, T, hd) -> (B, T, C)` | Combine the insights from all heads |
+| **Final Projection**| `(B, T, C) -> (B, T, C)` | Mix the combined information |
+
+#### Part 2: Encapsulating in the `nn.Module`
+
+Let's now look at the full `CausalSelfAttention` class from `gpt2_min.py` and see how this logic is implemented.
+
+**The `__init__` Method**
+We add the `c_proj` layer and an assertion to ensure the dimensions are compatible.
+
+```python
+class CausalSelfAttention(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        assert config.n_embd % config.n_head == 0
+        self.n_head = config.n_head
+        self.n_embd = config.n_embd
+        # ... (c_attn and bias buffer from before)
+        self.c_proj = nn.Linear(config.n_embd, config.n_embd, bias=True)
+```
+
+**The `forward` Method**
+This is the full implementation, combining everything we have learned.
+
+```python
+    def forward(self, x):
+        B, T, C = x.size()
+
+        # 1. Get QKV and split into heads
+        qkv = self.c_attn(x)
+        q, k, v = qkv.split(self.n_embd, dim=2)
+        head_dim = C // self.n_head
+        q = q.view(B, T, self.n_head, head_dim).transpose(1, 2)
+        k = k.view(B, T, self.n_head, head_dim).transpose(1, 2)
+        v = v.view(B, T, self.n_head, head_dim).transpose(1, 2)
+
+        # 2. Run causal self-attention on each head
+        att = (q @ k.transpose(-2, -1)) / math.sqrt(head_dim)
+        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
+        att = F.softmax(att, dim=-1)
+        y = att @ v
+
+        # 3. Merge heads and project
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        y = self.c_proj(y)
+        
+        return y
