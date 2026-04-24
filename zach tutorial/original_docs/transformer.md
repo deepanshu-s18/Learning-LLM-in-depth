@@ -1486,3 +1486,118 @@ beta = torch.tensor([0.5, 0.0, 0.0, 0.0])
 
 # --- Manually apply gamma and beta ---
 y = gamma * x_hat + beta
+
+print("\n--- After Applying Learned Gamma and Beta ---")
+print("Final output vector (y):\n", y.data.round(decimals=2))
+print(f"\nMean of y: {y.mean().item():.2f}")
+print(f"Std Dev of y: {y.std().item():.2f}")
+```
+**Output:**
+```
+--- After Applying Learned Gamma and Beta ---
+Final output vector (y):
+ tensor([[[ 0.3200, -1.3300,  1.0900,  0.3600]]])
+
+Mean of y: 0.11
+Std Dev of y: 0.94
+```
+The final `nn.LayerNorm` module performs all these steps in one efficient call. The model has used the learnable $\gamma$ and $\beta$ to find the most useful distribution for the next layer.
+
+#### Pre-Norm vs. Post-Norm
+
+The exact placement of Layer Normalization relative to the residual connection is an important architectural choice.
+
+| Feature      | Pre-Norm (GPT-2 style)                                | Post-Norm (Original Transformer style)                          |
+| :----------- | :---------------------------------------------------- | :-------------------------------------------------------------- |
+| **Equation** | `x + Sublayer( LayerNorm(x) )`                      | `LayerNorm( x + Sublayer(x) )`                                 |
+| **Stability**| Generally leads to **more stable training** for very deep networks. Easier to train from scratch without warm-up schedules. | Can be harder to train for very deep models. Often requires learning rate warm-up. |
+| **Example Code** | `x = x + self.attn(self.ln_1(x))`                   | `x = self.ln_1(x + self.attn(x))`                               |
+
+**Why GPT-2 uses Pre-Norm:**
+Pre-Norm helps prevent the internal activations from growing too large. Since the input to each sub-layer (Attention or MLP) is always normalized, it keeps the magnitudes of values in check, which directly contributes to a more stable training process, especially for very deep models like GPT.
+
+With residual connections providing the "express lane" and layer normalization acting as the "stabilizer," we now have all the necessary components to assemble a complete, robust, and trainable Transformer Block. In the next chapter, we will put it all together.
+
+## **Chapter 11: Assembling One Complete Transformer Block**
+
+This chapter is the grand payoff for all the components we've built in Part 3. We will now take our `CausalSelfAttention` and `MLP` modules and assemble them, using the architectural glue of `Residual Connections` and `Layer Normalization`, into one complete, powerful, and stackable `Block`.
+
+This `Block` is the fundamental repeating unit of the entire GPT-2 model. First, let's look at our final destination: the code for the `Block` itself, and the code that stacks it to build the full model.
+
+```python
+# The Lego Brick: One complete Transformer Block
+# We will assemble this in this chapter.
+class Block(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.ln_1 = nn.LayerNorm(config.n_embd)
+        self.attn = CausalSelfAttention(config)
+        self.ln_2 = nn.LayerNorm(config.n_embd)
+        self.mlp = MLP(config)
+
+    def forward(self, x):
+        x = x + self.attn(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
+        return x
+
+# Stacking the Bricks: How the Block is used in the full GPT2 model
+# We will build this in the next chapter.
+class GPT2(nn.Module):
+    def __init__(self, config: GPTConfig):
+        # ... (other layers)
+        self.h = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
+        # ... (other layers)
+```
+
+#### The Blueprint of a `Block` (`__init__`)
+
+The constructor of our `Block` is simple because it's just an assembly of the complex parts we've already built.
+
+```python
+def __init__(self, config: GPTConfig):
+    super().__init__()
+    self.ln_1 = nn.LayerNorm(config.n_embd)
+    self.attn = CausalSelfAttention(config)
+    self.ln_2 = nn.LayerNorm(config.n_embd)
+    self.mlp = MLP(config)
+```
+
+*   `self.ln_1`: The first "stabilizer" (LayerNorm), applied just before the attention layer.
+*   `self.attn`: The "communication" layer (`CausalSelfAttention`), where tokens exchange information.
+*   `self.ln_2`: The second "stabilizer," applied just before the MLP layer.
+*   `self.mlp`: The "thinking" layer (`MLP`), where each token processes the information it has gathered.
+
+#### The Data's Journey Through the Block (`forward`)
+
+The `forward` method orchestrates the flow of data through these components, following the "Pre-Norm" architecture.
+
+```python
+def forward(self, x):
+    # First sub-layer: Attention
+    x = x + self.attn(self.ln_1(x))
+    
+    # Second sub-layer: MLP
+    x = x + self.mlp(self.ln_2(x))
+    
+    return x
+```
+
+The logic for each sub-layer is identical and beautifully simple: **Normalize, Process, Add.**
+
+1.  **Normalize:** The input `x` is first passed through `self.ln_1`.
+2.  **Process:** The stabilized output is then passed through the `self.attn` layer.
+3.  **Add:** The output of the attention layer is added back to the *original, unmodified input `x`* via the residual connection.
+
+This process is then repeated for the MLP sub-layer.
+
+```mermaid
+graph TD
+    A[Input x] --> B[LayerNorm1]
+    B --> C[CausalSelfAttention]
+    C --> D[Add1]
+    A --"Residual Connection"--> D
+    D --> E[Output1]
+    E --> F[LayerNorm2]
+    F --> G[MLP]
+    G --> H[Add2]
+    E --"Residual Connection"--> H
