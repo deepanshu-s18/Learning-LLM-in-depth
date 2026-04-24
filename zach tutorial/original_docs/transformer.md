@@ -1028,3 +1028,118 @@ This is the full implementation, combining everything we have learned.
         y = self.c_proj(y)
         
         return y
+```
+Every single line in this module should now be clear. We have built the most complex and important component of the Transformer from the ground up.
+
+The rest of the model is surprisingly simple. We just need to add the "thinking" layer (the MLP) and then stack these blocks together.
+
+## **Chapter 8: The "Thinking" Layer: The MLP**
+
+We have successfully built the `CausalSelfAttention` module. This is the "communication" layer of the Transformer. It allows tokens to gather and aggregate information from their context.
+
+But gathering information is only half the battle. After each token has collected the context it needs, it needs time to "think" about it. It needs to process this new, context-rich information. This is the job of the **MLP**, or Multi-Layer Perceptron. It is also sometimes called a Position-wise Feed-Forward Network (FFN).
+
+Let's look at the `gpt2_min.py` code we are about to build. It's refreshingly simple.
+
+```python
+# gpt2_min.py (lines 56-65)
+class MLP(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.fc = nn.Linear(config.n_embd, 4 * config.n_embd)
+        self.proj = nn.Linear(4 * config.n_embd, config.n_embd)
+        self.drop = nn.Dropout(config.dropout)
+
+    def forward(self, x):
+        x = self.fc(x)
+        x = F.gelu(x)  # GPT-2 uses GELU
+        x = self.drop(self.proj(x))
+        return x
+```
+
+#### The Goal: Processing Information Locally
+
+The MLP has a very simple but crucial role. While the attention layer allows tokens to interact with *each other*, the MLP processes the information for **each token independently**.
+
+Imagine the attention layer was a group meeting where everyone shared ideas. The MLP is like each person going back to their desk to sit and think about what they just heard. They process the information on their own, without talking to anyone else, before the next group meeting (the next Transformer block).
+
+This structure—communication followed by individual computation, repeated over many layers—is what gives the Transformer its power.
+
+#### The Architecture: Expand and Contract
+
+The MLP in a Transformer has a standard two-layer architecture:
+
+1.  **Expansion Layer (`fc`):** The first linear layer takes the input vector of size `n_embd` and projects it up to a much larger, intermediate dimension, typically `4 * n_embd`.
+2.  **Non-Linearity (`gelu`):** An activation function is applied. GPT-2 uses GELU (Gaussian Error Linear Unit), which is a smooth alternative to the more common ReLU. This is what allows the network to learn complex, non-linear functions.
+3.  **Contraction Layer (`proj`):** The second linear layer projects the large intermediate vector back down to the original `n_embd` dimension.
+4.  **Dropout (`drop`):** A dropout layer is applied for regularization to prevent overfitting.
+
+---
+
+### Part 1: A Deeper Dive into `nn.Linear`
+
+Before building the full MLP, let's demystify its core component: the `nn.Linear` layer. It's simpler than it sounds. At its heart, it's just a matrix multiplication followed by the addition of a bias vector.
+
+**The Math: `output = input @ W^T + b`**
+For each output element, the layer calculates a weighted sum of all input elements and adds a bias.
+
+Let's see this with a tiny example. We'll project a vector of size 2 up to a vector of size 4.
+
+```python
+import torch
+import torch.nn as nn
+
+C_in = 2
+C_out = 4
+linear_layer = nn.Linear(C_in, C_out)
+```
+
+**What are the learnable parameters?**
+This layer has two sets of learnable parameters that are updated during training:
+1.  **Weights (`.weight`):** A matrix of shape `(C_out, C_in)`. For us, this is `(4, 2)`. Total weights: `4 * 2 = 8`.
+2.  **Biases (`.bias`):** A vector of shape `(C_out)`. For us, this is `(4)`. Total biases: `4`.
+
+Let's manually set these parameters to simple integers to see the math clearly.
+```python
+# Manually set the weights
+linear_layer.weight.data = torch.tensor([
+    [1., 0.],  # Weights for output element 0
+    [-1., 0.], # Weights for output element 1
+    [0., 2.],  # Weights for output element 2
+    [0., -2.]  # Weights for output element 3
+])
+
+# Manually set the biases
+linear_layer.bias.data = torch.tensor([1., 1., -1., -1.])
+```
+
+Now, let's pass a single input vector through it.
+```python
+# Our input vector
+input_vector = torch.tensor([0.5, -0.5])
+
+# The forward pass
+output_vector = linear_layer(input_vector)
+```
+Let's manually calculate the first output element to prove we understand the logic.
+*   `output[0]` = `(input[0] * weight[0,0]) + (input[1] * weight[0,1]) + bias[0]`
+*   `output[0]` = `(0.5 * 1.0) + (-0.5 * 0.0) + 1.0`
+*   `output[0]` = `0.5 + 0.0 + 1.0` = `1.5`
+
+Let's see the full result from PyTorch:
+```python
+print("Input vector:", input_vector)
+print("Output vector:", output_vector)
+```
+**Output:**
+```
+Input vector: tensor([ 0.5000, -0.5000])
+Output vector: tensor([ 1.5000,  0.5000, -2.0000,  0.0000], grad_fn=<AddBackward0>)
+```
+The output matches our manual calculation for the first element. The `nn.Linear` layer simply performs this weighted sum for each of the 4 output elements. Now that this is clear, we can build the full MLP.
+
+### Part 2: The Full MLP Walkthrough with Numbers
+
+Now that we understand how an `nn.Linear` layer works, let's trace a single token's vector through the entire MLP forward pass. The MLP acts on each token independently, so we only need to look at one vector to understand the whole process.
+
+**Our Setup:**
