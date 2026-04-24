@@ -1257,3 +1257,118 @@ We have now built both major components of our Transformer block: `CausalSelfAtt
 
 We have successfully built the two main computational engines of our model:
 1.  **`CausalSelfAttention`**: The "communication" layer where tokens exchange information.
+2.  **`MLP`**: The "thinking" layer where each token processes the information it has gathered.
+
+Now, we need to assemble them into a robust, repeatable `Block`. To do this, we must introduce the architectural glue that makes deep learning possible. In this chapter, we will focus on the first and most important piece of that glue: the **Residual Connection**.
+
+Let's look at the full `Block` class from `gpt2_min.py`. Our entire focus in this chapter is on the `+` operations in the `forward` method.
+
+```python
+# gpt2_min.py (lines 67-76)
+class Block(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        # We will discuss these LayerNorm layers in the next chapter
+        self.ln_1 = nn.LayerNorm(config.n_embd)
+        self.attn = CausalSelfAttention(config)
+        self.ln_2 = nn.LayerNorm(config.n_embd)
+        self.mlp = MLP(config)
+
+    def forward(self, x):
+        """
+        The forward pass of a single Transformer Block.
+        """
+        # --- This is our focus: the addition operation ---
+        # The output of the attention layer is ADDED to the original input 'x'.
+        x = x + self.attn(self.ln_1(x))
+        
+        # --- And this one too ---
+        # The output of the MLP is ADDED to the result of the first step.
+        x = x + self.mlp(self.ln_2(x))
+        return x
+```
+This simple `x = x + ...` pattern, known as a residual or skip connection, is arguably one of the most significant innovations in the history of deep learning.
+
+#### The Problem: Why Simple Stacking Fails (The Vanishing Gradient)
+
+A natural first instinct when building a deep model is to just stack layers sequentially: `x -> layer1 -> layer2 -> layer3 -> ...`. However, when networks get very deep (e.g., more than a dozen layers), this simple approach often fails.
+
+The reason is a phenomenon called the **vanishing gradient problem**. During training, the learning signal (the gradient) must travel backward from the final output all the way to the first layer's weights. With each step backward through a layer, this signal is multiplied by the layer's weights. In many cases, this causes the signal to shrink exponentially. By the time it reaches the early layers, it's so vanishingly small that those layers barely learn at all.
+
+#### The Solution: The Residual "Express Lane"
+
+The residual connection provides an elegant solution by creating a "shortcut" or an "express lane" for the data and, more importantly, for the gradient.
+
+```mermaid
+graph TD
+    subgraph Attention Sub-Layer
+        B(LayerNorm) --> C(CausalSelfAttention)
+    end
+
+    A[Input x] --> B
+    C --> D["(+)"]
+    A --"Residual Connection (Express Lane)"--> D
+    D --> E[Output]
+```
+By adding the original input `x` directly to the output of the sub-layer (`self.attn(...)`), we create an uninterrupted highway. During backpropagation, the gradient can flow directly through this addition operator, completely bypassing the complex transformations inside the `attn` layer.
+
+This changes the learning objective. The network no longer needs to learn the entire, complex transformation from scratch. Instead, the `attn` layer only needs to learn the *residual*—the difference, or "delta," that should be applied to the input.
+
+**Intuition:** Imagine you're teaching a painter.
+*   **Without Residuals (Hard):** "Here is a blank canvas. Paint a masterpiece."
+*   **With Residuals (Easy):** "Here is the current painting (`x`). Just make these small, incremental adjustments (`attn(self.ln_1(x))`)."
+
+The final result is `x + attn(self.ln_1(x))`. It is much easier for a network to learn how to make small, iterative adjustments than it is to learn the entire transformation at every single layer.
+
+#### Walkthrough with Numbers
+
+Let's see this in action. The operation is a simple element-wise addition. We'll focus on a single token for clarity (`B=1, T=1`) with an embedding dimension of `C=4`.
+
+```python
+import torch
+
+# Our input vector for a single token, 'x' at the start of the forward pass
+x_initial = torch.tensor([[[0.2, 0.1, 0.3, 0.4]]])
+print("Original input x:\n", x_initial)
+
+# Let's pretend this is the output of `self.attn(self.ln_1(x))`.
+# It represents the "change" or "adjustment" to be made.
+attention_output = torch.tensor([[[0.1, -0.1, 0.2, -0.3]]])
+print("\nOutput from the Attention sub-layer (the 'adjustment'):\n", attention_output)
+
+# The residual connection is the first line of the forward pass: x = x + ...
+x_after_attn = x_initial + attention_output
+print("\nValue of x after the first residual connection:\n", x_after_attn)
+```
+**Output:**
+```
+Original input x:
+ tensor([[[0.2000, 0.1000, 0.3000, 0.4000]]])
+
+Output from the Attention sub-layer (the 'adjustment'):
+ tensor([[[ 0.1000, -0.1000,  0.2000, -0.3000]]])
+
+Value of x after the first residual connection:
+ tensor([[[0.3000, 0.0000, 0.5000, 0.1000]]])
+```
+It's that simple. The output of the attention sub-layer is just an update to the original vector. The shape of the tensor remains unchanged, which is a critical property.
+
+| Step in `forward` | Operation | Input Shape | Output Shape | Meaning |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | `self.attn(self.ln_1(x))`| `(B, T, C)` | `(B, T, C)` | Calculate the update/residual |
+| 2 | `x + ...` | `(B, T, C)` | `(B, T, C)` | Apply the update to the original input |
+
+We have now added the first piece of "glue" to our block. This express lane allows us to build much deeper and more powerful models. The next piece of glue we need is a stabilizer to keep the data flowing smoothly on this highway: Layer Normalization.
+
+## **Chapter 10: Keeping it Stable: Layer Normalization**
+
+In the last chapter, we introduced the "express lane" of our Transformer Block: the residual connection. This allows us to build deep networks. However, a highway with no rules can lead to chaos. We need a "stabilizer" to ensure the data flowing through our network remains well-behaved. This is the role of **Layer Normalization**.
+
+Let's look again at the full `Block` class from `gpt2_min.py`. Our focus is now on the `self.ln_1` and `self.ln_2` layers and where they are applied in the `forward` pass.
+
+```python
+# gpt2_min.py (lines 67-76)
+class Block(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        # --- We define the LayerNorm layers here ---
