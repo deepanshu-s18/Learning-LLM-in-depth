@@ -1601,3 +1601,117 @@ graph TD
     F --> G[MLP]
     G --> H[Add2]
     E --"Residual Connection"--> H
+    H --> I[Final Output x]
+```
+
+The most critical property of this entire block is that the shape of the output tensor is **identical to the shape of the input tensor (`B, T, C`)**. This is what makes the block "stackable."
+
+#### Stacking Blocks for Depth: From a Single Meeting to a Symposium
+
+This "stackability" is the key to the Transformer's power. A single `Block` can only perform one round of "communication" (attention) and "thinking" (MLP). This is like a single project meeting. The team gets together, shares information, and then goes back to their desks to process it. It's a good first step, but complex problems require more than one meeting.
+
+To build a truly deep understanding of language, we need to hold a series of these meetings—a symposium.
+
+*   **Meeting 1 (Block 0):** The team starts with the raw project proposal (the token embeddings). They discuss it, and each member leaves with a refined, first-level understanding of the project.
+*   **Meeting 2 (Block 1):** The team reconvenes. They don't start from the raw proposal again. Instead, they start with the *refined understanding they gained from the first meeting*. This allows them to discuss higher-level concepts and strategies.
+*   **Meeting 12 (Block 11):** After a long series of such meetings, the team's understanding is incredibly deep and nuanced. They've moved from basic syntax to deep semantic meaning.
+
+This is exactly what stacking Transformer Blocks does. The output of one block becomes the input for the next, allowing the model to build a hierarchical understanding of the text.
+
+**Distinguishing Depth from Width**
+Now we can clearly distinguish between what happens *in* a meeting versus the *series* of meetings.
+
+| Concept | What it Does | Analogy | Why? |
+| :--- | :--- | :--- | :--- |
+| **Width** (Multi-Head) | Parallel processing within a layer. | A committee of 12 specialists **in one meeting**. | To analyze input from many perspectives at the same level of abstraction. |
+| **Depth** (Multi-Layer) | Sequential processing across layers. | **A series of 12 meetings**, each refining the last. | To build a hierarchical understanding, from simple syntax to abstract semantics. |
+
+#### Implementing Depth with `nn.ModuleList`
+
+Now, let's look at the code that implements this series of meetings. This line is from the main `GPT2` model's `__init__` method.
+
+```python
+# From the GPT2 class __init__ method
+self.h = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
+```
+
+*   `[...] for _ in range(config.n_layer)`: This creates `n_layer` (e.g., 12) separate instances of our `Block`.
+*   `nn.ModuleList([...])`: This special PyTorch container registers all 12 `Block`s as part of our model, so PyTorch can track all their parameters.
+
+**Are the weights shared between blocks?**
+**No, they are not.** This is the crucial implementation detail that enables the symposium analogy. When the code calls `Block(config)` twelve separate times, it creates twelve brand-new `Block` objects. Each one has its own unique set of weights for its `attn` and `mlp` layers.
+
+This is essential. The "skills" needed for the first meeting (processing raw embeddings) are different from the skills needed for the last meeting (performing final refinements on an abstract representation). By giving each block its own set of weights, we allow each layer in the stack to specialize in its particular stage of the processing pipeline.
+
+We have now officially finished building our fundamental Lego brick and we understand the strategy for stacking them. We are ready to move on to construct the final model architecture.
+
+## **Chapter 12: Stacking the Blocks: The Full GPT Model**
+
+We are now at the top of the mountain. We have built every single custom component required for our GPT model. All that's left is to assemble them in the correct order, following the blueprint laid out in the `GPT2` class. This chapter will feel like a victory lap, as you will recognize every single line.
+
+Let's start by looking at the `__init__` method of our final model. This is the constructor that defines and organizes all the layers we've discussed.
+
+```python
+# gpt2_min.py (lines 78-90)
+class GPT2(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.config = config
+        
+        # --- Part 1: The Input Layers ---
+        self.wte = nn.Embedding(config.vocab_size, config.n_embd)  # token embeddings
+        self.wpe = nn.Embedding(config.block_size, config.n_embd)  # positional embeddings
+        self.drop = nn.Dropout(config.dropout)
+        
+        # --- Part 2: The Core Processing Layers ---
+        self.h = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
+        
+        # --- Part 3: The Output Layers ---
+        self.ln_f = nn.LayerNorm(config.n_embd)
+
+        # ... (Language Model Head will be in the next chapter)
+```
+
+#### The Architecture of the Full Model
+
+This `__init__` method perfectly follows the high-level architecture we set out to build from the very beginning.
+
+```mermaid
+graph TD
+    A[Input Token IDs] --> B{Token & Positional Embeddings};
+    B --> C{Dropout};
+    C --> D[N x Transformer Blocks];
+    D --> E{Final Layer Norm};
+    E --> F[Language Model Head];
+    F --> G[Output Logits];
+```
+
+Let's walk through the `__init__` method section by section.
+
+**Part 1: The Input Layers**
+```python
+self.wte = nn.Embedding(config.vocab_size, config.n_embd)
+self.wpe = nn.Embedding(config.block_size, config.n_embd)
+self.drop = nn.Dropout(config.dropout)
+```
+This is the "entry point" of our model. It handles the initial conversion of raw token IDs into meaningful vectors.
+*   `self.wte` (Word Token Embedding): The learnable dictionary that maps a token's ID to its initial vector representation (Chapter 2).
+*   `self.wpe` (Word Position Embedding): The learnable lookup table that provides a vector representing each token's position in the sequence (Chapter 3).
+*   `self.drop`: A dropout layer applied to the sum of these embeddings. This is a regularization technique that helps prevent the model from overfitting by randomly setting some of the input features to zero during training.
+
+**Part 2: The Core Processing Layers**
+```python
+self.h = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
+```
+This is the heart of the model—the "deep" part of deep learning. As we discussed in the last chapter, this line creates `n_layer` (e.g., 12) independent `Block` instances and registers them in an `nn.ModuleList`. The data will flow through these blocks sequentially, becoming more contextually refined at each step.
+
+**Part 3: The Final Output Layer**
+```python
+self.ln_f = nn.LayerNorm(config.n_embd)
+```
+*   `self.ln_f` (Final Layer Norm): After the data has passed through the entire stack of Transformer blocks, a final layer normalization is applied. This provides one last stabilization step, ensuring the output vectors are well-behaved before they are passed to the final prediction layer.
+
+We have now defined almost all the structural components of our model. We've built the entrance, the main processing tower, and the final stabilization stage.
+
+The only piece missing is the most important one for a language model: the layer that actually makes the prediction. How do we go from these highly processed vectors back to a probability distribution over our entire vocabulary? That is the job of the Language Model Head, which we will build in the very next chapter.
+
