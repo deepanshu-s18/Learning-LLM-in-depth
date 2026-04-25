@@ -1830,3 +1830,117 @@ class GPT2(nn.Module):
         B, T = idx.size()
         assert T <= self.config.block_size, "Sequence length exceeds block size."
 
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device).unsqueeze(0)
+
+        x = self.wte(idx) + self.wpe(pos)
+        x = self.drop(x)
+        for block in self.h:
+            x = block(x)
+        x = self.ln_f(x)
+        logits = self.lm_head(x)
+
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+
+        return logits, loss
+```
+
+#### The Goal of Training: Next-Token Prediction
+
+The training process for GPT is based on a simple principle: **given a sequence of words, predict the very next word.** To do this, we need to prepare our training data—a massive corpus of text—into `(input, target)` pairs using the **simple chunking** method we discussed. For each chunk, the `idx` is the input, and the `targets` are the input shifted by one position.
+
+#### A Walkthrough of the `forward` Method
+
+Let's trace the data flow step-by-step for one of these chunks.
+
+1.  **Get Embeddings:**
+    ```python
+    pos = torch.arange(0, T, dtype=torch.long, device=idx.device).unsqueeze(0)
+    x = self.wte(idx) + self.wpe(pos)
+    ```
+    This is exactly what we built in Chapters 2 and 3. We create token embeddings and add positional embeddings to get our initial `(B, T, C)` tensor.
+
+2.  **Process through Blocks:**
+    ```python
+    x = self.drop(x)
+    for block in self.h:
+        x = block(x)
+    ```
+    The initial tensor is passed through a dropout layer and then sequentially through every `Block` in our `self.h` ModuleList. With each pass through a block, the token vectors become more and more context-aware.
+
+3.  **Get Logits:**
+    ```python
+    x = self.ln_f(x)
+    logits = self.lm_head(x)
+    ```
+    The output from the final block is stabilized with a LayerNorm, and then projected by the `lm_head` to get our final `logits` tensor of shape `(B, T, vocab_size)`. This tensor contains `T` predictions, one for each position in our input sequence.
+
+#### Calculating the Loss: One Number to Rule Them All
+
+We now have our `logits` (the model's `T` predictions) and our `targets` (the `T` correct answers). The final step is to compare them to get a single loss value. This is done with `F.cross_entropy`.
+
+```python
+loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+```
+This line looks dense, but it's doing something very methodical. `F.cross_entropy` in PyTorch expects its input in a specific 2D format, so we first need to reshape our tensors.
+
+*   `logits` has a shape of `(B, T, vocab_size)`.
+*   `targets` has a shape of `(B, T)`.
+*   The `.view(-1, ...)` function is PyTorch's way of reshaping. We are squashing the Batch and Time dimensions together.
+
+**Shape Transformation for the Loss Function**
+
+| Variable | Original Shape | Reshaped with `.view()` | Purpose |
+| :--- | :--- | :--- | :--- |
+| `logits` | `(B, T, vocab_size)`| `(B*T, vocab_size)` | A 2D tensor where each row is a prediction for one position. |
+| `targets`| `(B, T)` | `(B*T)` | A 1D tensor of the correct token IDs, aligned with the predictions. |
+
+**How does `cross_entropy` average the loss?**
+A crucial point is that `F.cross_entropy` calculates the loss for *each* of the `B*T` predictions individually and then **averages them** to produce a single, final scalar `loss` value.
+
+It does not add them up; it takes the mean. This is important because it keeps the loss on a consistent scale regardless of the batch size or sequence length.
+
+#### The Full Training Loop: From a Text Stream to a Weight Update
+
+Let's put it all together. A "training step" consists of processing one "batch" of data. To understand what a batch is, we first need to see how our raw text data is prepared.
+
+Imagine our training data is one long stream of token IDs. For this example, let's say our `block_size` (or `T`) is `4`.
+
+**Step 1: Preparing the Data Stream**
+First, we lay out our continuous stream of text tokens.
+*   **Text Stream (Token IDs):** `[5, 12, 8, 21, 6, 33, 9, 4, 15, 7, 2, ...]`
+
+**Step 2: Creating `(input, target)` Pairs**
+From this stream, we create our `(idx, targets)` pairs. The `targets` are simply the `idx` shifted one position to the right.
+*   **Sample 1:** `idx`=`[5,12,8,21]`, `targets`=`[12,8,21,6]`
+*   **Sample 2:** `idx`=`[6,33,9,4]`, `targets`=`[33,9,4,15]`
+
+**Step 3: Forming a Batch**
+A **batch** is a stack of these training samples. We process multiple samples at once to make training on GPUs highly efficient. Let's create a batch with a batch size of `B=2`.
+
+*   **Input `idx` (shape `(2, 4)`):**
+    ```
+    [[ 5, 12,  8, 21],  <-- Sample 1
+     [ 6, 33,  9,  4]]   <-- Sample 2
+    ```
+*   **Target `targets` (shape `(2, 4)`):**
+    ```
+    [[12,  8, 21,  6],  <-- Targets for Sample 1
+     [33,  9,  4, 15]]   <-- Targets for Sample 2
+    ```
+This batch is the single unit of data that will be processed in one training step.
+
+**Step 4: The Training Step - A Detailed Walkthrough**
+
+Now, let's trace this batch through the five stages of a single training step.
+
+| Stage | What Happens | Detailed Breakdown |
+| :--- | :--- | :--- |
+| **1. Forward Pass** | The batch (`idx`) is fed into the model's `forward` method. | The model processes both samples in parallel. This involves embeddings, 12 `Block`s of attention and MLPs, etc. The final output is a `logits` tensor of shape `(2, 4, vocab_size)`. |
+| **2. Loss Computation (Part A - Reshaping)** | We prepare `logits` and `targets` for the loss function. | `logits.view(-1, vocab_size)` reshapes `logits` to `(8, vocab_size)`. `targets.view(-1)` reshapes `targets` to a 1D tensor of shape `(8)`, which looks like: `[12, 8, 21, 6, 33, 9, 4, 15]`. |
+| **3. Loss Computation (Part B - Cross-Entropy)** | `F.cross_entropy` calculates the loss for each of the 8 prediction/target pairs. | Let's imagine the individual (negative log likelihood) losses are: <br> • For `(pred_0, target_0=12)`: loss = 2.5 <br> • For `(pred_1, target_1=8)`: loss = 3.1 <br> • For `(pred_2, target_2=21)`: loss = 1.9 <br> • For `(pred_3, target_3=6)`: loss = 4.2 <br> • For `(pred_4, target_4=33)`: loss = 2.8 <br> • For `(pred_5, target_5=9)`: loss = 3.5 <br> • For `(pred_6, target_6=4)`: loss = 2.2 <br> • For `(pred_7, target_7=15)`: loss = 3.8 |
+| **4. Loss Computation (Part C - Averaging)** | `F.cross_entropy` **averages** these individual losses into one final number. | `final_loss = (2.5 + 3.1 + 1.9 + 4.2 + 2.8 + 3.5 + 2.2 + 3.8) / 8` <br> `final_loss = 24.0 / 8 = 3.0` <br> Our single, scalar `loss` value is `3.0`. |
+| **5. Backpropagation**| **One** backpropagation is performed for the entire batch. | `loss.backward()` is called on the single scalar value `3.0`. PyTorch calculates the gradient of this *average loss* with respect to every single parameter in the entire model. |
+| **6. Weight Update** | The optimizer takes one step. | `optimizer.step()` uses these gradients to update all the model's weights, nudging them in a direction that would have lowered that average loss of `3.0`. |
+
