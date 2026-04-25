@@ -24,3 +24,30 @@ graph LR
         E --> F[Softmax -> Probabilities]
         F --> G["Cross-Entropy Loss (Error)"]
         G -.-> D
+    end
+```
+
+By the end, you will understand:
+1.  **Data Preparation:** How we turn the entire internet into an infinite source of free training examples.
+2.  **The Learning Loop:** How the model makes a prediction, measures its own error, and systematically corrects itself.
+
+Let's begin by tackling the single biggest bottleneck in the history of AI: data.
+
+## **Part 1: The Data Revolution - Learning Without Labels**
+
+#### The Problem: The Expensive Reality of Supervised Learning
+
+You've seen neural networks master tasks through supervised learning. The recipe is simple: give the model an input (like an image) and a correct output (the label "cat"), and it learns to map one to the other.
+
+But there's a massive bottleneck: getting that labeled training data is painfully expensive and fundamentally limiting. Consider the real-world costs:
+
+*   **Medical Imaging:** Radiologists, who charge hundreds of dollars per hour, are needed to label tumors in MRI scans.
+*   **Legal Documents:** Lawyers, billing even more, are required to classify contracts or find evidence in discovery documents.
+*   **Scientific Research:** PhD researchers can spend months or years meticulously annotating datasets for their experiments.
+
+This creates two fundamental problems:
+
+1.  **The Scale Ceiling:** The famous ImageNet dataset, with its 14 million labeled images, took years and millions of dollars to create. Yet, this is a tiny fraction of the billions of unlabeled images on the internet that we can't use.
+2.  **The "Garbage In, Garbage Out" Problem:** The quality of the model is capped by the quality of its labels. Getting high-quality annotations requires true experts, making the process even more expensive and less scalable.
+
+Supervised learning, for all its power, hits a wall. How do you get to billions or trillions of training examples if every single one requires an expensive human expert?
