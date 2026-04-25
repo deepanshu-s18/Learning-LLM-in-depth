@@ -51,3 +51,30 @@ This creates two fundamental problems:
 2.  **The "Garbage In, Garbage Out" Problem:** The quality of the model is capped by the quality of its labels. Getting high-quality annotations requires true experts, making the process even more expensive and less scalable.
 
 Supervised learning, for all its power, hits a wall. How do you get to billions or trillions of training examples if every single one requires an expensive human expert?
+
+#### The Breakthrough: The Self-Supervised Engine
+
+The genius of models like GPT-2 wasn't just a bigger architecture—it was abandoning the need for human labels entirely. Instead of asking a human, "What is the right answer?", it asks the text itself.
+
+The task is deceptively simple: **predict the next word.**
+
+That's it. No human annotation is needed. The text provides both the input (the sequence of words so far) and the "label" (the very next word in the sequence). This is the core of **self-supervised learning**.
+
+We promised you an algorithm, and here is the simple, powerful engine that turns any document into an almost unlimited supply of training data.
+
+```
+// ALGORITHM: CreateTrainingData
+
+INPUT: A document of text, broken into a list of words/tokens T.
+       T = [t_1, t_2, t_3, ..., t_n]
+
+OUTPUT: A set of (input, output) pairs for training.
+
+FOR k FROM 1 TO n-1:
+  input_sequence = [t_1, ..., t_k]
+  target_word = t_{k+1}
+  
+  ADD (input_sequence, target_word) TO output_set
+
+RETURN output_set
+```
