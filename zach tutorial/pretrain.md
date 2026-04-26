@@ -132,3 +132,30 @@ Now that we understand the *task*, let's tackle the next critical step: how do w
 
 We've established our learning task: predict the next piece of text. But our neural network doesn't understand "text"; it understands numbers. The process of converting raw text into a list of numbers the model can process is called **Tokenization**.
 
+At first glance, this seems simple. Why not just split sentences by spaces? Or go even smaller and use individual characters? Let's explore why these naive approaches fail.
+
+Consider the sentence: **"The cat quickly jumped."**
+
+*   **Word-level tokenization** would give us: `["The", "cat", "quickly", "jumped."]`
+*   **Character-level tokenization** would give us: `["T", "h", "e", " ", "c", "a", "t", ...]`
+
+Both of these simple methods create immediate and severe problems.
+
+| Problem | Word-Level Issues | Character-Level Issues |
+| :--- | :--- | :--- |
+| **Massive Vocabulary** | Is "The" different from "the"? Are "jump", "jumps", and "jumping" all unique words? The vocabulary would need to store every single variation, making it enormous. | Solved. The vocabulary is tiny (A-Z, 0-9, punctuation). |
+| **Unknown Words** | What happens with a new word like "hyper-threading" or a typo like "awesommmme"? The model has no entry for it. This is a critical failure point known as the **Out-of-Vocabulary (OOV)** problem. | Solved. Any word can be constructed from characters. |
+| **Sequence Length** | Sequences are short and manageable. "The cat jumped." is 4 tokens. | **Massive Inefficiency.** A 4-word sentence becomes over 20 tokens. A paragraph becomes thousands. The model must process each character one by one, making learning patterns across long distances slow and difficult. |
+
+We need a solution that gives us the best of both worlds: a manageable vocabulary that can still represent any word without creating absurdly long sequences. Modern language models solve this with a clever technique called **Subword Tokenization**.
+
+#### The LEGO Brick Approach: Subword Tokenization
+
+The core idea is brilliant: **Don't treat words as the smallest unit.** Instead, break them down into smaller, common pieces, just like building things with LEGO bricks. The tokenizer learns these common pieces from the training data itself.
+
+Let's see how a real subword tokenizer might handle our examples:
+
+*   The common word "cat" is treated as a single token: `["cat"]`
+*   The word "quickly" is broken into two common pieces: `["quick", "##ly"]`
+*   The word "jumping" becomes two familiar parts: `["jump", "##ing"]`
+
