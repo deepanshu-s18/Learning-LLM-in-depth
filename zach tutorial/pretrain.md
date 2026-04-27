@@ -186,3 +186,30 @@ The full tokenization process for "The cat quickly jumped" would look like this:
 3.  **Final Output (Token IDs):** `[5, 8, 73, 152, 311, 94]`
 
 This final list of numbers is what represents our sentence. But these numbers are just labels. ID `73` doesn't have any mathematical relationship to ID `8`. They are just arbitrary pointers.
+
+***
+*A quick clarification: In Part 1, when we said the model predicts the next "word," it's more precise to say it predicts the next **token**. The process is the same, but the model is often working with these subword pieces, not just full words. This allows for a much more flexible and powerful system.*
+***
+
+#### The Dirty Secret of Tokenization
+
+Tokenization is a brilliant engineering compromise, but it can confuse models in surprising ways. For example, ask a powerful LLM how many 'r's are in the word "strawberry" and it might struggle.
+
+Why?
+
+A human sees the word "strawberry"—one complete object where you can easily count three 'r's.
+
+But the model might see three abstract, alien symbols: `[$, %, &]`, where:
+*   `$` means "str"
+*   `%` means "aw"
+*   `&` means "berry"
+
+Now, imagine someone asks you: "How many 'r's are in `$ % &`?"
+
+You would have to mentally decode each symbol back to its letters, keep track of where the 'r's are across the symbol boundaries, and then count them. That's exactly what the model has to do. The letters 'r' are hidden inside tokens `$` and `&`, split across the token boundaries. The model doesn't naturally "see" individual characters—it sees these learned chunks.
+
+This is why language models can write beautiful poetry about strawberries but might stumble when counting the letters in the word. The tokenization that makes them efficient also creates blind spots.
+
+Now that we've turned our text into a clean sequence of token IDs, we need to convert these meaningless IDs into rich, meaningful vectors that our neural network can actually understand. This is the **Embeddings** layer, the input to the Transformer model itself. Let's now jump past the model's internal workings and see how it produces an output.
+
+## **Part 3: The Output - From Probabilities to Actual Words**
