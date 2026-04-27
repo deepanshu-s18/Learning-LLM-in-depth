@@ -267,3 +267,30 @@ The model's official prediction is now a clean probability distribution. We've r
 During training, we know the correct answer was "mat". Our model assigned an 86.6% probability to it. Was that good? How do we turn this into a single error number to drive learning?
 
 We use a loss function called **Cross-Entropy**.
+
+The intuition behind Cross-Entropy is to measure **"surprise."**
+*   If you predict the correct answer with high confidence, you are not surprised (low loss).
+*   If you predict the correct answer with low confidence, you are very surprised (high loss).
+
+The full Cross-Entropy formula looks complex, but for next-token prediction, it simplifies beautifully to:
+
+**`Loss = -log(probability_of_the_correct_token)`**
+
+That's it. We only care about the probability the model assigned to the single right answer. All other probabilities are ignored because their "true" probability was 0.
+
+Let's calculate it for our two scenarios:
+
+1.  **A Good Prediction:**
+    *   The model assigned **86.6%** to the correct token ("mat").
+    *   Loss = -log(0.866) ≈ **0.14**
+    *   This is a small number, which is good! It tells the network it did a good job.
+
+2.  **A Terrible Prediction:**
+    *   Imagine the model had only assigned **1%** to "mat".
+    *   Loss = -log(0.01) ≈ **4.6**
+    *   This is a much larger number, reflecting high surprise and creating a large error signal to drive learning.
+
+This single loss number is the starting point for backpropagation. When combined with Softmax, the initial gradient (the direction for correction) simplifies to `Predicted_Probability - True_Probability`. This clean, simple error signal flows backward through the entire network, updating billions of weights to make a slightly better prediction next time.
+
+---
+
