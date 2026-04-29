@@ -244,3 +244,85 @@ How can we prove this graph exists? Every tensor that is the result of an operat
 Let's inspect the tensors from our previous example.
 
 ```python
+# z was created by multiplication
+print(f"grad_fn for z: {z.grad_fn}")
+
+# y was created by addition
+print(f"grad_fn for y: {y.grad_fn}")
+
+# a was created by the user, not by an operation, so it has no grad_fn
+print(f"grad_fn for a: {a.grad_fn}")
+```
+**Output:**
+```
+grad_fn for z: <MulBackward0 object at 0x10f7d3d90>
+grad_fn for y: <AddBackward0 object at 0x10f7d3d90>
+grad_fn for a: None
+```
+This is the tangible proof of the computation graph. PyTorch knows `z` came from a multiplication (`MulBackward0`) and `y` came from an addition (`AddBackward0`). When we later ask it to compute gradients, it will use this information to trace its way backward through the graph using the chain rule.
+
+### 2.4. Visualizing the Graph
+
+Here is what the graph we just created looks like. The `grad_fn` is the "arrow" leading to each new tensor.
+
+```mermaid
+graph TD
+    A[Tensor a=2.0] --> C{Add};
+    B[Tensor b=3.0] --> C{Add};
+    C -- y = a + b --> D[Tensor y=5.0<br>grad_fn=&lt;AddBackward0&gt;];
+    D --> E{Multiply};
+    F[Tensor x=4.0] --> E{Multiply};
+    E -- z = x * y --> G[Tensor z=20.0<br>grad_fn=&lt;MulBackward0&gt;];
+```
+
+---
+
+We have now learned how to activate PyTorch's "nervous system" by setting `requires_grad=True`. This allows PyTorch to build a computation graph and remember the history of all operations.
+
+We have built the network of roads. In the next parts, we'll learn the common operations (the "verbs") and then see how to send the gradient signal flowing backward along these roads to enable learning. Let's move on to **Part 3: Basic Mathematical & Reduction Operations**.
+
+## Part 3: Basic Mathematical & Reduction Operations
+
+We have our `Tensor` (the noun) and `Autograd` (the nervous system). Now we need **operations** (the verbs) to describe the calculations our model will perform. In deep learning, the vast majority of these operations are surprisingly simple: matrix multiplications and aggregations.
+
+Our goal is to master these core verbs and, most importantly, the critical `dim` argument that controls how they work.
+
+### 3.1. Mathematical Operations: `*` vs. `@`
+
+This is the single most common point of confusion for beginners. PyTorch has two very different kinds of multiplication.
+
+**1. Element-wise Multiplication (`*`)**
+This operation multiplies elements in the same position. It's like overlaying two tensors and multiplying the corresponding cells. The tensors **must have the same shape**.
+
+```python
+a = torch.tensor([[1, 2], [3, 4]])
+b = torch.tensor([[10, 20], [30, 40]])
+
+# Calculation: [[1*10, 2*20], [3*30, 4*40]]
+element_wise_product = a * b
+
+print(f"Tensor a:\n {a}\n")
+print(f"Tensor b:\n {b}\n")
+print(f"Element-wise Product (a * b):\n {element_wise_product}")
+```
+**Output:**
+```
+Tensor a:
+ tensor([[1, 2],
+        [3, 4]])
+
+Tensor b:
+ tensor([[10, 20],
+        [30, 40]])
+
+Element-wise Product (a * b):
+ tensor([[ 10,  40],
+        [ 90, 160]])
+```
+
+---
+
+**2. Matrix Multiplication (`@`)**
+This is the standard matrix product from linear algebra. It's the core operation of every `Linear` layer in a neural network. For `m1 @ m2`, the number of columns in `m1` must equal the number of rows in `m2`.
+
+```python
