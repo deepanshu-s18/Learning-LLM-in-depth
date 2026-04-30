@@ -408,3 +408,85 @@ print(f"Sum per student (dim=1):    {sum_per_student}")
 ```
 Original Scores:
  tensor([[10., 20., 30.],
+        [ 5., 10., 15.]])
+
+Sum per assignment (dim=0): tensor([15., 30., 45.])
+Sum per student (dim=1):    tensor([60., 30.])
+```
+
+This table visualizes exactly what happened:
+
+| `scores` | Assignment 1 | Assignment 2 | Assignment 3 | `sum(dim=1)` ➡️ |
+| :--- | :---: | :---: | :---: | :---: |
+| Student 1 | 10 | 20 | 30 | **60** |
+| Student 2 | 5 | 10 | 15 | **30** |
+| `sum(dim=0)` ⬇️ | **15** | **30** | **45** | |
+
+Mastering the `dim` argument is essential for everything from calculating loss functions to implementing attention mechanisms.
+
+---
+
+We now have the basic vocabulary of calculation and aggregation. We know how to multiply matrices and how to sum up results across specific dimensions.
+
+Now let's look at more advanced "verbs" for selecting and manipulating data. Let's move on to **Part 4: Advanced Indexing & Selection Primitives**.
+
+## Part 4: Advanced Indexing & Selection Primitives
+
+If basic math ops are the "verbs" of PyTorch, then indexing primitives are the "adverbs" and "prepositions"—they let you specify *which* data to act upon with great precision.
+
+Our goal is to learn how to select data in increasingly sophisticated ways, moving from uniform block selection to dynamic, per-row lookups.
+
+### 4.1. Standard Indexing: The Basics
+
+This works just like in Python lists or NumPy. It's for selecting uniform "blocks" of data, like entire rows or columns.
+
+```python
+# A simple, easy-to-read tensor
+x = torch.tensor([[0, 1, 2, 3],
+                  [4, 5, 6, 7],
+                  [8, 9, 10, 11]])
+
+# Get the second row (at index 1)
+row_1 = x[1]
+print(f"Row 1: {row_1}\n")
+
+# Get the third column (at index 2)
+col_2 = x[:, 2]
+print(f"Column 2: {col_2}\n")
+
+# Get a specific element (row 1, column 3)
+element_1_3 = x[1, 3]
+print(f"Element at (1, 3): {element_1_3}")
+```
+**Output:**
+```
+Row 1: tensor([4, 5, 6, 7])
+
+Column 2: tensor([ 2,  6, 10])
+
+Element at (1, 3): 7
+```
+
+### 4.2. Boolean Masking: Selection by Condition
+
+Instead of using integer indices, you can use a boolean (True/False) tensor to select only the elements where the mask is `True`.
+
+```python
+x = torch.tensor([[0, 1, 2, 3], [4, 5, 6, 7]])
+
+# Step 1: Create the boolean mask
+mask = x > 3
+print(f"The Boolean Mask (x > 3):\n {mask}\n")
+
+# Step 2: Apply the mask to the tensor
+selected_elements = x[mask]
+print(f"Selected elements: {selected_elements}")
+```
+**Output:**
+```
+The Boolean Mask (x > 3):
+ tensor([[False, False, False, False],
+        [ True,  True,  True,  True]])
+
+Selected elements: tensor([4, 5, 6, 7])
+```
