@@ -819,3 +819,85 @@ Let's translate this from math to our context:
 *   `θ`: Represents all our parameters, `W` and `b`.
 *   `η` (eta): The **learning rate**, a small number that controls how big of a step we take.
 *   `∇_θ L`: The gradient of the loss with respect to our parameters, which we now have in `W.grad` and `b.grad`.
+
+So, the update rules for our model are:
+1.  `W_new = W_old - learning_rate * W.grad`
+2.  `b_new = b_old - learning_rate * b.grad`
+
+### 7.2. The Loop: Putting It All Together
+
+Let's write a `for` loop that performs these steps for a set number of `epochs` (one epoch is one full pass through our training data).
+
+We will add two new, critical details inside the loop:
+1.  **`with torch.no_grad():`**: The weight update step should *not* be part of the computation graph. It's an external intervention by the "optimizer" (us, in this case). We wrap it in this block to tell PyTorch, "Don't track this operation for gradient purposes."
+2.  **`.grad.zero_()`**: After we update our weights, we must manually reset the gradients to zero. If we don't, the gradients from the next backward pass will be *added* to the old ones, which is incorrect.
+
+```python
+# Hyperparameters
+learning_rate = 0.01
+epochs = 100
+
+# Let's re-initialize our random parameters
+W = torch.randn(1, 1, requires_grad=True)
+b = torch.randn(1, requires_grad=True)
+
+print(f"Starting Parameters: W={W.item():.3f}, b={b.item():.3f}\n")
+
+# The Training Loop
+for epoch in range(epochs):
+    ### STEP 1 & 2: Forward Pass and Loss Calculation ###
+    y_hat = X @ W + b
+    loss = torch.mean((y_hat - y_true)**2)
+
+    ### STEP 3: Backward Pass (Calculate Gradients) ###
+    loss.backward()
+
+    ### STEP 4: Update Parameters (The Gradient Descent Step) ###
+    # We wrap this in no_grad() because this is not part of the model's computation
+    with torch.no_grad():
+        W -= learning_rate * W.grad
+        b -= learning_rate * b.grad
+
+    ### STEP 5: Zero the Gradients ###
+    # We must reset the gradients for the next iteration
+    W.grad.zero_()
+    b.grad.zero_()
+
+    # Optional: Print progress
+    if epoch % 10 == 0:
+        print(f"Epoch {epoch:02d}: Loss={loss.item():.4f}, W={W.item():.3f}, b={b.item():.3f}")
+
+print(f"\nFinal Parameters: W={W.item():.3f}, b={b.item():.3f}")
+print(f"True Parameters:  W=2.000, b=1.000")
+```
+
+### 7.3. Watching the Model Learn
+
+Let's look at the output. We can literally see the learning happen.
+
+**Output:**
+```
+Starting Parameters: W=-0.369, b=0.485
+
+Epoch 00: Loss=4.1451, W=-0.347, b=0.505
+Epoch 10: Loss=1.0454, W=0.485, b=0.887
+Epoch 20: Loss=0.2917, W=0.970, b=1.077
+Epoch 30: Loss=0.1068, W=1.251, b=1.155
+Epoch 40: Loss=0.0592, W=1.422, b=1.178
+Epoch 50: Loss=0.0441, W=1.528, b=1.178
+Epoch 60: Loss=0.0381, W=1.600, b=1.168
+Epoch 70: Loss=0.0354, W=1.650, b=1.154
+Epoch 80: Loss=0.0339, W=1.685, b=1.140
+Epoch 90: Loss=0.0329, W=1.711, b=1.127
+
+Final Parameters: W=1.731, b=1.115
+True Parameters:  W=2.000, b=1.000
+```
+
+This table is the most beautiful thing in deep learning. We can see:
+1.  The **Loss** is steadily decreasing, from a high of `4.1451` down to `0.0329`. The model is getting less wrong.
+2.  The **Weight `W`** is moving from its random start (`-0.369`) towards the true value of `2.0`.
+3.  The **Bias `b`** is moving from its random start (`0.485`) towards the true value of `1.0`.
+
+It works! We have successfully implemented the entire gradient descent algorithm from scratch using raw PyTorch tensors and Autograd. We have built a machine that learns.
+
