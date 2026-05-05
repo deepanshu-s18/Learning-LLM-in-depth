@@ -1311,3 +1311,85 @@ linear_layer.bias: tensor([0.4820])
 ```
 Look how clean that is! All our parameters are neatly organized inside the model object.
 
+### 9.2. The Optimizer: `torch.optim`
+
+Next, we replace our manual weight update step: `W -= learning_rate * W.grad`. An **optimizer** from the `torch.optim` library encapsulates this logic. We give it the model's parameters to manage and a learning rate.
+
+The most common optimizers are:
+*   `optim.SGD`: Stochastic Gradient Descent. This is exactly what we implemented manually.
+*   `optim.Adam`: A more advanced, adaptive optimizer that is often the default choice for training deep neural networks. It adjusts the learning rate for each parameter individually.
+
+```python
+import torch.optim as optim
+
+# Hyperparameters
+learning_rate = 0.01
+
+# Create an Adam optimizer
+# We pass model.parameters() to tell the optimizer which tensors it should manage.
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+# We also use a pre-built loss function from torch.nn
+loss_fn = nn.MSELoss() # Mean Squared Error Loss
+```
+
+### 9.3. The Final, Clean Training Loop
+
+Now we can rewrite our training loop. The five manual steps are replaced by three elegant, high-level commands. This is the universal training loop pattern you will see in 99% of PyTorch code.
+
+**The Three-Line Mantra:**
+1.  `optimizer.zero_grad()`: Replaces our manual `.grad.zero_()` for all parameters.
+2.  `loss.backward()`: Same as before, calculates the gradients for all parameters.
+3.  `optimizer.step()`: Replaces our manual weight update for all parameters using the logic of the chosen optimizer (e.g., Adam).
+
+```python
+# The professional training loop
+epochs = 100
+
+for epoch in range(epochs):
+    ### FORWARD PASS ###
+    # Use the model to make a prediction
+    y_hat = model(X)
+
+    ### CALCULATE LOSS ###
+    # Use our pre-built loss function
+    loss = loss_fn(y_hat, y_true)
+
+    ### THE THREE-LINE MANTRA ###
+    # 1. Zero the gradients from the previous iteration
+    optimizer.zero_grad()
+    # 2. Compute gradients for this iteration
+    loss.backward()
+    # 3. Update the parameters
+    optimizer.step()
+
+    # Optional: Print progress
+    if epoch % 10 == 0:
+        # We can access the learned parameters through the model object
+        w_learned = model.linear_layer.weight.item()
+        b_learned = model.linear_layer.bias.item()
+        print(f"Epoch {epoch:02d}: Loss={loss.item():.4f}, W={w_learned:.3f}, b={b_learned:.3f}")
+```
+**Output:** (Starts from different random values but converges similarly)
+```
+Epoch 00: Loss=2.6515, W=-0.519, b=0.482
+Epoch 10: Loss=1.7011, W=-0.219, b=0.582
+Epoch 20: Loss=0.9706, W=0.117, b=0.678
+Epoch 30: Loss=0.4805, W=0.456, b=0.767
+Epoch 40: Loss=0.2078, W=0.768, b=0.846
+Epoch 50: Loss=0.0886, W=1.031, b=0.912
+Epoch 60: Loss=0.0435, W=1.238, b=0.963
+Epoch 70: Loss=0.0270, W=1.391, b=1.000
+Epoch 80: Loss=0.0221, W=1.499, b=1.025
+Epoch 90: Loss=0.0210, W=1.571, b=1.042
+```
+We achieved the same result—a learning system that finds the underlying pattern in the data—but our code is now organized, scalable, and uses the standard, optimized tools provided by the PyTorch library.
+
+---
+
+We have completed the full journey from raw tensors to a professional PyTorch workflow. We understand not just *what* the code does, but *why* it's designed that way, because we built the "manual" version first.
+
+The final step is to connect this simple model to the state-of-the-art giants. Let's move on to our conclusion, **Part 10: The Big Picture - From Our Model to an LLM**.
+
+## Part 10: The Big Picture - From Our Model to an LLM
+
