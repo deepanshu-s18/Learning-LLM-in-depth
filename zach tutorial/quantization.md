@@ -170,3 +170,32 @@ The core idea is simple: find a scale factor to stretch or shrink the float rang
 We've mastered the algorithm for compressing numbers. Now, where do we apply it inside a real neural network? A neural network layer primarily does one simple thing: it performs a matrix multiplication.
 
 `Output = MatMul(Input_Data, Weights)`
+
+The key is to understand what these two components are.
+
+*   **Weights:** Think of these as the **model's brain** or its long-term memory. They contain all the knowledge learned during weeks of training. They are static, enormous, and are loaded into the GPU's memory (VRAM) once. For a 7B model, this "brain" is the 28 GB of data we need to shrink.
+*   **Input Data (Activations):** This is the **stream of thought** or the data that is actively flowing through the model *right now*. When you type a prompt, your words are turned into numbers that become the `Input_Data` for the first layer. The output of that layer then becomes the input for the next. These numbers are dynamic and change with every new request.
+
+#### The Core Decision: What Do We Compress?
+
+We have a choice. We can quantize the `Weights`, the `Input_Data (Activations)`, or both. Given the nature of these two components, the engineering choice becomes clear.
+
+1.  **Why We MUST Quantize Weights:**
+    *   **They are the memory problem.** The weights are the massive, multi-gigabyte files that live permanently in VRAM. Compressing them from FP32 (or FP16) to INT8 gives us a 4x (or 2x) reduction in memory footprint, which is our primary goal.
+    *   **They are static.** Since they don't change during inference, we can quantize them once and store them in their compressed form.
+
+2.  **Why We Generally DON'T Quantize Activations:**
+    *   **They are transient.** Activations are "in-flight" data. They are generated, used in one calculation, and then discarded. They don't live in VRAM for long.
+    *   **They are computationally expensive to quantize.** Compressing them would mean adding a `quantize()` step at the input of every layer and a `dequantize()` step at the output, adding overhead to the critical path for a minimal memory gain.
+
+This leads to the industry-standard approach: **Weights-Only Quantization**. We compress the large, static "brain" (weights) but keep the fast-moving "thoughts" (activations) in their high-precision format (usually FP16). This is also called a **mixed-precision** approach.
+
+#### The Workflow: The On-the-Fly Dequantization Trick
+
+This sounds like we might have a problem: how can you multiply an FP16 activation with an INT8 weight? The answer is you don't. Modern GPUs have specialized hardware to perform a clever, last-second conversion.
+
+Here is the step-by-step process for `Y = MatMul(Activations, Weights)`:
+
+1.  **Storage:** The `Weights` tensor is stored in VRAM as **INT8**. Its corresponding `Scale` factor is stored nearby as an **FP16** number. The `Activations` tensor arrives at the layer as a standard **FP16** tensor.
+2.  **Load:** The GPU's compute core pulls the necessary INT8 weights and their scale from VRAM into its own extremely fast on-chip memory.
+3.  **Dequantize On-the-Fly:** *Inside the core*, just nanoseconds before the multiplication, a specialized circuit dequantizes the weights back to FP16.
