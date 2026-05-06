@@ -112,3 +112,32 @@ Let's quantize our float `x = 1.2` using `S = 0.02745` and `Z = 0`.
 
 So, the float `1.2` is represented by the integer `44`.
 
+Let's see the error by dequantizing it back:
+`x̂ = 0.02745 * (44 - 0) ≈ 1.2078`. The error is very small!
+
+#### Code Snippet: Symmetric Quantization
+
+This is the most common type for weights. The zero-point is fixed at 0.
+
+```python
+import numpy as np
+
+def symmetric_quantize_int8(fp32_tensor):
+    # For INT8, the max integer value is 127
+    q_max = 127.0
+
+    # 1. Find the absolute maximum float value to define the range
+    abs_max = np.max(np.abs(fp32_tensor))
+
+    # 2. Calculate the scale factor
+    scale = abs_max / q_max
+
+    # 3. Apply the quantization formula (Z=0)
+    quantized_tensor = np.round(fp32_tensor / scale)
+    quantized_tensor = np.clip(quantized_tensor, -128, 127).astype(np.int8)
+
+    return quantized_tensor, scale
+
+# --- Input ---
+weights_fp32 = np.array([1.2, -3.5, 0.8, 2.1, -1.9, 3.5], dtype=np.float32)
+
