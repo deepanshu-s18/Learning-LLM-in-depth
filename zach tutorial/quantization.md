@@ -84,3 +84,31 @@ Our task is to represent these numbers using INT8, which can only hold values be
 
 2.  **Calculate the Zero-Point (Z):** The zero-point is an offset or "shift." It ensures that the floating-point value `0.0` maps correctly to an integer. Since our float range `[-3.5, 3.5]` is perfectly symmetric around zero, we can align its zero with the integer zero.
     *   **Zero-Point (Z) = 0**
+    *   This special case is called **Symmetric Quantization** and is standard for model weights.
+
+#### The Formal Algorithm (Affine Quantization)
+
+1.  **Quantization (Float -> Int):**
+    $$q = \text{clamp}\left(\text{round}\left(\frac{x}{S} + Z\right), q_{min}, q_{max}\right)$$
+    *   `x`: The original float value (e.g., `1.2`).
+    *   `S`: The scale factor we calculated.
+    *   `Z`: The zero-point we calculated.
+    *   `round()`: Standard rounding to the nearest integer.
+    *   `clamp()`: Ensures the result stays within the valid integer range (`[-128, 127]`).
+
+2.  **Dequantization (Int -> Float):**
+    $$\hat{x} = S(q - Z)$$
+    *   `q`: The quantized integer value.
+    *   `x̂`: The reconstructed (approximate) float value.
+
+#### Step-by-Step Example
+
+Let's quantize our float `x = 1.2` using `S = 0.02745` and `Z = 0`.
+
+1.  **Scale:** `1.2 / 0.02745 ≈ 43.71`
+2.  **Shift:** `43.71 + 0 = 43.71`
+3.  **Round:** `round(43.71) = 44`
+4.  **Clamp:** `44` is within `[-128, 127]`, so no clamping is needed.
+
+So, the float `1.2` is represented by the integer `44`.
+
