@@ -199,3 +199,31 @@ Here is the step-by-step process for `Y = MatMul(Activations, Weights)`:
 1.  **Storage:** The `Weights` tensor is stored in VRAM as **INT8**. Its corresponding `Scale` factor is stored nearby as an **FP16** number. The `Activations` tensor arrives at the layer as a standard **FP16** tensor.
 2.  **Load:** The GPU's compute core pulls the necessary INT8 weights and their scale from VRAM into its own extremely fast on-chip memory.
 3.  **Dequantize On-the-Fly:** *Inside the core*, just nanoseconds before the multiplication, a specialized circuit dequantizes the weights back to FP16.
+    $$\text{Temporary\_Weight}_{FP16} = S \times \text{Weight}_{INT8}$$
+4.  **Compute:** The matrix multiplication is now performed with both inputs in the same high-precision format.
+    $$\text{Y}_{FP16} = \text{MatMul}(\text{Activations}_{FP16}, \text{Temporary\_Weight}_{FP16})$$
+5.  **Discard:** The `Temporary_Weight` is immediately discarded. It only existed for a fraction of a second in the core's cache. The permanent `Weight` tensor in VRAM remains in its compressed INT8 form.
+
+This hardware-fused process gives us the best of both worlds: a **4x reduction in memory footprint** from INT8 storage, and the **full numerical accuracy of FP16** for the actual computation.
+
+#### Diagram: Visualizing the Data Flow
+
+```
+A diagram illustrating the mixed-precision matrix multiplication process.
+
+--------------------------------------------------------------------------------------------------
+| Box 1: VRAM (Slow, Large Memory)                                                               |
+|                                                                                                |
+|   - [Tensor] Activations (FP16) - Size: Large, but transient                                   |
+|   - [Tensor] Weights (INT8) - Size: Huge, compressed                                           |
+|   - [Vector] Scale Factors (FP16) - Size: Tiny                                                 |
+|                                                                                                |
+--------------------------------------------------------------------------------------------------
+      |
+      | Memory Bus (The Bottleneck We Are Solving)
+      | Data Transferred: Activations (FP16) + Weights (INT8)
+      |
+      V
+--------------------------------------------------------------------------------------------------
+| Box 2: GPU Core (Fast, Small On-Chip Cache)                                                    |
+|                                                                                                |
