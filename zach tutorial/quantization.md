@@ -342,3 +342,32 @@ Let's see what this means for a 7-billion parameter model. Remember, 1 byte = 8 
 
 | Format | Bits per Weight | Bytes per Weight | VRAM for 7B Model | Memory Savings (vs FP16) |
 | :--- | :--- | :--- | :--- | :--- |
+| FP16 | 16 | 2 | 14 GB | - |
+| INT8 | 8 | 1 | 7 GB | 2x |
+| **INT4** | **4** | **0.5** | **3.5 GB** | **4x** |
+
+This 4x memory reduction is a game-changer, making massive models accessible.
+
+#### The Hardware Constraint: Packing Two Numbers in One Byte
+
+A computer's memory is addressed in chunks of **bytes** (8 bits). It's impossible to read or write just 4 bits. To solve this, we must **pack** two 4-bit numbers into a single 8-bit byte.
+
+*   The first 4-bit number occupies the lower half of the byte.
+*   The second 4-bit number is shifted to occupy the upper half.
+
+```
+Diagram: Packing two 4-bit values (5 and 10) into one 8-bit byte.
+
+A rectangle represents an 8-bit byte.
+[ b7 | b6 | b5 | b4 | b3 | b2 | b1 | b0 ]
+
+Value 5 (binary 0101) goes into the right half:
+[ ?  | ?  | ?  | ?  | 0  | 1  | 0  | 1  ]
+
+Value 10 (binary 1010) goes into the left half:
+[ 1  | 0  | 1  | 0  | 0  | 1  | 0  | 1  ]
+
+The result is a single byte containing the packed information.
+```
+
+#### The Algorithm: Smaller Range, Higher Granularity
