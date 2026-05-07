@@ -400,3 +400,31 @@ print(f"Quantized to 4-bit integers: {quantized_4bit}")
 ```
 **Output:**
 ```
+Original Floats: [ 0.51  0.58 -1.2   2.1 ]
+Scale for this group: 0.30
+Quantized to 4-bit integers: [ 2  2 -4  7]
+```
+**The Point:** Notice that `0.51` and `0.58`, two distinct numbers, are both squashed into the same integer `2`. This is the **quantization error** we accept in exchange for the massive memory savings.
+
+#### Code Snippet 2: Packing for Memory Savings
+
+This code shows how the integers `2` and `-4` would be packed into a single byte. Note: we use their unsigned representation `[0-15]` for packing. `2` is `2`, and `-4` is `4`.
+
+```python
+# --- Input ---
+# Two 4-bit numbers from the previous step.
+# For packing, we use their unsigned representation (0-15).
+# int4 value 2  -> uint4 value 10 (by adding 8)
+# int4 value -4 -> uint4 value 4  (by adding 8)
+first_num = 10  # Binary 1010
+second_num = 4 # Binary 0100
+
+# --- The Packing Math ---
+# Shift the second number 4 bits to the left, then combine with the first
+packed_byte = (second_num << 4) | first_num
+
+print(f"First number (10) is 0b{first_num:04b}")
+print(f"Second number (4) is 0b{second_num:04b}")
+print(f"Packed byte (decimal): {packed_byte}")
+print(f"Packed byte (binary): 0b{packed_byte:08b}")
+```
