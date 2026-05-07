@@ -457,3 +457,32 @@ We have mastered the mechanics of quantization. The final step is to understand 
     *   **Sufficiently Accurate:** For modern LLMs, using the techniques we've discussed (per-channel for INT8, group-wise for INT4) makes PTQ so effective that the loss in model quality is often negligible or zero.
 
 *   **Limitation:** The model cannot adapt to the quantization error. If a crucial weight value is changed by rounding, the model has no way to compensate. In practice, this is rarely a significant problem for large models.
+
+---
+
+#### 2. QAT (Quantization-Aware Training): The Advanced Alternative
+
+**QAT is an advanced technique used when PTQ results in an unacceptable loss of performance.** Instead of quantizing after training, QAT simulates the effects of quantization *during* the fine-tuning process, allowing the model to learn to be robust to quantization errors.
+
+*   **The Workflow (The "Fake Quantization" Trick):**
+    During the model's fine-tuning forward pass:
+    1.  The model starts with its high-precision FP32 weights.
+    2.  It **simulates** the quantization process: it quantizes a weight to INT8 and immediately **dequantizes it back to FP32**.
+    3.  This slightly "damaged" FP32 weight is then used for the computation.
+
+    By "feeling" the error introduced by this round-trip conversion, the model's training process (backpropagation) learns to adjust the original FP32 weights to values that are naturally more resistant to rounding errors.
+
+*   **When It's Used:**
+    *   **Older Architectures:** More common for smaller or older models that are very sensitive to quantization.
+    *   **Edge Devices:** Frequently used in domains like computer vision for mobile phones, where models are small and every bit of accuracy must be preserved under extreme (e.g., INT4 or lower) quantization.
+    *   **For LLMs, QAT is rarely necessary** due to the high success rate of modern PTQ methods.
+
+*   **Limitations:**
+    *   **Expensive and Complex:** Requires a full fine-tuning pipeline, a representative dataset, and significant computational resources.
+
+---
+
+#### Decision Matrix: Your Practical Guide
+
+| Method | When to Use | Your Default Action |
+| :--- | :--- | :--- |
