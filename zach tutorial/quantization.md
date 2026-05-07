@@ -313,3 +313,32 @@ When we move to extremely low bit-widths like 4-bit, even per-channel quantizati
 *   **Cons:** The most metadata overhead. For a group size of 128, we store one scale factor for every 128 weights.
 
 ```
+Diagram: Group-wise Quantization
+
+Zoom in on a single row of a weight matrix.
+The row is divided into several blocks.
+[ Block 1 | Block 2 | Block 3 | ... ]
+Each block has its own, independent scale factor underneath it.
+( S_1a    | S_1b    | S_1c    | ... )
+```
+
+#### The Rule of Thumb
+
+| Granularity | Best For | Quality | Overhead |
+| :--- | :--- | :--- | :--- |
+| Per-Tensor | Simple cases, no outliers | Lowest | Lowest |
+| Per-Channel | **INT8 Quantization** | Good | Medium |
+| Group-wise | **4-bit Quantization** | Highest | Highest |
+
+If you remember one thing: **granularity controls quality.** By calculating scale factors over smaller and smaller groups of numbers, we drastically reduce quantization error and preserve the performance of the model. This principle is what makes 4-bit quantization feasible, which we will explore next.
+
+## 4. The 4-Bit Frontier
+
+We've successfully compressed weights to INT8. To run even larger models on consumer hardware, we must push compression to the limit: **4-bit quantization**. This halves the memory footprint again but requires us to be even more careful about precision and data storage.
+
+#### The Real-World Impact: VRAM Calculation
+
+Let's see what this means for a 7-billion parameter model. Remember, 1 byte = 8 bits.
+
+| Format | Bits per Weight | Bytes per Weight | VRAM for 7B Model | Memory Savings (vs FP16) |
+| :--- | :--- | :--- | :--- | :--- |
