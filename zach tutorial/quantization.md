@@ -486,3 +486,32 @@ We have mastered the mechanics of quantization. The final step is to understand 
 
 | Method | When to Use | Your Default Action |
 | :--- | :--- | :--- |
+| **PTQ** | For nearly all LLM quantization tasks (e.g., Llama 2, Mistral) to INT8 or INT4. | **Start here. This will be your tool for 99% of use cases.** |
+| **QAT** | Only when PTQ has been tried and has resulted in a measurable and unacceptable drop in your model's performance on a critical task. | Use this as a last resort to recover lost accuracy. |
+
+## Conclusion: The Black Box, Decoded
+
+You began this tutorial with a set of technical terms—INT8, 4-bit, per-channel, group size, PTQ—that represent the core of modern model compression. These terms are no longer a black box. You now possess the first-principles understanding of the engineering decisions that allow massive language models to run on accessible hardware.
+
+Let's recap the fundamental concepts you have mastered.
+
+#### Your Core Knowledge, Summarized
+
+*   **The Algorithm is Simple Math:** At its heart, quantization is just an affine transformation ($q = \text{round}(x/S + Z)$) that maps a wide range of floats to a narrow range of integers. The entire field is built on this simple foundation.
+*   **The Implementation is a Hardware Trick:** The industry standard is **weights-only quantization**. We only compress the massive, static weights to save VRAM and memory bandwidth. The actual computation remains in high precision thanks to specialized GPU hardware that performs "on-the-fly" dequantization, a trick that is fast and efficient.
+*   **The Key to Quality is Granularity:** A single outlier can destroy the precision of an entire model. We defeat this by increasing granularity:
+    *   **Per-channel** quantization is the standard for INT8.
+    *   **Group-wise** quantization (with block sizes like 64 or 128) is essential for 4-bit, isolating outliers into tiny segments.
+*   **The Practical Strategy is PTQ:** For nearly all modern LLMs, **Post-Training Quantization (PTQ)** is the go-to method. It is a fast, simple, and highly effective calibration process that does not require expensive retraining. QAT is a powerful but rarely needed alternative.
+
+#### The Reality Check: From Theory to Concrete Savings
+
+We started with the goal of making large models run. The progression of techniques you learned achieves exactly that. For a typical 7-billion parameter model, the journey looks like this:
+
+| Format | Technology Used | VRAM Requirement | Achieved By |
+| :--- | :--- | :--- | :--- |
+| FP16 | (Baseline) | ~14 GB | Standard high-precision format. |
+| INT8 | Per-Channel PTQ | ~7 GB | Applying the core algorithm to each row. |
+| INT4 | Group-wise PTQ | ~3.5 GB | Increasing granularity and packing bits. |
+
+You have not just learned what these techniques are; you have learned *why* they are designed this way—from the bit-level representation of a float to the trade-offs between metadata overhead and precision in group-wise quantization. You now have the vocabulary and the conceptual framework to understand, evaluate, and implement the methods that power the world of efficient deep learning.
