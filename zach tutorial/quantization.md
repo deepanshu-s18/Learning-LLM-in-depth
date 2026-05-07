@@ -285,3 +285,31 @@ The entire matrix shares this one scale.
 **2. Per-Channel Quantization (The INT8 Standard)**
 Instead of one scale for the whole matrix, we calculate a separate scale factor for each **row**. In a linear layer, each row of the weight matrix corresponds to the connections for a single output neuron or "channel." This is the most common method for INT8 quantization.
 *   **Pros:** Effectively isolates outliers. An outlier in one row only affects the precision of that single row, leaving all other rows untouched.
+*   **Cons:** Requires storing more metadata (one scale factor per row instead of one for the whole matrix).
+
+```python
+# --- Code Snippet: Per-Channel Scale Calculation ---
+import numpy as np
+
+# A weight matrix with 3 rows (channels) and 4 columns
+weights_fp32 = np.array([
+    [1.2, -0.5, 2.8, 0.9],   # Channel 1: max(abs) is 2.8
+    [-1.5, 1000.0, 0.3, -2.1], # Channel 2: has a huge outlier
+    [3.1, -2.2, -1.8, 1.1]    # Channel 3: max(abs) is 3.1
+], dtype=np.float32)
+
+# Calculate scales per-row (axis=1 means operate along columns for each row)
+abs_max_per_channel = np.max(np.abs(weights_fp32), axis=1)
+scales_per_channel = abs_max_per_channel / 127.0
+
+print(f"Per-Channel Scales (S): {scales_per_channel}")
+# Output: [0.022, 7.87, 0.024]
+# Notice how the scale for Channel 2 is huge, but the others remain small and precise.
+```
+
+**3. Group-wise Quantization (The 4-bit Standard)**
+When we move to extremely low bit-widths like 4-bit, even per-channel quantization can lose too much information. The solution is to increase granularity even further. We take each row and divide it into smaller chunks called **groups** or **blocks** (e.g., of size 32, 64, or 128). Each group gets its own scale factor.
+*   **Pros:** The highest precision, as outliers are isolated to very small blocks of weights.
+*   **Cons:** The most metadata overhead. For a group size of 128, we store one scale factor for every 128 weights.
+
+```
