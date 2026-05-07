@@ -371,3 +371,32 @@ The result is a single byte containing the packed information.
 ```
 
 #### The Algorithm: Smaller Range, Higher Granularity
+
+The quantization math is the same, but our target integer range is now tiny: `[-8, 7]` (16 possible values).
+$$S = \frac{\max(|x|)}{7}$$
+Because the range is so small, using a single scale for a large group of weights would destroy all precision. This is why **group-wise quantization** (calculating a scale for every 32, 64, or 128 weights) is **essential** for 4-bit models.
+
+#### Code Snippet 1: The Precision Loss in Action
+
+This code shows how aggressively floats are mapped to the tiny 4-bit integer range.
+
+```python
+import numpy as np
+
+# --- Input ---
+# A small group of weights. Let's make two values very close.
+weights_group = np.array([0.51, 0.58, -1.2, 2.1], dtype=np.float32)
+
+# --- The 4-bit Quantization Math ---
+q_max = 7.0 # Target range is [-8, 7]
+scale = np.max(np.abs(weights_group)) / q_max # S = 2.1 / 7.0 = 0.3
+
+# Quantize using the formula q = round(x / S)
+quantized_4bit = np.round(weights_group / scale).astype(np.int8)
+
+print(f"Original Floats: {weights_group}")
+print(f"Scale for this group: {scale:.2f}")
+print(f"Quantized to 4-bit integers: {quantized_4bit}")
+```
+**Output:**
+```
