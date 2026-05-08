@@ -408,3 +408,72 @@ The core loop of RL is simple: the **Agent** (LLM Policy) takes an **Action** (g
 
 Let's imagine the simplest learning objective: generate a response `y`, get a reward `r(x,y)`, and use gradient ascent to maximize `r(x,y)`. To do this, we would need to backpropagate the gradient of the reward through the entire generation process, all the way back to the model's weights `θ`.
 
+This computational path is completely broken by the **sampling step**. When the model generates a token, it samples from a probability distribution. You cannot differentiate a discrete, random choice. There is no smooth, mathematical function that describes how a tiny change in the probability of "apple" causes you to sample "banana" instead. You cannot take the derivative of a die roll. This means we cannot directly connect the final reward to the model's weights through standard backpropagation.
+
+#### The Solution: Maximizing Expected Reward
+
+The solution is to shift our goal. Instead of maximizing the reward of one *specific* output, we aim to improve the policy's **average performance** across *all possible* outputs. We want to maximize the **Expected Reward**:
+
+$$ J(\theta) = \mathbb{E}_{y \sim \pi_\theta(y|x)} [r(x,y)] $$
+
+This objective asks: "If we sample many, many responses from our policy for a given prompt, what is the average reward we would get?" Improving this average is our true goal.
+
+Miraculously, a branch of mathematics called **policy gradients** provides a way to compute the gradient of this exact objective, bypassing the non-differentiable sampling problem. The policy gradient theorem states:
+
+$$ \nabla_\theta J(\theta) = \mathbb{E}_{y \sim \pi_\theta(y|x)} [\nabla_\theta \log \pi_\theta(y|x) \cdot r(x,y)] $$
+
+Let's break down why this elegant formula works:
+
+1.  **`∇_θ log π_θ(y|x)`: The "Score Function"**. This is the part we can actually compute. It asks a simple question: "For the specific response `y` that we just sampled, which direction should we move our weights `θ` to make that response more likely?" It's a standard backpropagation calculation.
+2.  **`r(x,y)`: The Reward as a Scaling Factor**. The reward `r(x,y)` is now a simple scalar number that multiplies the gradient. It is *not* differentiated. It acts as a gatekeeper:
+    *   If `r(x,y)` is high and positive, we apply a large update in the direction that makes `y` more likely.
+    *   If `r(x,y)` is low or negative, we apply an update in the *opposite* direction, making `y` less likely.
+
+We've turned the impossible problem into a simple, two-step process: find out how to make a sampled output more likely, and then decide *how much* to do so based on its reward.
+
+#### The High Variance Problem
+
+While theoretically sound, this formula has a major practical flaw: **high variance**. Imagine our policy generates two responses to the prompt "Write a poem about a robot":
+*   Response A gets a reward of `4.0`.
+*   Response B gets a reward of `5.0`.
+
+Using the formula, we would encourage both. But what if the *average* reward for this prompt is `4.5`? In that case, Response A was actually below average and should be discouraged, while Response B was above average and should be encouraged. The raw reward score lacks context. This leads to erratic training updates that are highly sensitive to the luck of the draw in sampling.
+
+#### Reducing Variance with a Baseline (The Advantage)
+
+To solve this, we introduce a **baseline** `b(x)`. We change our update rule to use `r(x,y) - b(x)` instead of just `r(x,y)`. The baseline represents the "expected" or "average" score for a prompt `x`.
+
+$$ \nabla_\theta J(\theta) = \mathbb{E}_{x \sim D, y \sim \pi_\theta(\cdot|x)} [\nabla_\theta \log \pi_\theta(y|x) \cdot (r(x,y) - b(x))] $$
+
+The ideal baseline is the **Value Function** `V(x)`, which is formally defined as the expected reward from prompt `x`. To get this, we train a second, smaller neural network (the **Value Model** or **Critic**) to predict the reward model's score for a given prompt.
+
+This gives us the **Advantage Function**:
+
+$$ A(x,y) = r(x,y) - V(x) $$
+
+The advantage tells us: "How much better (or worse) was this specific response than what we normally expect for this prompt?"
+*   `A(x,y) > 0`: A pleasant surprise! This was a good response. We increase its probability.
+*   `A(x,y) < 0`: A disappointment. This was a bad response. We decrease its probability.
+
+This relative judgment is far more stable than the absolute reward.
+
+#### Why is Subtracting a Baseline "Legal"?
+
+This is the key question. How can we just subtract `V(x)` without messing up our objective? Doesn't it change the gradient?
+
+The answer is **no, it doesn't change the gradient *in expectation***. Here's the intuition:
+
+1.  The term we subtract from the gradient estimate is `∇_θ log π_θ(y|x) · V(x)`.
+2.  The baseline `V(x)` depends only on the prompt `x`, *not the sampled response `y`*. So, when we calculate the expectation over all possible `y`, `V(x)` is a constant.
+3.  This means we need to evaluate `E [∇_θ log π_θ(y|x)]`. This term is proven to be **zero**. Intuitively, if you consider all possible actions you could take, the gradients that push you to take *some* actions more must be perfectly balanced by gradients that push you to take *other* actions less. On average, the "push" vector is zero.
+4.  Therefore, the expectation of the term we subtract is `V(x) * E [∇_θ log π_θ(y|x)] = V(x) * 0 = 0`.
+
+Subtracting the baseline has zero effect on the average gradient, so our updates still point in the correct direction on average. However, for any *single sample*, it dramatically reduces the variance, leading to much more stable and efficient training.
+
+#### From Theory to Practice: The REINFORCE Algorithm
+
+We can't average over infinite responses. Instead, we approximate the expectation using a batch of real samples. This gives us a practical algorithm (a version of REINFORCE with a baseline):
+
+1.  **Rollout:** For a batch of prompts `x`, generate one response `y` for each using your current policy `π_θ`.
+2.  **Evaluate:** Get the scalar reward `r(x,y)` from the Reward Model and the predicted value `V(x)` from the Value Model for each sample.
+3.  **Calculate Advantage:** Compute `A(x,y) = r(x,y) - V(x)`.
