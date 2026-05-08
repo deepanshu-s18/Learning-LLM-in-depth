@@ -203,3 +203,71 @@ $$ \text{loss} = -\log \left( P(y_w \succ y_l | x) \right) $$
 Substituting our Bradley-Terry formula, we get the final loss function for the Reward Model, which is averaged over the entire preference dataset `D_prefs`:
 
 $$ \mathcal{L}(\theta) = -\mathbb{E}_{(x, y_w, y_l) \sim D_{prefs}} \left[ \log \sigma(r_\theta(x, y_w) - r_\theta(x, y_l)) \right] $$
+
+This loss function has a formally similar logistic form to Direct Preference Optimization (DPO), but the *targets differ significantly*:
+
+- **RM (this approach)**: We learn a scalar reward function `r_θ(x,y)` from pairwise preferences, then use this as a separate scoring component.
+- **DPO**: We update the **policy directly** by contrasting `log π_φ(y|x) - log π_ref(y|x)` with preference labels, bypassing the separate reward model entirely.
+
+Both use formally similar logistic losses, but applied to different quantities and training objectives.
+
+We have now defined *what* we want our automated judge to learn. But theory is one thing - how do we actually implement this? Let's see the code.
+
+## **Implementing the Reward Model: Brain Surgery on a Transformer**
+
+The theory tells us we need a model that outputs scalar scores. But why not just use a simple classifier? Why do we need "brain surgery" on a full transformer?
+
+**The problem is harder than it looks.** A reward model needs to understand:
+- Complex nuanced language (is this response helpful vs preachy?)
+- Context and intent (same words, different meaning based on the question)
+- Subtle quality differences (both responses are factual, but one flows better)
+
+**Key insight: Reuse the SFT model for reward modeling.** Instead of training from scratch, we take our instruction-tuned SFT model and modify it. It already understands language and instruction-following - we just need to change its output from tokens to scores. Here's how we transform a GPT model to do exactly that. The most effective and data-efficient way to create a powerful RM is not to train one from scratch, but to adapt an existing, capable language model. This process is like performing "brain surgery" on our SFT model to give it a new function: judging instead of generating.
+
+**Starting Point: Standard GPT Architecture**
+
+Let's begin with a minimal, but complete, implementation of a GPT-style transformer. This model's architecture is designed for one primary task: predicting the next token in a sequence.
+
+Pay close attention to the `forward` method and the `lm_head` layer. This is where the model produces its final output.
+
+```python
+# gpt_for_generation.py
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+# --- Boilerplate Transformer Blocks (Self-Attention, MLP, etc.) ---
+# (Full implementation code as provided in the prompt)
+# class CausalSelfAttention(nn.Module): ...
+# class MLP(nn.Module): ...
+# class Block(nn.Module): ...
+
+class GPT(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        self.config = config
+        
+        # The main body of the transformer
+        self.transformer = nn.ModuleDict(dict(
+            wte = nn.Embedding(config.vocab_size, config.n_embd),
+            wpe = nn.Embedding(config.block_size, config.n_embd),
+            drop = nn.Dropout(config.dropout),
+            h = nn.ModuleList([Block(config) for _ in range(config.n_layer)]),
+            ln_f = nn.LayerNorm(config.n_embd),
+        ))
+        
+        # The 'language model head' for generation
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        self.lm_head.weight = self.transformer.wte.weight # Weight tying
+
+    def forward(self, idx: torch.Tensor) -> torch.Tensor:
+        # Standard transformer forward pass
+        B, T = idx.size()
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device).unsqueeze(0)
+        tok_emb = self.transformer.wte(idx)
+        pos_emb = self.transformer.wpe(pos)
+        x = self.transformer.drop(tok_emb + pos_emb)
+        for block in self.transformer.h:
+            x = block(x)
+        x = self.transformer.ln_f(x)
+        
