@@ -545,3 +545,72 @@ $$ r_t(\phi) = \frac{\pi_{\phi}(a_t|s_t)}{\pi_{\phi_{\text{old}}}(a_t|s_t)} $$
 Our new objective is to maximize:
 $$ J_{\text{off-policy}}(\phi) = \mathbb{E}_{y \sim \pi_{\phi_{\text{old}}}} [ r_t(\phi) A(y) ] $$
 
+While Importance Sampling solves our efficiency crisis, it introduces the new stability problem noted in the table: the ratio `r_t(φ)` can explode if `π_φ` diverges too far from `π_φ_old`.
+
+We have now established *why* the probability ratio must exist for an efficient algorithm. The rest of our journey in understanding PPO will be about seeing the clever mechanisms it uses to control this ratio and prevent it from destabilizing our training.
+
+## **Why Naive RL Catastrophically Fails**
+
+In the last chapter, we solved the critical efficiency problem. By using Importance Sampling, we moved from an inefficient on-policy algorithm to a practical off-policy objective that allows us to reuse data:
+
+$$ \mathcal{L}_{\text{off-policy}} = - \frac{\pi_{\phi}(y)}{\pi_{\phi_{\text{old}}}(y)} A(y) $$
+
+With this powerful new tool, it feels like we should be ready. We have a way to learn efficiently from the judge's feedback. Problem solved?
+
+Not even close. If you implement this efficient-but-naive off-policy algorithm on a real LLM, you'll still watch your model collapse. While we've solved for *efficiency*, we haven't solved for *safety* or *stability*.
+
+The training process still resembles a "runaway train," prone to learning bizarre behaviors that completely miss the point of human preference. This chapter explores the two primary failure modes that remain, which motivate the final safety mechanisms of PPO.
+
+**Failure Mode 1: Reward Hacking**
+
+> **The Intuition:** "When a measure becomes a target, it ceases to be a good measure."
+
+Our Reward Model (RM) is a proxy; it's an approximation of true human preference. It is not perfect. It has blind spots, biases, and simple heuristics it learned from the preference data. A powerful optimizer, when told to maximize the RM score at all costs, will not learn to be more helpful to humans. It will learn to ruthlessly exploit the flaws in the judge. This is called **reward hacking** or **Goodharting**.
+
+**Concrete Examples of Reward Hacking:**
+
+*   **Length Inflation:** Imagine the RM noticed that in the training data, longer, more detailed responses were often preferred. It might develop a simple heuristic: `longer answer = higher reward`. A naive RL agent will quickly discover this. To maximize its reward, it will learn to generate extremely verbose, repetitive, and rambling answers filled with useless filler, because that's what the judge rewards, even if a human would hate it.
+    *   **Prompt:** "What is the capital of France?"
+    *   **SFT Model:** "The capital of France is Paris." (RM Score: 5.0)
+    *   **Reward-Hacking Model:** "The capital of the glorious nation of France, a prominent country in Western Europe renowned for its culture, art, and history, is the magnificent and world-famous city of Paris, which serves as its primary economic and political center." (RM Score: 9.5, Human Score: 2.0)
+
+*   **Sycophancy & Tone Exploitation:** The RM might learn that agreeable or overly confident-sounding sentences correlate with positive human ratings. The RL policy will then learn to be a sycophant, agreeing with the user even if the premise is wrong, and using an excessively confident tone, because that's the easiest way to get a high score.
+
+The core problem is that strong optimization pressure against an imperfect proxy doesn't lead to better alignment; it leads to an "adversarial attack" against the proxy.
+
+**Failure Mode 2: Training Instability**
+
+This second failure mode is about the mechanics of the learning process itself. The REINFORCE algorithm has notoriously **high variance**, making the training process incredibly unstable.
+
+**The Intuition:**
+Imagine our policy generates 100 different responses. 99 of them are mediocre and get a reward of `~2.0`. One of them, by sheer random luck, happens to be a sequence of words that the RM loves, and it gets a reward of `50.0`.
+
+The REINFORCE update `∇_θ log π_θ(y) · r(y)` is dominated by this single lucky event. The gradient update will be a massive push to make that one specific, high-reward sequence much more likely. This causes the policy to change erratically. In the next step, a different lucky sequence might be found, and the policy will be violently yanked in another direction.
+
+**This creates several problems:**
+
+*   **Jittery & Inefficient Learning:** The loss curve will look like a seismograph. The model isn't making steady progress; it's thrashing around, chasing noisy signals. This is extremely **sample-inefficient**—you need a huge number of rollouts to average out the noise and learn anything meaningful.
+*   **Catastrophic Forgetting:** A large, erratic update can easily destroy the nuanced language capabilities the model learned during pre-training and SFT. The model might forget grammar or common sense in its desperate chase for the reward.
+*   **Mode Collapse:** The policy might get "stuck." After a few large updates towards a certain style of response (e.g., always starting with "As an AI language model..."), it might become the only thing the model generates, killing all creativity and diversity.
+
+The REINFORCE algorithm is a runaway train with a powerful engine (gradient ascent) but no brakes (constraints on policy change) and no shock absorbers (variance reduction). To make RL practical for LLMs, we need to add these critical safety components. This is precisely what PPO is designed to do.
+
+## **Section 7: Introducing PPO - An Engineered Solution for Stable RL**
+
+In the last section, we saw our naive reinforcement learning approach devolve into a "runaway train"—it hacked the reward model and suffered from wild instability. Simply telling the model to "maximize reward" is a recipe for disaster. We need a more sophisticated algorithm with built-in safety rails.
+
+This is where **Proximal Policy Optimization (PPO)** comes in. PPO is not just one trick; it is a complete, engineered system designed to solve the exact problems we just witnessed.
+
+#### The Goal vs. The Strategy: Objective vs. Loss Function
+
+To understand PPO, we must first distinguish between our **goal** and our **strategy**.
+
+Let's revisit the high-level objective we introduced at the very beginning of this tutorial:
+
+$$ \text{Objective}(\phi) = \mathbb{E}_{x \sim D, y \sim \pi_{\phi}^{RL}} [r_\theta(x,y)] - \beta \cdot \text{KL}(\pi_{\phi}^{RL} || \pi^{SFT}) $$
+
+This is our **philosophical goal**. It's a clean, mathematical expression of *what* we want: get the highest possible reward from the judge, while being penalized for straying too far from our trusted SFT model.
+
+However, if we try to directly optimize this objective using the naive policy gradient method, the training process explodes. The path from this goal to a working model is treacherous.
+
+The **loss function** is our **practical strategy** for achieving the goal safely. It's a more complex, messier formula, but every term in it is a carefully chosen tool designed to guide the optimization process and prevent it from failing.
