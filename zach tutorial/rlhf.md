@@ -819,3 +819,71 @@ Let's continue with our 3-token generation: **"very, very, sleepy"**. We already
 *   `γ` (gamma, discount factor) = **0.9**
 *   `λ` (lambda, GAE factor) = **0.8**
 
+**Our Rollout Data:**
+
+| t | Token Generated | `R_aug(t)` | `Vψ(s_t)` (Critic's Forecast) |
+|---|---|---|---|
+| 1 | `very` | -0.06 | 3.0 |
+| 2 | `very` | +0.15 | 3.5 |
+| 3 | `sleepy`| +5.00 | 4.0 |
+| 4 | (end) | 0 | 0.0 |
+
+**Step 1: Calculate the "Surprise" at Each Step (TD Errors `δ`)**
+We use the formula: `δ_t = R_aug(t) + γ * Vψ(s_{t+1}) - Vψ(s_t)`
+
+*   **`δ_3` (for "sleepy"):** `5.00 + 0.9 * 0.0 - 4.0 = +1.0`
+    *   *Intuition: We got a reward of 5.0, but the Critic only predicted 4.0. A positive surprise of +1.0.*
+
+*   **`δ_2` (for "very"):** `0.15 + 0.9 * 4.0 - 3.5 = 0.15 + 3.6 - 3.5 = +0.25`
+    *   *Intuition: We got an immediate reward of 0.15 and landed in a state worth 4.0 (discounted to 3.6). This total reality of 3.75 was better than the 3.5 the Critic predicted. A positive surprise of +0.25.*
+
+*   **`δ_1` (for "very"):** `-0.06 + 0.9 * 3.5 - 3.0 = -0.06 + 3.15 - 3.0 = +0.09`
+    *   *Intuition: The immediate reward was slightly negative, but it led to a better-than-expected future state. The overall surprise was positive.*
+
+**Step 2: Calculate the GAE Advantage by Chaining the Surprises (working backwards)**
+We use the formula: `A_t = δ_t + γ * λ * A_{t+1}`
+
+*   `A_4 = 0` (There's no advantage after the episode ends)
+
+*   **`A_3` (for "sleepy"):** `A_3 = δ_3 + (0.9 * 0.8 * A_4) = 1.0 + 0.72 * 0 = 1.0`
+    *   *The advantage of the last action is just its immediate surprise.*
+
+*   **`A_2` (for "very"):** `A_2 = δ_2 + (0.9 * 0.8 * A_3) = 0.25 + 0.72 * 1.0 = 0.25 + 0.72 = 0.97`
+    *   *The advantage of generating the second "very" was its own surprise (0.25) plus the discounted future advantage it unlocked (0.72).*
+
+*   **`A_1` (for "very"):** `A_1 = δ_1 + (0.9 * 0.8 * A_2) = 0.09 + 0.72 * 0.97 = 0.09 + 0.70 = 0.79`
+    *   *The first "very" had a small immediate surprise but set up a chain of future positive surprises, giving it a solid overall advantage.*
+
+#### Final Result: The Refined Learning Signal
+
+We have successfully transformed our noisy `R_aug` stream into a stable, fine-grained Advantage signal for each token.
+
+| Timestep (t) | Token Generated | `R_aug(t)` | **Advantage `A_t`** |
+| :--- | :--- | :--- | :--- |
+| 1 | `very` | -0.06 | **0.79** |
+| 2 | `very` | +0.15 | **0.97** |
+| 3 | `sleepy`| +5.00 | **1.00** |
+
+These Advantage values are the final, high-quality learning signal that we will feed into Step 3 of our pipeline. They tell the model not just whether an action was good, but precisely *how much better than expected* it was, providing the stable foundation needed for the final policy update.
+
+## **Section 10: PPO's Core Innovation: The Clipping "Governor"**
+
+We have arrived at the final and most important step of the PPO pipeline. We've meticulously crafted a stable, refined learning signal—the **Advantage (`A_t`)**. We have also established that for efficiency, we must use an **off-policy** approach. Now, we will combine these ideas and introduce PPO's signature innovation: a **clipped objective function** that tames the instability of off-policy learning.
+
+| Step | Component Name | The Formula We Compute | The Intuition: "What is its purpose?" |
+| :--- | :--- | :--- | :--- |
+| **1** | **Augmented Reward** `(R_aug)` | $R_{\text{aug}}(t) = R_{\text{KL}}(t) + R_{\text{RM}}$ | **Create the Raw Signal.** Combine the RM score and KL penalty. |
+| **2** | **Advantage** `(A_t)` | $A_t \approx R_{\text{aug}}(t) + \gamma V_{\psi}(s_{t+1}) - V_{\psi}(s_t)$ | **Refine the Signal.** Calculate the "surprise" factor relative to the Critic's forecast. |
+| **▶ 3**| **Final Loss** `(L_total)` | $\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{Policy}}(A_t) - c_1 \mathcal{L}_{\text{Value}} + c_2 \mathcal{L}_{\text{Entropy}}$ | **Assemble the Final Product.** Use the refined Advantage signal `A_t` as the core ingredient in our final loss function. |
+
+Today, we focus on the main event: the Policy Loss, `L_Policy`.
+
+#### The Unbounded Off-Policy Objective
+
+From our discussion on off-policy learning, we derived the Importance Sampling objective, which allows us to learn from old data. This is our new "naive" starting point:
+
+$$ J_{\text{unclipped}}(\phi) = \mathbb{E}_{t \sim \pi_{\phi_{\text{old}}}} \left[ \frac{\pi_{\phi}(a_t|s_t)}{\pi_{\phi_{\text{old}}}(a_t|s_t)} A_t \right] $$
+
+This formula correctly re-weights the advantage from our old data. However, it is **unbounded** and therefore unstable. Imagine a situation where the Advantage `A_t` is large and positive. The optimizer will be incentivized to make the probability ratio `π_φ / π_φ_old` as large as possible to maximize the objective. A single large-advantage event could cause a massive, destructive update to the policy.
+
+This is the final instability we must solve.
