@@ -1093,3 +1093,71 @@ graph TD
     style Critic fill:#ddeeff
 ```
 
+#### The PPO Algorithm: From Rollout to Update
+
+The PPO algorithm alternates between two main phases: collecting a large batch of experience (Rollout) and learning from that experience for multiple steps (Learning).
+
+**Phase 1: Rollout (Data Collection)**
+
+The goal is to generate a static dataset of experience using the current policy.
+
+```python
+# --- PHASE 1: ROLLOUT ---
+# Snapshot the current actor to create the 'old' policy for clipping
+pi_phi_old = copy(actor_policy).freeze()
+
+# Generate a batch of experience
+# This involves getting responses and log-probs from the models
+static_dataset = []
+for prompt in prompts:
+    # 1. Generate response using the frozen snapshot
+    # actions are token IDs, states are the context at each step
+    actions, states = pi_phi_old.generate(prompt)
+
+    # 2. Get necessary log-probabilities and values
+    log_probs_old = pi_phi_old.get_log_probs(states, actions)
+    log_probs_SFT = reference_policy.get_log_probs(states, actions)
+    values = critic.get_values(states) # From the live critic
+
+    # 3. Get the final reward score
+    reward_score = reward_model.score(prompt, actions)
+
+    # 4. Compute augmented rewards and advantages
+    rewards_aug = calculate_augmented_rewards(reward_score, log_probs_old, log_probs_SFT)
+    advantages = calculate_advantages(rewards_aug, values)
+    
+    # 5. Store everything in a static dataset
+    static_dataset.append((states, actions, log_probs_old, advantages))
+```
+
+**Phase 2: Learning (Model Updates)**
+
+Now we iterate over our static dataset for a few epochs, updating the Actor and Critic.
+
+```python
+# --- PHASE 2: LEARNING ---
+for epoch in range(NUM_EPOCHS):
+    for (states, actions, log_probs_old, advantages) in static_dataset:
+        
+        # --- Policy Loss Calculation ---
+        # L_Policy = -min(ratio * A, clip(ratio, 1-e, 1+e) * A)
+        
+        # Get log-probs from the LIVE actor
+        log_probs_new = actor_policy.get_log_probs(states, actions)
+        
+        # Calculate the ratio
+        ratio = torch.exp(log_probs_new - log_probs_old)
+        
+        # Calculate the two terms of the min function
+        unclipped_term = ratio * advantages
+        clipped_term = torch.clamp(ratio, 1 - EPSILON, 1 + EPSILON) * advantages
+        
+        # Final policy loss
+        policy_loss = -torch.min(unclipped_term, clipped_term).mean()
+
+        # --- Value Loss Calculation ---
+        # L_Value = (V_psi(s) - R_target)^2
+        
+        # Get predictions from the LIVE critic
+        predicted_values = critic.get_values(states)
+        
