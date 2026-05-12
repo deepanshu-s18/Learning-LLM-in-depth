@@ -170,3 +170,32 @@ We have now established the fundamental principle in a simple 2D world. The next
 We have a solid principle for 2D vectors, but in a real Transformer, our Query and Key vectors have high dimensions (`d`), for example, `d=128` for a single attention head. How do we "rotate" a 128-dimensional vector?
 
 A single rotation matrix for 128 dimensions would be enormous and complex. RoPE uses a much simpler and more elegant approach.
+
+#### **The Solution: Many Small, Independent Rotations**
+
+Instead of one big rotation, we perform many small 2D rotations. The core trick is to **group the dimensions of the vector into pairs.**
+
+For a vector `x` with `d` dimensions, `x = (x_0, x_1, x_2, x_3, ..., x_{d-2}, x_{d-1})`, we form `d/2` pairs:
+*   Pair 0: `(x_0, x_1)`
+*   Pair 1: `(x_2, x_3)`
+*   ...
+*   Pair `i`: `(x_{2i}, x_{2i+1})`
+*   ...
+*   Final Pair: `(x_{d-2}, x_{d-1})`
+
+We then apply our 2D rotation to **each of these pairs independently**.
+
+#### **The Second Trick: Different Speeds of Rotation**
+
+Think about how a clock tells time. It has three hands that all rotate, but at different speeds:
+- The **second hand** rotates fast - one full circle per minute
+- The **minute hand** rotates slower - one full circle per hour
+- The **hour hand** rotates slowest - one full circle per 12 hours
+
+Why do we need all three? Because a single hand would be ambiguous. If you only had a second hand, you couldn't tell 1:00 from 2:00 - the hand would be in the same position. But the *combination* of all three hands at different speeds gives every moment a unique signature. And crucially, the *difference* between two times is easy to read - if the minute hand moved 5 ticks, 5 minutes passed, regardless of what hour it is.
+
+RoPE works exactly the same way, but instead of 3 hands, we have `d/2` hands (64 for a 128-dimensional vector). Each dimension pair is like a clock hand rotating at its own speed:
+
+*   The first pairs rotate **quickly** - like a second hand, sensitive to nearby positions
+*   The last pairs rotate **very slowly** - like an hour hand, tracking long-range position
+
