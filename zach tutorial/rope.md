@@ -55,3 +55,32 @@ This is like giving each word in a sentence a specific street address.
 #### **The Flaw: Context is Relative, but Addresses are Absolute**
 
 Language is built on relative relationships. The meaning of "red car" doesn't change based on where it appears in a document. However, the absolute embedding method fundamentally changes the input vectors.
+
+Consider these two sentences:
+1.  "**The red car** is fast."
+2.  "I saw **the red car**."
+
+Let's look at the final vector for the word "red" in each sentence.
+
+*   In sentence 1, "red" is at position 1. Its final vector is `vec("red") + vec(pos=1)`.
+*   In sentence 2, "red" is at position 3. Its final vector is `vec("red") + vec(pos=3)`.
+
+These are two different vectors. The model receives a different input for the exact same word, simply because its absolute position changed. The attention mechanism now has a harder job. It must learn from scratch that the relationship between `vec("red") + vec(pos=1)` and `vec("car") + vec(pos=2)` is the same as the relationship between `vec("red") + vec(pos=3)` and `vec("car") + vec(pos=4)`.
+
+The model doesn't inherently know that "position 4" is one step away from "position 3". It only knows that `vec(pos=3)` and `vec(pos=4)` are two distinct, arbitrary vectors that it needs to learn the relationship between. This is computationally expensive and doesn't generalize well to positions the model hasn't seen during training.
+
+#### **The Goal: A New System Based on Relative Distance**
+
+We need an encoding scheme that bakes the concept of relative position directly into the math. Ideally, the attention score between a query vector `q` at position `m` and a key vector `k` at position `n` should be computable from a function that looks like this:
+
+`Score = f(q, k, m-n)`
+
+The score should depend on the vectors themselves and their **relative distance `m-n`**, not their absolute positions `m` and `n`.
+
+This is the problem RoPE solves. It provides a way to modify `q` and `k` such that their dot product naturally produces this desired relative relationship. The solution, as we will see, is found not in adding vectors, but in rotating them.
+
+Before we dive in, let's clarify exactly how RoPE fits into the Transformer:
+
+| Question | Answer |
+|:---|:---|
+| **Applied to which vectors?** | Only Q and K, not V. We need position in the attention score (`QK^T`), not in the output values. |
