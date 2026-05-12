@@ -26,3 +26,32 @@ def apply_rotary_pos_emb(x: torch.Tensor, rope_emb: torch.Tensor):
     x_reshaped = x.float().reshape(*x.shape[:-1], -1, 2)
     x_partner = torch.stack([-x_reshaped[..., 1], x_reshaped[..., 0]], dim=-1)
     x_partner = x_partner.flatten(-2)
+
+    return (x * cos_emb + x_partner * sin_emb).type_as(x)
+```
+
+This is the complete RoPE implementation. Every line will make sense by the end.
+
+## **Chapter 1: The Problem: The Limitations of Absolute Positions**
+
+To understand why RoPE is a breakthrough, we must first understand the method it replaced: **Absolute Positional Embeddings**.
+
+#### **The Old Way: Assigning an "Address" to Each Position**
+
+In early Transformer models like BERT and GPT-2, the position of a token was handled by creating a unique vector for each possible position, up to a maximum length (e.g., 1024).
+
+1.  A token's meaning is represented by its **Token Embedding**.
+2.  A token's location is represented by its **Positional Embedding**.
+3.  The final input vector is the sum: `Input Vector = Token Embedding + Positional Embedding`.
+
+This is like giving each word in a sentence a specific street address.
+
+| Word | Token Embedding | Position | Positional Embedding | Final Input Vector |
+| :--- | :--- | :--- | :--- | :--- |
+| "The" | `vec("The")` | 0 | `vec(pos=0)` | `vec("The") + vec(pos=0)` |
+| "red" | `vec("red")` | 1 | `vec(pos=1)` | `vec("red") + vec(pos=1)` |
+| "car" | `vec("car")` | 2 | `vec(pos=2)` | `vec("car") + vec(pos=2)` |
+
+#### **The Flaw: Context is Relative, but Addresses are Absolute**
+
+Language is built on relative relationships. The meaning of "red car" doesn't change based on where it appears in a document. However, the absolute embedding method fundamentally changes the input vectors.
