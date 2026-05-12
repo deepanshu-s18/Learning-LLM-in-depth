@@ -112,3 +112,32 @@ $$
 Let's make this tangible. Suppose our vector is `v = (1, 2)` and we want to rotate it by `θ = 90°` (or `π/2` radians).
 
 1.  **The Angle:** We know `cos(90°) = 0` and `sin(90°) = 1`.
+
+2.  **The Rotation Matrix:** Plugging these values into `R(θ)` gives us:
+    $$
+    R(90^{\circ}) = \begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}
+    $$
+
+3.  **The Calculation:** Now we perform the matrix multiplication:
+    $$
+    v' = \begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix} \begin{pmatrix} 1 \\ 2 \end{pmatrix} = \begin{pmatrix} (0 \cdot 1) + (-1 \cdot 2) \\ (1 \cdot 1) + (0 \cdot 2) \end{pmatrix} = \begin{pmatrix} -2 \\ 1 \end{pmatrix}
+    $$
+    Our new vector is `v' = (-2, 1)`.
+
+4.  **Verifying the Length:**
+    *   Length of original vector `v`: `||v|| = sqrt(1² + 2²) = sqrt(5)`
+    *   Length of rotated vector `v'`: `||v'|| = sqrt((-2)² + 1²) = sqrt(4 + 1) = sqrt(5)`
+    The length is perfectly preserved. All we changed was the direction.
+
+```
+A 2D coordinate plane.
+The x-axis goes from -3 to 3. The y-axis goes from -3 to 3.
+Vector v starts at the origin (0,0) and points to the dot (1, 2). It's an arrow in the first quadrant.
+Vector v' starts at the origin (0,0) and points to the dot (-2, 1). It's an arrow in the second quadrant.
+An arc with an arrow shows the counter-clockwise 90-degree rotation from v to v'.
+```
+
+#### **The "Aha!" Moment: Connecting Rotation to Position**
+
+Here is the core idea of RoPE: **The angle of rotation is determined by the token's position `m`**.
+
