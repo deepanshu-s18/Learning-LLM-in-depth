@@ -313,3 +313,32 @@ $$
 R(m\theta)^T R(n\theta) = R(-m\theta) R(n\theta) = R(n\theta - m\theta) = R((n-m)\theta)
 $$
 
+**The "Aha!" Moment**
+The product of the two rotation matrices simplifies to a single rotation matrix whose angle is determined by the **relative distance `n-m`**.
+
+**Step 5: The Final Result**
+Now we can substitute this back into our score equation:
+$$
+\text{Score} = q_m^T R((n-m)\theta) k_n
+$$
+Let's expand this to see it clearly:
+$$
+\text{Score} = \begin{pmatrix} q_0 & q_1 \end{pmatrix} \begin{pmatrix} \cos((n-m)\theta) & -\sin((n-m)\theta) \\ \sin((n-m)\theta) & \cos((n-m)\theta) \end{pmatrix} \begin{pmatrix} k_0 \\ k_1 \end{pmatrix}
+$$
+This expression depends only on:
+1.  The original query components `(q_0, q_1)`.
+2.  The original key components `(k_0, k_1)`.
+3.  The relative distance `n-m`.
+
+The absolute positions `m` and `n` have vanished from the final equation, replaced entirely by their difference. This is exactly what we set out to prove.
+
+We have now built the mathematical foundation. In the final chapter, we will translate this theory into efficient PyTorch code.
+
+## **Chapter 5: Implementation: Building RoPE from Scratch**
+
+We've explored the theory and proven the mathematics. Now, let's translate the RoPE algorithm into clean, efficient PyTorch code. Our goal is to create a reusable function that can be easily plugged into any Transformer architecture.
+
+The implementation has two main parts:
+1.  **Pre-computation:** Calculating the `sin` and `cos` values for all possible positions and frequencies ahead of time. This is a one-time setup cost.
+2.  **Application:** Applying these pre-computed rotations to the Query and Key tensors during the model's forward pass.
+
