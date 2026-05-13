@@ -342,3 +342,32 @@ The implementation has two main parts:
 1.  **Pre-computation:** Calculating the `sin` and `cos` values for all possible positions and frequencies ahead of time. This is a one-time setup cost.
 2.  **Application:** Applying these pre-computed rotations to the Query and Key tensors during the model's forward pass.
 
+#### **Snippet 1: Pre-computing the Frequencies and Rotations**
+
+We don't want to re-calculate `sin(mθ_i)` and `cos(mθ_i)` on the fly for every token in every forward pass. It's far more efficient to compute these values once and store them.
+
+Let's write a function that prepares a tensor containing all the necessary rotation angles.
+
+```python
+import torch
+
+def precompute_rope_embeddings(head_dim: int, max_seq_len: int, base: int = 10000):
+    # 1. Calculate the frequencies (theta_i) for each dimension pair
+    # For head_dim=4: torch.arange(0,4,2) = [0, 2]
+    #                 exponents = [0/4, 2/4] = [0, 0.5]
+    #                 inv_freq = 10000^(-[0, 0.5]) = [1.0, 0.01]
+    inv_freq = 1.0 / (base ** (torch.arange(0, head_dim, 2).float() / head_dim))
+
+    # 2. Create the position index tensor
+    # For max_seq_len=4: t = [0, 1, 2, 3]
+    t = torch.arange(max_seq_len, dtype=torch.float32)
+
+    # 3. Outer product: each position m multiplied by each frequency theta_i
+    # freqs[m, i] = m * theta_i
+    # For our example: [[0*1.0, 0*0.01], [1*1.0, 1*0.01], [2*1.0, 2*0.01], [3*1.0, 3*0.01]]
+    #                = [[0, 0], [1, 0.01], [2, 0.02], [3, 0.03]]
+    freqs = torch.einsum("i,j->ij", t, inv_freq)
+    
+    # 4. Duplicate frequencies for both elements in each pair
+    # [θ0, θ1] -> [θ0, θ0, θ1, θ1] so consecutive elements share the same angle
+    # Shape: (max_seq_len, head_dim)
