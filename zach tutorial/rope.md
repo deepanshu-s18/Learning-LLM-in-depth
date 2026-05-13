@@ -256,3 +256,32 @@ This is the entire forward pass of RoPE. It's a deterministic transformation app
 ## **Chapter 4: The Mathematical Proof: Why RoPE is Relative**
 
 We've built the RoPE algorithm. Now it's time for the payoff. We will prove that this method of rotating vector pairs creates the exact relative positioning property we wanted.
+
+**Why the Dot Product?** Recall how attention works: `Attention = softmax(QK^T)V`. The `QK^T` part computes dot products between every query and key. This dot product determines how much one token attends to another. So if we want relative position information to influence attention, we need it to show up in this dot product.
+
+**Our Goal:** To show that after applying RoPE, this dot product depends only on the original vectors and their *relative* distance `m-n`, not their absolute positions.
+
+Formally, we want to prove there exists a function `g` such that:
+$$
+\text{RoPE}(q, m)^T \cdot \text{RoPE}(k, n) = g(q, k, m-n)
+$$
+
+The absolute positions `m` and `n` should disappear, leaving only their difference.
+
+Since RoPE treats each pair of dimensions independently, we only need to prove this for a single 2D pair. The result will hold for the sum of dot products across all pairs, and thus for the full high-dimensional vectors.
+
+#### **Setup for a Single 2D Pair**
+
+Let's consider a single pair of dimensions for our query and key vectors.
+*   The query pair at position `m`: `q_m = (q_0, q_1)`
+*   The key pair at position `n`: `k_n = (k_0, k_1)`
+*   The rotation frequency for this pair: `θ` (we'll drop the subscript `i` for clarity).
+
+**Step 1: Apply RoPE to the Query**
+We apply the rotation for position `m`. The rotated query `q'_m` is:
+$$
+q'_m = R(m\theta)q_m = \begin{pmatrix} \cos(m\theta) & -\sin(m\theta) \\ \sin(m\theta) & \cos(m\theta) \end{pmatrix} \begin{pmatrix} q_0 \\ q_1 \end{pmatrix}
+$$
+
+**Step 2: Apply RoPE to the Key**
+We apply the rotation for position `n`. The rotated key `k'_n` is:
