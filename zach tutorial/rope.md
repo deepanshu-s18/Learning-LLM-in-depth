@@ -486,3 +486,32 @@ Input x:                          # Same vector at both positions
 
 Rotated x:
  tensor([[[[1.0000, 0.0000, 1.0000, 0.0000]],   # position 0: no rotation (m=0)
+          [[0.5403, 0.8415, 0.9999, 0.0100]]]]) # position 1: rotated!
+```
+At position 0, no rotation (angle = 0). At position 1:
+- Pair 0 `(1,0)` rotated by θ=1.0 → `(cos(1), sin(1))` = `(0.54, 0.84)`
+- Pair 1 `(1,0)` rotated by θ=0.01 → `(cos(0.01), sin(0.01))` ≈ `(1.0, 0.01)` (barely moved)
+
+The same input vector produces different outputs based on position. That's RoPE! The `apply_rotary_pos_emb` function can now be called on the Query and Key tensors inside the attention block, right before the dot-product is calculated.
+
+#### **Connecting to Reality: Llama-3**
+Let's see how our example numbers connect to a real, state-of-the-art model like Llama-3 8B.
+*   **Embedding Dimension (`n_embd`):** 4096
+*   **Number of Heads (`n_head`):** 32
+*   **Head Dimension (`head_dim`):** `4096 / 32 = 128`. This is the `H` in our code.
+*   **Max Sequence Length (`block_size`):** 8192. This is the `MAX_LEN`.
+
+When Llama-3 processes a sequence, it takes each of its 32 query heads (each a 128-dimensional vector) and applies exactly the rotation logic we just implemented. It does the same for the key heads. This simple, elegant rotation is a cornerstone of its ability to process long and complex contexts.
+
+---
+
+## **Conclusion: From Absolute Addresses to Relative Directions**
+
+We began our journey with a problem: absolute positional embeddings are rigid and don't naturally capture the relative nature of language. Over the last 40 minutes, we have completely demystified the solution used by today's most powerful models.
+
+*   We built the core intuition that **position can be encoded via rotation**, starting in a simple 2D plane.
+*   We scaled this idea to high dimensions by **rotating pairs of dimensions at different speeds**, allowing the model to capture relative distances at multiple scales.
+*   We proved mathematically that this rotation scheme guarantees the attention score between two tokens is **a function of their relative distance**, not their absolute locations.
+*   Finally, we translated this theory into a **concrete and efficient PyTorch implementation**, ready to be used in a real Transformer.
+
+RoPE is a perfect illustration of a powerful principle in machine learning: injecting a correct and useful **inductive bias** into a model's architecture. Instead of forcing the model to learn the concept of "relative distance" from scratch, we built the idea directly into its geometry. The result is a more efficient, powerful, and flexible model that has become a cornerstone of modern AI. The magic has dissolved into elegant, understandable mathematics.
