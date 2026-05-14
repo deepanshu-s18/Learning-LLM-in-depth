@@ -400,3 +400,31 @@ tensor([[ 1.0000,  1.0000,  1.0000,  1.0000],
         [ 0.5403,  0.5403,  0.9999,  0.9999],
         [-0.4161, -0.4161,  0.9998,  0.9998],
         [-0.9900, -0.9900,  0.9996,  0.9996]])
+
+Sines:
+tensor([[0.0000, 0.0000, 0.0000, 0.0000],
+        [0.8415, 0.8415, 0.0100, 0.0100],
+        [0.9093, 0.9093, 0.0200, 0.0200],
+        [0.1411, 0.1411, 0.0300, 0.0300]])
+```
+Notice how pair 0 (columns 0,1) rotates quickly - by position 2 the cosine is already negative (-0.4161). Pair 1 (columns 2,3) barely moves - cosine stays near 1.0. This is our "clock hands at different speeds."
+
+#### **Snippet 2: Applying the Rotations**
+
+Now for the core function. This function will take a Query or Key tensor and apply the pre-computed rotations. The implementation uses a clever trick to handle the 2D rotations on paired dimensions without any explicit loops.
+
+**The Rotation Trick**
+
+Recall the 2D rotation formulas:
+$$
+x'_0 = x_0 \cos\theta - x_1 \sin\theta
+$$
+$$
+x'_1 = x_0 \sin\theta + x_1 \cos\theta
+$$
+
+We can rewrite this as element-wise operations:
+$$
+\begin{pmatrix} x'_0 \\ x'_1 \end{pmatrix} = \begin{pmatrix} x_0 \\ x_1 \end{pmatrix} \odot \begin{pmatrix} \cos\theta \\ \cos\theta \end{pmatrix} + \begin{pmatrix} -x_1 \\ x_0 \end{pmatrix} \odot \begin{pmatrix} \sin\theta \\ \sin\theta \end{pmatrix}
+$$
+
