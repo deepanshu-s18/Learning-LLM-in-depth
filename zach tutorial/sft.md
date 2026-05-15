@@ -74,3 +74,28 @@ That's the entire trick. The rest is just standard model training. PyTorch's los
 By mastering this function, you master SFT.
 
 
+Our journey will take us from the problem to the complete solution.
+
+```mermaid
+graph TD
+    A[Pre-trained LLM] -- "Objective: Next-token prediction" --> B{The Parrot Problem};
+    B -- "Solution: Imitate expert examples via Loss Masking" --> C[Supervised Fine-Tuning];
+    C -- "Result: Instruction-following" --> D[Aligned Assistant Model];
+```
+
+To understand *why* this data transformation is so effective, we must first master the engine it modifies. In the next chapter, we will dissect the mathematical core of pre-training—Cross-Entropy Loss—to see exactly how the parrot learns to talk in the first place.
+
+## **Chapter 2: The Engine of Pre-training: Cross-Entropy Loss**
+
+Before we can teach a model to be an assistant, we must first understand how it learned to be a parrot. The vast knowledge of a base LLM is forged during its **pre-training** phase, where it is trained on a single, brutally simple objective: **next-token prediction**.
+
+The rule is this: given a sequence of text, predict the very next token. That's it. The model is a highly sophisticated pattern-completion machine. To teach it this skill, we use the standard workhorse of deep learning classification: **Cross-Entropy Loss**.
+
+Cross-Entropy Loss is a way to measure how "surprised" a model is by the correct answer. If the model assigns a high probability to the correct next token, the loss is low (low surprise). If it assigns a very low probability, the loss is high (high surprise).
+
+Mathematically, this simplifies to calculating the **negative log-probability** of the correct target token.
+
+Let's make this concrete with a minimal example that you can calculate by hand.
+
+Imagine a tiny model with a vocabulary of only six words.
+
