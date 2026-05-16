@@ -175,3 +175,29 @@ It is a **parrot** because its training objective is **mimicry**.
 To fix this, we need to change the data it learns from. We need to show it examples not of how text *is*, but of how we *want* it to be. This is the goal of Supervised Fine-Tuning, which we will build from the ground up in the next chapter.
 
 ## **Chapter 3: The SFT Solution: The Theory of Expert Imitation**
+
+In the last chapter, we established that the pre-training objective creates a powerful but aimless parrot. Supervised Fine-Tuning (SFT) is the first and most direct solution to this problem. The idea is wonderfully simple: **if you want a model that follows instructions, you must show it a large, high-quality dataset of instructions being followed correctly.**
+
+We shift the model's diet. Instead of training on a vast, unstructured sea of internet text, we move to a curated, structured dataset of `(prompt, response)` pairs. This is like taking the model out of a library containing every book ever written and handing it a focused curriculum of expert-written Q&A flashcards.
+
+*   **Prompt:** "Explain the concept of gravity to a 6-year-old in a short paragraph."
+*   **Response:** "Imagine the Earth is a giant magnet, but for everything! It's always gently pulling you and your toys down towards it. That's why when you jump, you always come back down. This special pulling power is called gravity!"
+
+
+We can't just feed the prompt and response to the model separately. A language model only understands a single, continuous sequence of tokens. Furthermore, it needs to learn the *structure* of a conversation—who is speaking and when.
+
+To solve this, we introduce **special tokens** and a **chat template**. A common template formats the data like this:
+```
+<|user|>
+{prompt}
+<|end|>
+<|assistant|>
+{response}
+<|end|>
+```
+Our `(prompt, response)` pair is formatted into a single string, which is then tokenized into a single sequence of `input_ids`.
+
+**Example:**
+`<|user|>\nExplain gravity...<|end|>\n<|assistant|>\nImagine the Earth...<|end|>`
+
+This template teaches the model the turn-taking format of a conversation. It learns that after seeing `<|assistant|>`, it is its turn to generate helpful text.
