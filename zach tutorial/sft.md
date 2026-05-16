@@ -226,3 +226,29 @@ Our single sequence is fed into the model. The `input_ids` contain the full conv
 | **`force`** | 14 | 14 | **Yes** |
 | **`<\|end\|>`** | 9 | 9 | **Yes** |
 
+This achieves our goal perfectly. The gradients are only calculated based on the model's ability to generate the expert-written response. It learns the core rule: "When you see the token sequence `<|user|> ... <|end|> <|assistant|>`, your goal is to generate the following sequence."
+
+The SFT loss is the same cross-entropy loss from pre-training, but with this crucial modification. The loss is averaged *only* over the non-masked, response tokens.
+
+Given a dataset $\mathcal{D}_{\text{SFT}}$ of `(prompt, response)` pairs, $(x, y)$, the SFT objective is to minimize the negative log-probability of the response tokens, conditioned on the prompt:
+
+$$ \mathcal{L}_{\text{SFT}}(\theta) = - \mathbb{E}_{(x, y) \sim \mathcal{D}_{\text{SFT}}} \left[ \sum_{t=1}^{|y|} \log P_{\theta}(y_t | x, y_{<t}) \right] $$
+
+Where:
+*   $P_{\theta}(y_t | x, y_{<t})$ is the probability assigned by the model $\theta$ to the correct token $y_t$ at timestep $t$ of the response.
+*   The summation $\sum_{t=1}^{|y|}$ is performed **only over the tokens in the target response $y$**, not the prompt $x$. This is the formal mathematical representation of our loss masking trick.
+
+We now have the complete theory of Supervised Fine-Tuning. We know why we need chat templates and, most importantly, we understand the critical role of loss masking.
+
+In the next chapter, we will translate this theory directly into the Python code we promised, implementing the `prepare_sft_batch` function from start to finish.
+
+## **Chapter 4: SFT: The PyTorch Implementation**
+
+We have the theory: format conversations with a chat template and use loss masking to train only on the assistant's replies. Now, we will translate that theory into code.
+
+The main engineering task in SFT is not the training loop—that's standard PyTorch. The crucial part is the **data collation**: the process of taking a batch of `(prompt, response)` pairs and converting them into the `input_ids` and `labels` tensors the model needs.
+
+To keep things crystal clear, we will use a tiny, handcrafted vocabulary and tokenizer. This allows us to focus entirely on the SFT logic without getting lost in external libraries.
+
+```python
+import torch
