@@ -150,3 +150,28 @@ targets = torch.tensor([[2, 3, 4]]) # "cat", "sat", "on"
 logits_flat = logits.view(-1, logits.size(-1)) # Shape: (3, 6)
 targets_flat = targets.view(-1)               # Shape: (3)
 
+loss = F.cross_entropy(logits_flat, targets_flat)
+
+print(f"Logits shape (original): {logits.shape}")
+print(f"Logits shape (flattened): {logits_flat.shape}")
+print(f"Targets shape (flattened): {targets_flat.shape}")
+print(f"Calculated Loss: {loss.item():.3f}")
+```
+**Output:**
+```
+Logits shape (original): torch.Size([1, 3, 6])
+Logits shape (flattened): torch.Size([3, 6])
+Targets shape (flattened): torch.Size([3])
+Calculated Loss: 0.337
+```
+The result perfectly matches our manual, step-by-step calculation. This is the simple, powerful engine that drives large-scale pre-training.
+
+Now we can see the source of the Parrot Problem with mathematical clarity. The model's sole objective is to minimize this cross-entropy loss over a massive dataset of text from the internet. It will adjust its weights to become a master of statistical mimicry because that is the most effective way to reduce the loss.
+
+When you prompt it with `Q: What is the capital of Italy?`, it doesn't "understand" the question. It sees a sequence of tokens. It asks itself: "Across the trillions of tokens I have seen, what tokens are most likely to follow this sequence?" Since its data contains countless FAQs and quizzes formatted as `Q:...\nA:...\n\nQ:...`, completing the pattern is the path of least "surprise"—the path to the lowest possible loss.
+
+It is a **parrot** because its training objective is **mimicry**.
+
+To fix this, we need to change the data it learns from. We need to show it examples not of how text *is*, but of how we *want* it to be. This is the goal of Supervised Fine-Tuning, which we will build from the ground up in the next chapter.
+
+## **Chapter 3: The SFT Solution: The Theory of Expert Imitation**
