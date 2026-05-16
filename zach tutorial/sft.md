@@ -201,3 +201,28 @@ Our `(prompt, response)` pair is formatted into a single string, which is then t
 `<|user|>\nExplain gravity...<|end|>\n<|assistant|>\nImagine the Earth...<|end|>`
 
 This template teaches the model the turn-taking format of a conversation. It learns that after seeing `<|assistant|>`, it is its turn to generate helpful text.
+
+Now we face the critical problem. If we feed this entire formatted sequence into the standard next-token prediction objective from Chapter 2, we would be training the model to predict *the user's prompt* as well as the assistant's response.
+
+**This is wrong and counterproductive.** We don't want the model to learn to generate user prompts. We only want to penalize the model for errors it makes when it's the assistant's turn to speak.
+
+The solution is an elegant engineering trick called **loss masking**. We create a `labels` tensor that is a copy of our `input_ids`. Then, for every token we want the loss function to *ignore*, we replace its ID with a special value: **-100**. PyTorch's `CrossEntropyLoss` is specifically designed to completely ignore any target with this value.
+
+Let's see this in action. Assume we have the following tokenization for a simplified example:
+*   `<|user|>` -> 6, `Explain` -> 7, `gravity` -> 8, `<|end|>` -> 9, `<|assistant|>` -> 10, `Gravity` -> 11, `is` -> 12, `a` -> 13, `force` -> 14
+
+Our single sequence is fed into the model. The `input_ids` contain the full conversation. The `labels` tensor, however, is strategically filled with `-100` to mask out everything that isn't the assistant's response.
+
+| Token Text | `input_ids` | `labels` | Loss Calculated? |
+| :--- | :--- | :--- | :--- |
+| `<\|user\|>` | 6 | -100 | **No** |
+| `Explain` | 7 | -100 | **No** |
+| `gravity` | 8 | -100 | **No** |
+| `<\|end\|>` | 9 | -100 | **No** |
+| `<\|assistant\|>`| 10 | -100 | **No** |
+| **`Gravity`** | 11 | 11 | **Yes** |
+| **`is`** | 12 | 12 | **Yes** |
+| **`a`** | 13 | 13 | **Yes** |
+| **`force`** | 14 | 14 | **Yes** |
+| **`<\|end\|>`** | 9 | 9 | **Yes** |
+
