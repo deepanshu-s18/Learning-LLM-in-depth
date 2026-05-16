@@ -277,3 +277,28 @@ tokenizer = SimpleTokenizer()
 
 # A sample batch of data (list of dictionaries)
 # Note: For simplicity, our responses are the same length.
+sft_batch = [
+    {"prompt": "The quick brown fox", "response": "jumps over the lazy dog"},
+    {"prompt": "What is a dog ?", "response": "a lazy brown fox"},
+]
+```
+
+Now for the core logic we promised. We will write a function that takes this `sft_batch` and produces the masked `labels` tensor. This function implements the theory from Chapter 3 step-by-step.
+
+```python
+def sft_data_collator(batch, tokenizer):
+    all_input_ids = []
+    all_labels = []
+
+    for example in batch:
+        # 1. Format the text with the chat template.
+        prompt_part = f"<|user|> {example['prompt']} <|end|> <|assistant|>"
+        full_text = f"{prompt_part} {example['response']} <|end|>"
+
+        # 2. Tokenize the prompt part to find the masking boundary.
+        # This tells us how many tokens to ignore in the loss calculation.
+        prompt_ids = tokenizer.encode(prompt_part)
+        mask_until_idx = len(prompt_ids)
+
+        # 3. Tokenize the full text for the model's input.
+        input_ids = tokenizer.encode(full_text)
