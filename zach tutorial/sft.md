@@ -353,3 +353,29 @@ print("\n--- Decoded Labels (non-masked part) ---")
 response_part = prepared_batch["labels"][0][prepared_batch["labels"][0] != -100]
 print(f"Decoded: '{tokenizer.decode(response_part)}'")
 ```
+**Output:**
+```
+--- Prepared Batch (First Example) ---
+Input IDs: tensor([ 9,  1,  2,  3,  4, 11, 10,  5,  6,  1,  7,  8, 11])
+Labels:    tensor([-100, -100, -100, -100, -100, -100, -100,    5,    6,    1,    7,    8,   11])
+
+--- Decoded Labels (non-masked part) ---
+Decoded: 'jumps over The lazy dog <|end|>'
+```
+
+With the hard work of data preparation done, the actual training step is trivial. We simply pass the `input_ids` and `labels` to our model. If the model uses `torch.nn.functional.cross_entropy` for its loss calculation (as all standard transformer models do), it will automatically handle the `-100` masking.
+
+```python
+# Assume 'policy_model' is our LLM and 'optimizer' is an AdamW optimizer.
+# The model's forward pass is expected to return (logits, loss).
+def sft_training_step(policy_model, optimizer, batch):
+    policy_model.train()
+    optimizer.zero_grad()
+
+    # The model's forward pass automatically calculates the masked loss
+    # because PyTorch's cross_entropy ignores labels with value -100.
+    outputs = policy_model(
+        input_ids=batch["input_ids"],
+        labels=batch["labels"]
+    )
+    loss = outputs.loss # Assuming a Hugging Face-style model output
