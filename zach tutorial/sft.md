@@ -328,3 +328,28 @@ Let's print the prepared batch to see our loss masking in action. The table belo
 | Token Text | `input_ids` | `labels` | Loss Calculated? |
 | :--- | :--- | :--- | :--- |
 | `<\|user\|>` | 9 | -100 | **No** |
+| `The` | 1 | -100 | **No** |
+| `quick` | 2 | -100 | **No** |
+| `brown` | 3 | -100 | **No** |
+| `fox` | 4 | -100 | **No** |
+| `<\|end\|>` | 11 | -100 | **No** |
+| `<\|assistant\|>`| 10 | -100 | **No** |
+| **`jumps`** | 5 | 5 | **Yes** |
+| **`over`** | 6 | 6 | **Yes** |
+| **`the`** | 1 | 1 | **Yes** |
+| **`lazy`** | 7 | 7 | **Yes** |
+| **`dog`** | 8 | 8 | **Yes** |
+| **`<\|end\|>`** | 11 | 11 | **Yes** |
+
+The code has perfectly executed the theory. The `labels` tensor is correctly masked, ensuring that gradients will only be computed for the assistant's response.
+
+```python
+print("--- Prepared Batch (First Example) ---")
+print("Input IDs:", prepared_batch["input_ids"][0])
+print("Labels:   ", prepared_batch["labels"][0])
+
+# Let's decode to be sure
+print("\n--- Decoded Labels (non-masked part) ---")
+response_part = prepared_batch["labels"][0][prepared_batch["labels"][0] != -100]
+print(f"Decoded: '{tokenizer.decode(response_part)}'")
+```
