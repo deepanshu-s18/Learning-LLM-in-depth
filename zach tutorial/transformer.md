@@ -227,3 +227,117 @@ print(token_embedding_table.weight)
 Shape of our coordinate book: torch.Size([10, 3])
 Content of the book (initially random coordinates):
 Parameter containing:
+tensor([[-0.2185, -0.2291, -0.5435],  # Coordinate for token 0
+        [ 0.6508,  0.4734, -0.4439],  # Coordinate for token 1
+        [-0.3129,  1.6141,  0.2889],  # Coordinate for token 2
+        ...
+        [-1.0223, -0.2543, -0.3288]], # Coordinate for token 9
+       requires_grad=True)
+```
+This is the core. We have a `(vocab_size, n_embd)` matrix. The `requires_grad=True` part is crucial: it means that during training, the model will learn the best possible coordinates for each word to minimize its prediction error.
+
+#### The Power and The Insufficiency
+
+Let's see the lookup in action and then discuss what this new representation gives us, and what it lacks.
+
+```python
+B, T = 2, 4 # Batch, Time
+idx = torch.randint(0, vocab_size, (B, T)) # A batch of token ID sequences
+
+# --- The Lookup ---
+# For each ID in `idx`, we retrieve its coordinate vector from the table
+tok_emb = token_embedding_table(idx)
+
+print("Input IDs shape:", idx.shape)
+print("Output Vectors (Coordinates) shape:", tok_emb.shape)
+```
+**Output:**
+```
+Input IDs shape: torch.Size([2, 4])
+Output Vectors (Coordinates) shape: torch.Size([2, 4, 3])
+```
+We transformed our `(B, T)` integer tensor into a `(B, T, n_embd)` float tensor.
+
+**So what have we gained?**
+We now have a **context-free representation** of each word. During training, the model learns to place words with similar meanings near each other. This is what enables the famous analogy `vector('King') - vector('Man') + vector('Woman') ≈ vector('Queen')`. The vector for 'King' captures a concept of "maleness" and "royalty" that can be manipulated mathematically.
+
+**But what is the insufficiency?**
+This representation has one massive flaw: it is **static and context-free**. The vector for the word "bank" is identical in these two sentences:
+1.  "I sat on the river **bank**."
+2.  "I withdrew money from the **bank**."
+
+The lookup table gives us a powerful starting point, but it's just a dictionary. It doesn't know anything about the words surrounding it.
+
+This is the central problem the Transformer architecture is designed to solve. **How can a token's vector representation be dynamically adjusted based on its context?**
+
+To even begin to answer that, we first need to give the model a sense of order. That is the subject of the next chapter: Positional Embeddings.
+
+
+## **Chapter 3: Giving the Model a Sense of Order: Positional Embeddings**
+
+In the last chapter, we created a "dictionary" that maps each word to a context-free vector. This vector represents the word's general meaning. However, our model still sees the input as just a collection—a "bag"—of these vectors. It has no idea about their order.
+
+Language is all about order. "Dog bites man" is not the same as "Man bites dog." We must provide this crucial ordering information to the model.
+
+Let's locate our next component in the blueprint.
+
+```python
+class GPT2(nn.Module):
+    def __init__(self, config):
+        self.wte = nn.Embedding(...) # (Done)
+
+        # We are building THIS line now.
+        self.wpe = nn.Embedding(config.block_size, config.n_embd) # Positional Embedding
+
+        self.h = nn.ModuleList(...)
+        self.ln_f = nn.LayerNorm(...)
+        self.lm_head = nn.Linear(...)
+```
+
+#### The Problem: A Bag of Words
+
+Our current output is a tensor of shape `(B, T, C)`, where `C` is `n_embd`. For a sequence like `["Man", "bites", "dog"]`, the model receives a set of three vectors: `{vector("Man"), vector("bites"), vector("dog")}`. If we shuffled the input, the model would receive the exact same set of vectors, just in a different order along the `T` dimension. The core processing layers (the Transformer blocks) are designed to be order-invariant, so without modification, they would produce the same result.
+
+We need to explicitly "stamp" each token's vector with its position.
+
+#### The Solution: A Learnable "Position Vector"
+
+The solution used in GPT is wonderfully simple. Just as we learned a unique vector for each *word*, we will also learn a unique vector for each *position*.
+
+*   We'll have a vector that means "I am at the 1st position."
+*   We'll have another vector that means "I am at the 2nd position."
+*   ...and so on, up to the maximum sequence length (`block_size`).
+
+This is another `nn.Embedding` layer, but this time it's a lookup table for positions, not words. Its "vocabulary size" is the `block_size`. We then add this position vector to the corresponding token vector.
+
+**Why does adding them work?**
+Because the token and positional embeddings exist in the same high-dimensional space, the model can learn to interpret the combined vector. During training, it learns to create positional vectors such that adding `vector(pos=N)` to `vector(word=W)` produces a unique representation that distinguishes it from the same word at a different position. The network learns to "understand" this composition.
+
+#### The Code: Building and Combining
+
+Let's implement this. The key is to generate a sequence of position indices `(0, 1, 2, ...)` and use those to look up the positional vectors.
+
+```python
+import torch
+import torch.nn as nn
+
+# --- Our Config ---
+B, T, C = 2, 5, 3  # Batch, Time (sequence length), Channels (n_embd)
+vocab_size = 10
+block_size = 8     # Our model's max sequence length is 8
+
+# --- The Layers ---
+token_embedding_table = nn.Embedding(vocab_size, C)
+position_embedding_table = nn.Embedding(block_size, C)
+
+# --- The Input Data ---
+idx = torch.randint(0, vocab_size, (B, T)) # Shape (2, 5)
+
+# --- Step 1: Get Token Embeddings (as before) ---
+tok_emb = token_embedding_table(idx) # Shape (B, T, C) -> (2, 5, 3)
+
+# --- Step 2: Get Positional Embeddings ---
+# Note: Our input sequence length T=5, but block_size=8. This is fine.
+# We just need the positions for our current sequence.
+pos = torch.arange(0, T, dtype=torch.long) # Shape (T) -> tensor([0, 1, 2, 3, 4])
+pos_emb = position_embedding_table(pos) # Shape (T, C) -> (5, 3)
