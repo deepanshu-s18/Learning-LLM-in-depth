@@ -685,3 +685,117 @@ To prove this class is identical to our manual work, we can instantiate it and m
 @dataclass
 class GPTConfig: n_embd: int
 model = SingleHeadSelfAttention(GPTConfig(n_embd=C))
+
+# The c_attn layer's weight matrix is shape (3*C, C). Our separate weights
+# are each (C, C). We concatenate them along dim=0 to get (3*C, C).
+model.c_attn.weight.data = torch.cat(
+    [q_proj.weight.data, k_proj.weight.data, v_proj.weight.data], dim=0
+)
+
+# Run the model
+model_output = model(x)
+
+# 'output' is the tensor from our manual walkthrough in Part 1
+print("Are the outputs the same?", torch.allclose(output, model_output))
+```
+**Output:**
+```
+Are the outputs the same? True
+```
+It works perfectly. We have successfully implemented the core of self-attention and formalized it in a clean, reusable module.
+
+However, our model has a flaw for language generation: tokens can see into the future. Our current attention matrix allows this. We will fix this next by adding a causal mask.
+
+## **Chapter 6: Don't Look Ahead! Implementing the Causal Mask**
+
+We have built a powerful attention mechanism that allows tokens to communicate. However, it has a critical flaw for our purpose: it's a time-traveler.
+
+**The Problem: Cheating by Looking at the Future**
+
+GPT is an **autoregressive** model, meaning it generates text one token at a time. When it's trying to predict the next word in the sentence "A crane ate...", its decision should be based *only* on the tokens it has seen so far: "A", "crane", and "ate". It cannot be allowed to see the actual answer, "fish".
+
+Let's look at the attention weight matrix we calculated in the last chapter:
+
+```
+# From Chapter 5
+tensor([[[0.37, 0.32, 0.31, ...],  # "A" attends to all 4 tokens
+         [0.31, 0.37, 0.32, ...],  # "crane" attends to all 4 tokens
+         [0.36, 0.31, 0.33, ...],  # "ate" attends to all 4 tokens
+         ...                      # "fish" attends to all 4 tokens
+        ]]])
+```
+This is a problem. The token "A" (at position 0) is gathering information from "crane" (position 1), "ate" (position 2), and "fish" (position 3). When predicting the word that comes after "A", this is cheating.
+
+A token at position `t` must only be allowed to communicate with tokens at positions `0, 1, ..., t`. It cannot see tokens at `t+1, t+2, ...`.
+
+**The Solution: The Causal Mask**
+
+The solution is elegant. We will modify the attention score matrix *before* applying the softmax function. We will "mask out" all the future positions by setting their scores to negative infinity (`-inf`).
+
+Why `-inf`? Because the `softmax` function involves an exponential: `e^x / sum(e^x)`. The exponential of negative infinity, `e^-inf`, is effectively zero. This forces the attention weights for all future tokens to become `0`, preventing any information flow.
+
+#### Part 1: The Raw Tensor Walkthrough
+
+Let's pick up exactly where we left off, with our `scaled_scores` matrix from Chapter 5.
+
+```python
+# This is the scaled_scores tensor from the end of the last chapter
+# Shape (B, T, T) -> (1, 4, 4)
+scaled_scores = torch.tensor([[
+    [ 0.0375,  0.2925,  0.1274,  0.1924],
+    [ 0.1260,  0.9822,  0.4280,  0.6433],
+    [ 0.0437,  0.3405,  0.1484,  0.2228],
+    [ 0.0891,  0.6945,  0.3023,  0.4549]
+]])
+```
+
+**Step 1: Create the Mask**
+We need a mask that allows a token to see itself and the past, but not the future. A lower-triangular matrix is perfect for this. We can create one easily with `torch.tril`.
+
+```python
+# T=4 for our sentence "A crane ate fish"
+T = 4
+mask = torch.tril(torch.ones(T, T))
+print("--- The Mask ---")
+print(mask)
+```
+**Output:**
+```
+--- The Mask ---
+tensor([[1., 0., 0., 0.],
+        [1., 1., 0., 0.],
+        [1., 1., 1., 0.],
+        [1., 1., 1., 1.]])
+```
+Look at the rows.
+*   Row 0 ("A") can only see column 0 ("A").
+*   Row 1 ("crane") can see column 0 ("A") and 1 ("crane").
+*   And so on. The zeros in the upper-right triangle represent the "future" connections that we must block.
+
+**Step 2: Apply the Mask**
+We use the PyTorch function `masked_fill` to apply our mask. This function will replace all values in `scaled_scores` with `-inf` wherever the corresponding position in our `mask` is `0`.
+
+```python
+masked_scores = scaled_scores.masked_fill(mask == 0, float('-inf'))
+print("\n--- Scores After Masking ---")
+print(masked_scores)
+```
+**Output:**
+```
+--- Scores After Masking ---
+tensor([[[ 0.0375,    -inf,    -inf,    -inf],
+         [ 0.1260,  0.9822,    -inf,    -inf],
+         [ 0.0437,  0.3405,  0.1484,    -inf],
+         [ 0.0891,  0.6945,  0.3023,  0.4549]]])
+```
+Perfect! All the scores corresponding to future positions have been replaced.
+
+**Step 3: Re-run Softmax**
+Now, let's apply softmax to these masked scores and see the result.
+
+```python
+attention_weights = F.softmax(masked_scores, dim=-1)
+print("\n--- Final Causal Attention Weights ---")
+print(attention_weights.data.round(decimals=2))
+```
+**Output:**
