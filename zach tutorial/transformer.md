@@ -1372,3 +1372,117 @@ class Block(nn.Module):
     def __init__(self, config: GPTConfig):
         super().__init__()
         # --- We define the LayerNorm layers here ---
+        self.ln_1 = nn.LayerNorm(config.n_embd)
+        self.attn = CausalSelfAttention(config)
+        self.ln_2 = nn.LayerNorm(config.n_embd)
+        self.mlp = MLP(config)
+
+    def forward(self, x):
+        """
+        The forward pass of a single Transformer Block.
+        """
+        # --- LayerNorm is applied BEFORE the sub-layer ---
+        x = x + self.attn(self.ln_1(x))
+        
+        # --- And here again ---
+        x = x + self.mlp(self.ln_2(x))
+        return x
+```
+
+#### The Problem: Internal Covariate Shift
+
+As data flows through a deep network, the distribution of the activations at each layer is constantly changing during training. The mean and variance of the inputs to a given layer can shift wildly from one training batch to the next. This phenomenon is called **internal covariate shift**.
+
+This makes training very difficult. It's like trying to hit a moving target. Each layer has to constantly adapt to a new distribution of inputs from the layer before it, which can make the training process unstable and slow.
+
+#### The Solution: Layer Normalization
+
+Layer Normalization is a technique that forces the inputs to each sub-layer to have a consistent distribution. It acts as a stabilizer. For **each individual token's vector** in our `(B, T, C)` tensor, it performs the following steps *independently*:
+
+1.  Calculates the mean ($\mu$) and variance ($\sigma^2$) across the `C` (embedding) dimension of that single vector.
+2.  Normalizes the vector: $\hat{x} = \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}}$.
+3.  Applies learnable parameters: $y = \gamma \cdot \hat{x} + \beta$, where $\gamma$ is a `gain` and $\beta$ is a `bias`.
+
+These learnable parameters are crucial. After forcing the distribution to a standard normal (mean 0, std 1), the model can then learn, via $\gamma$ and $\beta$, to scale and shift this distribution to whatever is optimal for the next layer.
+
+#### Walkthrough with Numbers
+
+Let's trace the full Layer Normalization process for a single token's vector to see exactly what's happening. Our vector will have `C=4`.
+
+**Step 1: The Input Vector**
+Imagine this is the vector for one token after a residual connection. Its values have shifted away from a clean distribution during training.
+
+```python
+import torch
+import torch.nn as nn
+
+# A sample vector for one token, with shape (B, T, C)
+x_token = torch.tensor([[[0.3, -0.2, 0.8, 0.5]]])
+print("Input to LayerNorm (x):\n", x_token)
+
+# Let's calculate its current mean and standard deviation
+mean = x_token.mean(dim=-1, keepdim=True)
+std = x_token.std(dim=-1, keepdim=True)
+print(f"\nMean of input: {mean.item():.2f}")
+print(f"Std Dev of input: {std.item():.2f}")
+```
+**Output:**
+```
+Input to LayerNorm (x):
+ tensor([[[ 0.3000, -0.2000,  0.8000,  0.5000]]])
+
+Mean of input: 0.35
+Std Dev of input: 0.41
+```
+The vector is not centered at zero and its values are not scaled to a standard deviation of one.
+
+**Step 2: Normalization (The Core $\hat{x}$ Calculation)**
+The first part of LayerNorm is to force the vector to have a mean of 0 and a standard deviation of 1. This is the normalization step, producing $\hat{x}$.
+
+```python
+# A small value to prevent division by zero
+epsilon = 1e-5
+
+# Manually normalize
+x_hat = (x_token - mean) / torch.sqrt(std**2 + epsilon)
+
+print("Normalized vector (x_hat):\n", x_hat.data.round(decimals=2))
+print(f"\nMean of x_hat: {x_hat.mean().item():.2f}")
+print(f"Std Dev of x_hat: {x_hat.std().item():.2f}")
+```
+**Output:**
+```
+Normalized vector (x_hat):
+ tensor([[[-0.1200, -1.3300,  1.0900,  0.3600]]])
+
+Mean of x_hat: 0.00
+Std Dev of x_hat: 1.00
+```
+Perfect. This is the core stabilizing operation.
+
+**Step 3: Applying the Learnable Parameters ($\gamma$ and $\beta$)**
+The final step is to apply the learnable `gain` ($\gamma$) and `bias` ($\beta$). These parameters are created automatically when you instantiate `nn.LayerNorm`. Initially, $\gamma$ is a vector of all ones and $\beta$ is a vector of all zeros.
+
+```python
+C = 4
+ln = nn.LayerNorm(C)
+print("--- Initial Parameters ---")
+print(f"LayerNorm.weight (gamma) initial:\n {ln.weight.data}")
+print(f"LayerNorm.bias (beta) initial:\n {ln.bias.data}")
+```
+**Output:**
+```
+--- Initial Parameters ---
+LayerNorm.weight (gamma) initial:
+ tensor([1., 1., 1., 1.])
+LayerNorm.bias (beta) initial:
+ tensor([0., 0., 0., 0.])
+```
+Let's pretend that during training, the model learned that a different scaling and shifting is optimal. We can set these parameters manually to see their effect.
+
+```python
+gamma = torch.tensor([1.5, 1.0, 1.0, 1.0])
+beta = torch.tensor([0.5, 0.0, 0.0, 0.0])
+
+# --- Manually apply gamma and beta ---
+y = gamma * x_hat + beta
