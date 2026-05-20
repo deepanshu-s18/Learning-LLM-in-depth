@@ -1143,3 +1143,117 @@ The output matches our manual calculation for the first element. The `nn.Linear`
 Now that we understand how an `nn.Linear` layer works, let's trace a single token's vector through the entire MLP forward pass. The MLP acts on each token independently, so we only need to look at one vector to understand the whole process.
 
 **Our Setup:**
+*   We'll use a tiny embedding dimension `C=2`.
+*   The MLP will expand this to an intermediate dimension of `4*C = 8`.
+*   Our input `x` will be the vector for a single token (`T=1`), in a batch of one (`B=1`).
+
+```python
+# Our input vector for one token. Shape (B, T, C) -> (1, 1, 2)
+x = torch.tensor([[[0.5, -0.5]]])
+```
+
+**Step 1: The Expansion Layer (`fc`)**
+This is an `nn.Linear` layer that projects from `C=2` to `4*C=8`.
+
+```python
+# Create the layer
+fc = nn.Linear(2, 8)
+
+# Manually set its weights and biases for a clear example
+fc.weight.data = torch.randn(8, 2) * 2 # Scale up for more interesting GELU results
+fc.bias.data = torch.ones(8) # Set all biases to 1
+
+# --- Pass the input through the layer ---
+x_expanded = fc(x)
+
+print("--- After Expansion Layer ---")
+print("Shape:", x_expanded.shape)
+print("Values:\n", x_expanded.data.round(decimals=2))
+```
+**Output:**
+```
+--- After Expansion Layer ---
+Shape: torch.Size([1, 1, 8])
+Values:
+ tensor([[[ 2.4000, -0.5000,  1.8800, -1.9100,  2.0800,  1.1600,  0.4100, -2.1200]]])
+```
+Our 2-dimensional vector has been successfully expanded to an 8-dimensional one.
+
+**Step 2: The GELU Activation**
+Next, we apply the non-linear GELU activation function. Intuitively, GELU is a smoother version of ReLU. It squashes negative values towards zero but allows a small amount of negative signal to pass through. Positive values are largely left unchanged.
+
+| Input | GELU(Input) |
+| :--- | :--- |
+| 2.4 | ~2.39 |
+| 1.0 | ~0.84 |
+| 0.0 | 0.0 |
+| -0.5 | ~ -0.15 |
+| -2.0 | ~ -0.00 |
+
+Let's apply it to our expanded vector:
+```python
+import torch.nn.functional as F
+
+# --- Apply GELU ---
+x_activated = F.gelu(x_expanded)
+
+print("\n--- After GELU Activation ---")
+print("Shape:", x_activated.shape)
+print("Values:\n", x_activated.data.round(decimals=2))
+```
+**Output:**
+```
+--- After GELU Activation ---
+Shape: torch.Size([1, 1, 8])
+Values:
+ tensor([[[ 2.3900, -0.1500,  1.8700, -0.0100,  2.0600,  1.0300,  0.3100, -0.0000]]])
+```
+As expected, the large positive values (`2.40`, `1.88`) are almost untouched, while the large negative values (`-1.91`, `-2.12`) are squashed to nearly zero. This non-linear step is essential for the model to learn complex patterns.
+
+**Step 3: The Contraction Layer (`proj`)**
+Now, we project the 8-dimensional activated vector back down to our original `C=2` dimension.
+
+```python
+# Create the layer
+proj = nn.Linear(8, 2)
+
+# Manually set its weights and biases
+proj.weight.data = torch.randn(2, 8)
+proj.bias.data = torch.zeros(2) # No bias for simplicity
+
+# --- Pass the activated vector through the layer ---
+x_projected = proj(x_activated)
+
+print("\n--- After Contraction Layer ---")
+print("Shape:", x_projected.shape)
+print("Values:\n", x_projected.data.round(decimals=2))
+```
+**Output:**
+```
+--- After Contraction Layer ---
+Shape: torch.Size([1, 1, 2])
+Values:
+ tensor([[[ 1.0900, -1.3800]]])
+```
+We are back to our original shape of `(1, 1, 2)`.
+
+**Step 4: Dropout**
+The final step in the `MLP` is dropout.
+```python
+drop = nn.Dropout(0.1)
+final_output = drop(x_projected)
+```
+**During training**, this layer would randomly set 10% of the elements in `x_projected` to zero. This is a regularization technique that helps prevent the model from becoming too reliant on any single feature.
+**During inference/evaluation** (when we call `model.eval()`), the dropout layer does nothing and simply passes the data through unchanged. For our numerical example, we can assume it does nothing.
+
+**The Final Result**
+Our initial input vector `[[[0.5, -0.5]]]` has been transformed by the MLP into `[[[ 1.09, -1.38]]]`. This new vector, which has undergone a non-linear "thinking" process, is now ready for the next stage.
+
+The key takeaway is that the MLP transforms the input vector while preserving its shape `(B, T, C)`. This is critical, as it allows us to add this output back to the original input (a "residual connection") and to stack multiple Transformer Blocks on top of each other.
+
+We have now built both major components of our Transformer block: `CausalSelfAttention` (communication) and `MLP` (thinking). The final step is to assemble them into a complete `Block`.
+
+## **Chapter 9: The Express Lane: Residual Connections**
+
+We have successfully built the two main computational engines of our model:
+1.  **`CausalSelfAttention`**: The "communication" layer where tokens exchange information.
