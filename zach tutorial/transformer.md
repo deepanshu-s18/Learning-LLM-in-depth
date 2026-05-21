@@ -1715,3 +1715,118 @@ We have now defined almost all the structural components of our model. We've bui
 
 The only piece missing is the most important one for a language model: the layer that actually makes the prediction. How do we go from these highly processed vectors back to a probability distribution over our entire vocabulary? That is the job of the Language Model Head, which we will build in the very next chapter.
 
+## **Chapter 13: The Grand Finale: The Language Model Head**
+
+We have reached the final architectural component of our GPT model. Our data has been converted into embeddings, processed through a deep stack of Transformer blocks, and stabilized by a final layer norm. We are left with a tensor of highly context-aware vectors, one for each token in our sequence.
+
+**The Problem:** Our final processed tensor has a shape of `(B, T, C)`, for example `(1, 4, 768)`. This means for each of the 4 tokens in our input "A crane ate fish," we have a rich, 768-dimensional vector. This is an internal representation, not a prediction. How do we use these vectors to predict the single *next* word?
+
+A natural assumption would be to take the vector for the very last token ("fish") and use it to make one prediction. But the Transformer architecture does something far more clever and efficient. Let's see how by examining the final piece of our `GPT2` model's `__init__` method.
+
+```python
+# gpt2_min.py (lines 78-94, abbreviated)
+class GPT2(nn.Module):
+    def __init__(self, config: GPTConfig):
+        super().__init__()
+        # ... (wte, wpe, drop)
+        self.h = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
+        self.ln_f = nn.LayerNorm(config.n_embd)
+
+        # --- The final projection layer ---
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        self.lm_head.weight = self.wte.weight
+```
+
+#### The `lm_head`: A Parallel Prediction Layer
+
+The `lm_head` is a simple `nn.Linear` layer that projects from our internal vector space (`C` dimensions) into the vocabulary space (`vocab_size` dimensions). The key insight is that this projection is applied **independently and in parallel to every single token's vector** along the `T` dimension.
+
+Instead of making one prediction, it makes `T` predictions. This results in the following shape transformation:
+
+| Variable | Input Shape `(B, T, ...)` | Output Shape `(B, T, ...)` | Meaning of Output |
+| :--- | :--- | :--- | :--- |
+| `logits` | `(B, T, C)` | `(B, T, vocab_size)`| A raw score for every possible next token, for **each** of the `T` input positions. |
+
+This reveals the "twist": the output `logits` tensor doesn't contain one prediction, it contains `T` predictions. This brings us to a new, crucial question.
+
+#### "Why make `T` predictions? Isn't that wasteful?"
+
+This is a brilliant design choice that makes GPT models both efficient to train and effective at generation. The purpose of these parallel predictions depends entirely on the task at hand.
+
+**1. For Efficient Training:**
+During training, we want to teach the model to predict the next word at *every position* in the sequence, all at once.
+*   **Input:** "A crane ate fish" (`T=4`)
+*   **Targets:** The model should learn:
+    *   Given "A", predict "crane".
+    *   Given "A crane", predict "ate".
+    *   Given "A crane ate", predict "fish".
+
+The `logits` tensor gives us all the predictions we need in a single forward pass:
+*   `logits[:, 0, :]` is the model's prediction based on the context "A". We will compare this to the target "crane".
+*   `logits[:, 1, :]` is the prediction based on the context "A crane". We compare this to "ate".
+*   `logits[:, 2, :]` is the prediction based on the context "A crane ate". We compare this to "fish".
+
+(Thanks to our causal mask, we know the prediction at position `t` only depends on tokens `0` to `t`). This parallel approach is incredibly efficient for training.
+
+**2. For Generation (Inference):**
+When we want to generate new text, the observation is correct: we are seemingly "wasteful."
+*   **Input:** A prompt, e.g., "A crane ate" (`T=3`)
+*   The model produces a `logits` tensor of shape `(1, 3, vocab_size)`.
+*   We **ignore** the predictions from the first two positions (`logits[:, 0, :]` and `logits[:, 1, :]`).
+*   We **only use** the prediction from the final position, `logits[:, -1, :]`, to sample the next word.
+
+This might seem inefficient, but this design is a trade-off. The architecture is heavily optimized for the massively parallel computations needed for training. During inference, we leverage this same powerful parallel architecture, even if we only need the result from the final time step. Many modern inference optimizations focus on avoiding the re-computation of these "wasted" intermediate steps.
+
+#### The Final Trick: Weight Tying
+
+Let's look closely at the last two lines in our model's `__init__` method, which define the Language Model Head:
+
+```python
+# From the GPT2 class __init__ method
+self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+self.lm_head.weight = self.wte.weight
+```
+
+The first line is straightforward: it creates a standard linear layer. The second line, however, is a simple but profound optimization known as **weight tying**.
+
+**What is the code actually doing?**
+Instead of allowing the `lm_head` to have its own, randomly initialized weight matrix that would be learned during training, this line of code literally throws that matrix away. It then assigns the `.weight` attribute of the `lm_head` to be a *reference* to the `.weight` attribute of the `wte` (our token embedding layer).
+
+From this point on, these two layers **share the exact same weight matrix**. When backpropagation updates the weights of the `lm_head`, it is simultaneously updating the weights of the `wte`, and vice-versa. They are not just two matrices that happen to be identical; they are, in memory, the very same object.
+
+**Why does this make sense?**
+Let's analyze the roles and shapes of the two weight matrices:
+
+| Layer | Attribute | Shape `(rows, cols)` | Role |
+| :--- | :--- | :--- | :--- |
+| `wte` | `self.wte.weight` | `(vocab_size, n_embd)` | To convert a token ID (row index) into an `n_embd`-dimensional vector. |
+| `lm_head` | `self.lm_head.weight`| `(vocab_size, n_embd)` | To convert an `n_embd`-dimensional vector into a score for each of the `vocab_size` tokens. |
+
+They have the exact same shape! Let's think about their functions intuitively:
+*   The **Token Embedding** matrix (`wte.weight`) can be thought of as an "ID-to-meaning" lookup table. Row `i` of this matrix is the learned vector that represents the "meaning" of the `i`-th word in the vocabulary.
+*   The **Language Model Head** matrix (`lm_head.weight`) can be thought of as a "meaning-to-ID" lookup table. When we multiply our final processed vector with this matrix, we are essentially comparing our vector's "meaning" against the "meaning" vector of every word in the vocabulary (each row of the matrix). The words whose meaning vectors align best get the highest scores (logits).
+
+The core insight of weight tying is that these two operations—mapping from an ID to a meaning, and mapping from a meaning back to an ID—should be symmetric. The representation of a word should be the same whether it's an input or an output. By forcing them to share the same weight matrix, we build this strong and logical assumption directly into the model's architecture.
+
+**The Benefits:**
+1.  **Massive Parameter Reduction:** The `lm_head` is one of the largest layers in the model. For GPT-2 small, this matrix has `50257 * 768 ≈ 38.5 million` parameters. By tying the weights, we eliminate the need to store and train a second, separate matrix of this size.
+2.  **Improved Performance:** This technique often acts as a powerful form of regularization. By enforcing a sensible architectural constraint, it can prevent overfitting and lead to better model performance.
+
+We have now, finally, built a complete, end-to-end GPT model architecture, complete with this elegant optimization. The next step is to look at the full `forward` pass to see how the loss is calculated for training.
+
+
+## **Chapter 14: Training the Model: The Forward Pass and Loss Calculation**
+
+We have successfully built the complete `GPT2` model architecture. We have an uneducated machine, full of randomly initialized weights. Now, we must teach it. This chapter focuses on the `forward` pass—the journey of data through our model to produce a single, crucial number: the **loss**. This loss value quantifies how "wrong" the model's predictions are and is the signal used to update all the weights via backpropagation.
+
+Let's look at the `forward` method from `gpt2_min.py` that we will now fully understand.
+
+```python
+# gpt2_min.py (lines 104-121)
+class GPT2(nn.Module):
+    # ... (__init__ method from previous chapters) ...
+
+    def forward(self, idx, targets=None):
+        B, T = idx.size()
+        assert T <= self.config.block_size, "Sequence length exceeds block size."
+
