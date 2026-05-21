@@ -1944,3 +1944,118 @@ Now, let's trace this batch through the five stages of a single training step.
 | **5. Backpropagation**| **One** backpropagation is performed for the entire batch. | `loss.backward()` is called on the single scalar value `3.0`. PyTorch calculates the gradient of this *average loss* with respect to every single parameter in the entire model. |
 | **6. Weight Update** | The optimizer takes one step. | `optimizer.step()` uses these gradients to update all the model's weights, nudging them in a direction that would have lowered that average loss of `3.0`. |
 
+This entire 6-stage process is one training step. It is repeated millions of times with different batches of data. The key takeaway is that for each batch, there is **only one backward pass and one weight update**, driven by the *average* performance across all token predictions in that batch.
+
+We have now closed the loop: from a raw stream of text to a trained model. All that's left is the most exciting part: seeing how this trained model can be used to generate new text.
+
+## **Chapter 15: Bringing It to Life: Autoregressive Generation**
+
+We have built the entire GPT architecture and understood how it's trained. Now, we unlock its true purpose: generating new, coherent text. The process is called **autoregressive generation**, which sounds complex but is based on a beautifully simple loop.
+
+Let's look at the `generate` method from `gpt2_min.py`. This is the code that performs the magic.
+
+```python
+# gpt2_min.py (lines 123-143)
+class GPT2(nn.Module):
+    # ... (__init__ and forward methods) ...
+
+    @torch.no_grad()
+    def generate(self, idx, max_new_tokens=50, temperature=1.0, top_k=None):
+        for _ in range(max_new_tokens):
+            idx_cond = idx[:, -self.config.block_size:]
+            logits, _ = self(idx_cond)
+            logits = logits[:, -1, :] / max(temperature, 1e-8)
+
+            if top_k is not None:
+                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                thresh = v[:, -1].unsqueeze(-1)
+                logits = torch.where(logits < thresh, torch.full_like(logits, -float("inf")), logits)
+
+            probs = F.softmax(logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+            idx = torch.cat((idx, next_token), dim=1)
+        return idx
+```
+
+#### The Core Idea: The Generation Loop
+
+The process of generation is a one-token-at-a-time loop:
+1.  **PREDICT:** Feed the current sequence of tokens into the model to get the logits for the next token.
+2.  **SAMPLE:** Convert the logits into probabilities and sample one token from that distribution. This will be our newly generated token.
+3.  **APPEND:** Add the newly sampled token to the end of our sequence.
+4.  **REPEAT:** Go back to step 1 with the new, longer sequence.
+
+Let's walk through this loop with a concrete example. Imagine we give the model the starting prompt "A crane".
+*   **Initial `idx`:** `[5, 12]`
+
+**Iteration 1:**
+1.  **PREDICT:** We feed `idx = [5, 12]` into `model.forward()`. It produces `logits` of shape `(1, 2, vocab_size)`. We only care about the prediction for the *last* token, so we select `logits[:, -1, :]`. This is a vector of scores for the word to follow "crane".
+2.  **SAMPLE:** We apply softmax to these logits to get probabilities. Let's say the model gives "ate" a 40% probability, "lifted" a 35% probability, and so on. We sample from this distribution and get the token for "ate" (ID `8`).
+3.  **APPEND:** We concatenate this new token to our sequence. `idx` is now `[5, 12, 8]`.
+
+**Iteration 2:**
+1.  **PREDICT:** We feed the *new* `idx = [5, 12, 8]` into the model. It gives us the logits for the word to follow "ate".
+2.  **SAMPLE:** We convert to probabilities. The model, having seen "A crane ate", now gives a very high probability to "fish". We sample and get the token for "fish" (ID `21`).
+3.  **APPEND:** `idx` becomes `[5, 12, 8, 21]`.
+
+This loop continues until we reach the desired `max_new_tokens`.
+
+#### A Deeper Look at the `generate` Code
+
+Now let's connect this loop to the actual code.
+
+1.  **`@torch.no_grad()`**: This is a PyTorch decorator that tells the model not to calculate gradients. It's a crucial optimization for inference, as it saves a lot of memory and computation.
+
+2.  **Context Cropping:**
+    ```python
+    idx_cond = idx[:, -self.config.block_size:]
+    ```
+    Our model has a fixed context window (`block_size`). If the sequence `idx` becomes longer than this, we must crop it to only include the last `block_size` tokens. This is the "memory" of the model.
+
+3.  **Getting the Final Logits:**
+    ```python
+    logits, _ = self(idx_cond)
+    logits = logits[:, -1, :] / max(temperature, 1e-8)
+    ```
+    *   `self(idx_cond)` is just calling our `forward` method.
+    *   `logits[:, -1, :]` is the key step where we **throw away all predictions except the very last one**.
+    *   `/ temperature`: This is a knob to control the "creativity" of the output. We'll discuss it below.
+
+4.  **Sampling the Next Token:**
+    ```python
+    probs = F.softmax(logits, dim=-1)
+    next_token = torch.multinomial(probs, num_samples=1)
+    ```
+    *   `F.softmax` converts our final logits into a probability distribution.
+    *   `torch.multinomial` performs the sampling. It takes the probabilities and randomly picks one token, where tokens with higher probabilities are more likely to be chosen.
+
+5.  **Appending:**
+    ```python
+    idx = torch.cat((idx, next_token), dim=1)
+    ```
+    The newly sampled `next_token` is concatenated to the end of our `idx` sequence, preparing it for the next iteration of the loop.
+
+#### Controlling the Magic: `temperature` and `top_k`
+
+Randomly sampling from the full probability distribution can sometimes lead to strange or nonsensical words being chosen. We have two knobs to control this:
+
+| Parameter | What it Does | Effect |
+| :--- | :--- | :--- |
+| **`temperature`** | Rescales the logits before softmax. `logits / temp`. | **Low Temp (<1.0):** Makes the distribution "peakier". High-probability tokens become even more likely. The model becomes more confident and deterministic, but also more repetitive. **High Temp (>1.0):** Flattens the distribution. Low-probability tokens become more likely. The model becomes more random and creative, but also more prone to errors. **Note:** The code clamps temperature with `max(temperature, 1e-8)` to avoid division by zero, so `temp→0` approaches greedy sampling without exactly reaching it. |
+| **`top_k`** | Truncates the distribution. Considers only the `k` most likely tokens. | If `top_k=50`, the model calculates the probabilities for all 50257 tokens, but then throws away all but the 50 most likely ones. It then re-normalizes the probabilities among just those 50 and samples from that smaller set. This effectively prevents very rare or nonsensical words from ever being chosen. |
+
+#### Conclusion: The Transformer Has Clicked
+
+We have reached the end of our 90-minute journey. Let's take a moment to look back at what we've accomplished.
+
+We started with a file, `gpt2_min.py`, that seemed like a dense, magical black box. We made a promise: to take that box apart, piece by piece, until the magic dissolved into understandable, elegant engineering.
+
+And that is exactly what we did.
+*   We started with the fundamentals, turning token IDs into meaningful vectors with **Token and Positional Embeddings**.
+*   We dove deep into the heart of the machine, building the intuition for **Self-Attention** with simple analogies before translating it into the concrete mathematics of Queries, Keys, and Values.
+*   We made our model practical, implementing the **Causal Mask** to prevent it from seeing the future, and scaling its power with **Multi-Head Attention**.
+*   We added the "thinking" layer, the **MLP**, and glued everything together with the crucial concepts of **Residual Connections** and **Layer Normalization** to form a complete, stackable `Block`.
+*   Finally, we assembled the full architecture, understood how it's trained with a **Language Model Head** and a parallelized loss function, and brought it to life with an **Autoregressive Generation** loop.
+
+The `gpt2_min.py` file is no longer a mystery. Every `@torch.no_grad()`, every `.view()`, every `+` sign now has a purpose and a story. The Transformer has clicked.
+
