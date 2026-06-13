@@ -73,3 +73,41 @@ def parse_blocks(text):
         else:
             lines = token.splitlines()
             if lines:
+                first = lines[0].strip()
+                if first in ["python", "py", "diff", "text", "mermaid", "json", "bash", "sh", "none", "cpp", "c"]:
+                    lang = first
+                    c = "\n".join(lines[1:]).strip()
+                else:
+                    lang = "python"
+                    c = token.strip()
+            else:
+                lang = "python"
+                c = ""
+            if c:
+                blocks.append(("code", lang, c))
+    return blocks
+
+def process_and_add_blocks(cells, orig_filename):
+    raw_md = read_source(orig_filename)
+    blocks = parse_blocks(raw_md)
+
+    for block_type, *rest in blocks:
+        if block_type == "markdown":
+            content = rest[0]
+            cells.append(md(content))
+        elif block_type == "code":
+            lang, code_content = rest
+            
+            # Check if it is text/mermaid/diff/json explicitly
+            if lang in ["mermaid", "diff", "text", "json", "bash", "sh", "yaml", "html", "css", "markdown", "md"]:
+                cells.append(md(f"```{lang}\n{code_content}\n```"))
+                continue
+                
+            raw = code_content.strip()
+            non_python_starters = [
+                "A 2D coordinate plane", "A 3D visualization", "Diagram:", "A diagram illustrating",
+                "INPUT:", "OUTPUT:", "// ALGORITHM", "<|user|>", "<|assistant|>", "<|system|>",
+                "What is the primary cause", "What's the capital", "The primary cause",
+                "Original Floats:", "Logits shape", "First number (", "--- Prepared Batch",
+                "Input:          Kernel:", "Input (2×2):", "Imagine a timeline", "tensor([[[[",
+                "Angles (m * theta_i)", ">>> torch.", ">>> a = torch"
