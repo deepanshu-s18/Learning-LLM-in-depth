@@ -65,3 +65,4 @@
 [2026-01-23 17:34:43 +0530] refactor(grpo): finalize .gitignore for production integration
 [2026-01-31 14:06:12 +0530] docs(grpo): introduce Group Relative Policy Optimization mathematical formulation
 [2026-01-31 14:57:04 +0530] docs(grpo): document SWE-bench execution sandbox integration and unit-test reward shaping
+[2026-06-13 11:11:00 +0530] docs(interpretability): add mechanistic interpretability insights on induction heads and circuits
