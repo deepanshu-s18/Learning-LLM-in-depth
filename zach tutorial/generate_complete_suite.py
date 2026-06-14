@@ -262,3 +262,41 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 torch.manual_seed(42)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"PyTorch Version: {torch.__version__} on {device}")
+"""))
+
+    process_and_add_blocks(cells, "pytorch.md")
+
+    cells.append(md("""## **Interactive Playground: End-to-End PyTorch Training on Multi-Class Classification**"""))
+    cells.append(code("""# Complete Multi-Layer Perceptron (MLP) Classifier
+class MLPClassifier(nn.Module):
+    def __init__(self, in_features=2, hidden_dim=32, num_classes=3):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_features, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, num_classes)
+        )
+    def forward(self, x):
+        return self.net(x)
+
+# Generate 3-class spiral dataset
+N_points = 100
+centers = [(-1.5, -1.0), (1.5, -1.0), (0.0, 1.5)]
+X_data, y_data = [], []
+for label, (cx, cy) in enumerate(centers):
+    pts = np.random.randn(N_points, 2) * 0.4 + np.array([cx, cy])
+    X_data.append(pts)
+    y_data.append(np.full(N_points, label))
+
+X = torch.tensor(np.vstack(X_data), dtype=torch.float32).to(device)
+y = torch.tensor(np.concatenate(y_data), dtype=torch.long).to(device)
+
+model = MLPClassifier().to(device)
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.AdamW(model.parameters(), lr=0.03)
+
+# Training loop
