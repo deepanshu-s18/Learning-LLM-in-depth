@@ -149,3 +149,41 @@ def build_01_nn():
 !pip install -q matplotlib numpy torch
 
 import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(42)
+print(" Setup complete! Pure NumPy & Matplotlib ready.")
+"""))
+
+    process_and_add_blocks(cells, "nn.md")
+
+    cells.append(md("""## **Interactive Playground: Complete NumPy Neural Network & Decision Boundary Visualizer**
+Let's assemble all the concepts into a complete, 2-layer Neural Network and train it on a non-linear dataset (two concentric circles / moons) to watch gradient descent separate the classes in real-time!"""))
+
+    cells.append(code("""# Complete Pure NumPy 2-Layer Neural Network
+class SimpleNeuralNet:
+    def __init__(self, input_dim=2, hidden_dim=4, output_dim=1, lr=0.1):
+        self.lr = lr
+        # Initialize weights with small random numbers
+        self.W1 = np.random.randn(input_dim, hidden_dim) * 0.5
+        self.b1 = np.zeros((1, hidden_dim))
+        self.W2 = np.random.randn(hidden_dim, output_dim) * 0.5
+        self.b2 = np.zeros((1, output_dim))
+        
+    def sigmoid(self, z):
+        return 1.0 / (1.0 + np.exp(-np.clip(z, -250, 250)))
+    
+    def sigmoid_deriv(self, a):
+        return a * (1.0 - a)
+    
+    def forward(self, X):
+        self.z1 = np.dot(X, self.W1) + self.b1
+        self.a1 = self.sigmoid(self.z1)
+        self.z2 = np.dot(self.a1, self.W2) + self.b2
+        self.a2 = self.sigmoid(self.z2)
+        return self.a2
+    
+    def backward(self, X, y, y_hat):
+        m = X.shape[0]
+        # Binary Cross-Entropy / MSE gradient
+        dL_dz2 = (y_hat - y) * self.sigmoid_deriv(y_hat)
