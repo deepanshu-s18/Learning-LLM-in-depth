@@ -111,3 +111,41 @@ def process_and_add_blocks(cells, orig_filename):
                 "Original Floats:", "Logits shape", "First number (", "--- Prepared Batch",
                 "Input:          Kernel:", "Input (2×2):", "Imagine a timeline", "tensor([[[[",
                 "Angles (m * theta_i)", ">>> torch.", ">>> a = torch"
+            ]
+            
+            is_non_python = any(raw.startswith(s) or (s in raw[:100]) for s in non_python_starters) or ("→" in raw) or ("×" in raw)
+            if is_non_python:
+                cells.append(md(f"```text\n{raw}\n```"))
+                continue
+                
+            # Try parsing Python AST with dedent
+            dedented = textwrap.dedent(code_content)
+            filtered_lines = [l for l in dedented.splitlines() if not l.strip().startswith('!') and not l.strip().startswith('%')]
+            test_code = "\n".join(filtered_lines)
+            
+            try:
+                ast.parse(test_code)
+                # Valid standalone python code cell!
+                cells.append(code(dedented))
+            except SyntaxError:
+                # If it's a code snippet or method fragment, format as a markdown python block
+                cells.append(md(f"```python\n{dedented}\n```"))
+
+# ----------------------------------------------------------------------
+# 1. 01_Neural_Networks_From_Scratch.ipynb
+# ----------------------------------------------------------------------
+def build_01_nn():
+    cells = []
+    cells.append(md("""# 01. Neural Networks From Scratch: How AI Learns
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/01_Neural_Networks_From_Scratch.ipynb)
+
+> **Tutorial Overview**: Master how neural networks learn from first principles. We will implement gradient descent, partial derivatives, the chain rule, and backpropagation from scratch in pure Python/NumPy, and visualize how the decision boundary evolves over time.
+> **Original Source**: `nn.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q matplotlib numpy torch
+
+import numpy as np
