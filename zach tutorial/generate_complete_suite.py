@@ -300,3 +300,41 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.AdamW(model.parameters(), lr=0.03)
 
 # Training loop
+loss_history = []
+for epoch in range(150):
+    model.train()
+    optimizer.zero_grad()
+    outputs = model(X)
+    loss = criterion(outputs, y)
+    loss.backward()
+    optimizer.step()
+    loss_history.append(loss.item())
+
+print(f"Training Complete! Final Cross-Entropy Loss: {loss_history[-1]:.4f}")
+
+# Plot loss
+plt.figure(figsize=(8, 4))
+plt.plot(loss_history, color='royalblue', lw=2)
+plt.title("Cross-Entropy Loss Curve")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.grid(True, alpha=0.3)
+plt.show()
+"""))
+    save_nb(make_nb(cells, "02_PyTorch_Deep_Dive"), "02_PyTorch_Deep_Dive")
+
+# ----------------------------------------------------------------------
+# 3. 03_Adam_Optimizer_Demystified.ipynb
+# ----------------------------------------------------------------------
+def build_03_adam():
+    cells = []
+    cells.append(md("""# 03. Adam Optimizer Demystified: From SGD to Adaptive Moments
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/03_Adam_Optimizer_Demystified.ipynb)
+
+> **Tutorial Overview**: Understand why standard SGD struggles in ravines and saddle points, how Momentum solves oscillations, how RMSprop scales learning rates, and how Adam combines both with Bias Correction.
+> **Original Source**: `adam.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
