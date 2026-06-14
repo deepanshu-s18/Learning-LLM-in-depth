@@ -225,3 +225,40 @@ axes[0].set_xlabel("Epoch")
 axes[0].set_ylabel("Loss")
 axes[0].grid(True, alpha=0.3)
 
+# Decision Boundary Grid
+xx, yy = np.meshgrid(np.linspace(-3, 3, 100), np.linspace(-3, 3, 100))
+grid = np.c_[xx.ravel(), yy.ravel()]
+probs = net.forward(grid).reshape(xx.shape)
+axes[1].contourf(xx, yy, probs, levels=20, cmap='RdBu_r', alpha=0.8)
+axes[1].scatter(X[:, 0], X[:, 1], c=y.ravel(), cmap='RdBu_r', edgecolors='k')
+axes[1].set_title("Learned Non-Linear Decision Boundary")
+plt.tight_layout()
+plt.show()
+"""))
+    save_nb(make_nb(cells, "01_Neural_Networks_From_Scratch"), "01_Neural_Networks_From_Scratch")
+
+# ----------------------------------------------------------------------
+# 2. 02_PyTorch_Deep_Dive.ipynb
+# ----------------------------------------------------------------------
+def build_02_pytorch():
+    cells = []
+    cells.append(md("""# 02. PyTorch Deep Dive: From Tensors to Training Loop
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/02_PyTorch_Deep_Dive.ipynb)
+
+> **Tutorial Overview**: Build a complete, deep understanding of PyTorch. Tensors, Autograd, `nn.Module`, loss functions, optimizers, and constructing the industrial-strength training & evaluation loop.
+> **Original Source**: `pytorch.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch torchvision matplotlib numpy
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import matplotlib.pyplot as plt
+import numpy as np
+
+torch.manual_seed(42)
