@@ -187,3 +187,41 @@ class SimpleNeuralNet:
         m = X.shape[0]
         # Binary Cross-Entropy / MSE gradient
         dL_dz2 = (y_hat - y) * self.sigmoid_deriv(y_hat)
+        dL_dW2 = np.dot(self.a1.T, dL_dz2) / m
+        dL_db2 = np.sum(dL_dz2, axis=0, keepdims=True) / m
+        
+        dL_da1 = np.dot(dL_dz2, self.W2.T)
+        dL_dz1 = dL_da1 * self.sigmoid_deriv(self.a1)
+        dL_dW1 = np.dot(X.T, dL_dz1) / m
+        dL_db1 = np.sum(dL_dz1, axis=0, keepdims=True) / m
+        
+        # Gradient Descent Step
+        self.W2 -= self.lr * dL_dW2
+        self.b2 -= self.lr * dL_db2
+        self.W1 -= self.lr * dL_dW1
+        self.b1 -= self.lr * dL_db1
+
+# Generate synthetic non-linear dataset (XOR / Circle)
+N = 200
+X = np.random.randn(N, 2)
+y = ((X[:, 0]**2 + X[:, 1]**2) < 1.0).astype(float).reshape(-1, 1)
+
+# Train network
+net = SimpleNeuralNet(input_dim=2, hidden_dim=8, output_dim=1, lr=0.5)
+losses = []
+for epoch in range(1000):
+    y_pred = net.forward(X)
+    loss = np.mean((y_pred - y)**2)
+    losses.append(loss)
+    net.backward(X, y, y_pred)
+
+print(f"Final Loss after 1000 epochs: {losses[-1]:.4f}")
+
+# Plot Loss curve and Decision Boundary
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+axes[0].plot(losses, color='darkorange', lw=2)
+axes[0].set_title("Training Loss (MSE) Over Epochs")
+axes[0].set_xlabel("Epoch")
+axes[0].set_ylabel("Loss")
+axes[0].grid(True, alpha=0.3)
+
