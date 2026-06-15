@@ -679,3 +679,40 @@ class CachedAttention(nn.Module):
 
     def forward(self, x, kv_cache=None):
         B, T, C = x.size()
+        q, k, v = self.c_attn(x).split(C, dim=2)
+        q = q.view(B, T, self.n_head, self.d_head).transpose(1, 2)
+        k = k.view(B, T, self.n_head, self.d_head).transpose(1, 2)
+        v = v.view(B, T, self.n_head, self.d_head).transpose(1, 2)
+
+        if kv_cache is not None:
+            past_k, past_v = kv_cache
+            k = torch.cat([past_k, k], dim=-2)
+            v = torch.cat([past_v, v], dim=-2)
+        new_kv_cache = (k, v)
+
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.d_head))
+        att = F.softmax(att, dim=-1)
+        y = att @ v
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        return self.c_proj(y), new_kv_cache
+
+attn = CachedAttention(128, 4).to(device)
+
+# Measure token-by-token generation latency over 60 steps
+steps = 60
+naive_times = []
+cached_times = []
+
+# Naive simulation (full context recomputed)
+for step in range(1, steps + 1):
+    full_seq = torch.randn(1, step, 128).to(device)
+    t0 = time.perf_counter()
+    _ = attn(full_seq, kv_cache=None)
+    naive_times.append(time.perf_counter() - t0)
+
+# Cached simulation (single new token processed + KV concatenated)
+kv_cache = None
+for step in range(1, steps + 1):
+    new_token = torch.randn(1, 1, 128).to(device)
+    t0 = time.perf_counter()
+    _, kv_cache = attn(new_token, kv_cache=kv_cache)
