@@ -489,3 +489,41 @@ W_v = nn.Linear(d_model, d_model, bias=False)
 Q, K, V = W_q(X), W_k(X), W_v(X)
 output, attn_weights = scaled_dot_product_attention(Q, K, V)
 
+print("Attention Output Shape:", output.shape)
+print("Attention Weights Shape:", attn_weights.shape)
+
+# Visualize Attention Heatmap
+plt.figure(figsize=(8, 6))
+plt.imshow(attn_weights[0].detach().numpy(), cmap='magma')
+plt.colorbar(label='Attention Weight')
+plt.xticks(range(seq_len), tokens, rotation=45)
+plt.yticks(range(seq_len), tokens)
+plt.title("Self-Attention Alignment Matrix")
+plt.tight_layout()
+plt.show()
+"""))
+    save_nb(make_nb(cells, "04_Attention_Mechanism_Step_by_Step"), "04_Attention_Mechanism_Step_by_Step")
+
+# ----------------------------------------------------------------------
+# 5. 05_Transformer_From_Scratch.ipynb
+# ----------------------------------------------------------------------
+def build_05_transformer():
+    cells = []
+    cells.append(md("""# 05. Transformer Architecture From Scratch (GPT-2)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/05_Transformer_From_Scratch.ipynb)
+
+> **Tutorial Overview**: Build a complete, production-grade Decoder-Only Transformer (GPT-2 style) from scratch in PyTorch. Includes Token & Positional Embeddings, Pre-LayerNorm, Multi-Head Causal Self-Attention, MLP FeedForward, and Text Generation sampling.
+> **Original Source**: `transformer.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+torch.manual_seed(42)
