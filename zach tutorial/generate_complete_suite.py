@@ -603,3 +603,41 @@ class MiniGPT(nn.Module):
         logits = self.lm_head(x)
         
         loss = None
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+        return logits, loss
+
+    @torch.no_grad()
+    def generate(self, idx, max_new_tokens=50, temperature=0.8, top_k=5):
+        for _ in range(max_new_tokens):
+            idx_cond = idx if idx.size(1) <= self.block_size else idx[:, -self.block_size:]
+            logits, _ = self(idx_cond)
+            logits = logits[:, -1, :] / max(temperature, 1e-8)
+            if top_k is not None:
+                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                logits[logits < v[:, [-1]]] = -float('Inf')
+            probs = F.softmax(logits, dim=-1)
+            idx_next = torch.multinomial(probs, num_samples=1)
+            idx = torch.cat((idx, idx_next), dim=1)
+        return idx
+
+# Test instantiation & generation
+sample_text = "To be or not to be that is the question."
+chars = sorted(list(set(sample_text)))
+stoi = {ch: i for i, ch in enumerate(chars)}
+itos = {i: ch for i, ch in enumerate(chars)}
+encode = lambda s: [stoi[c] for c in s]
+decode = lambda l: ''.join([itos[i] for i in l])
+
+model = MiniGPT(vocab_size=len(chars), d_model=64, n_layer=2, n_head=4).to(device)
+prompt_tensor = torch.tensor([encode("To be")], dtype=torch.long).to(device)
+gen_out = model.generate(prompt_tensor, max_new_tokens=25)
+print("Generated Tokens Output:", decode(gen_out[0].cpu().tolist()))
+"""))
+    save_nb(make_nb(cells, "05_Transformer_From_Scratch"), "05_Transformer_From_Scratch")
+
+# ----------------------------------------------------------------------
+# 6. 06_KV_Cache_Optimization.ipynb
+# ----------------------------------------------------------------------
+def build_06_kv_cache():
+    cells = []
