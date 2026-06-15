@@ -414,3 +414,41 @@ def run_optimizer(opt_name, steps=50):
 # Run simulations
 optimizers = ["SGD", "SGD+Momentum", "RMSprop", "Custom Adam"]
 colors = ['red', 'purple', 'green', 'blue']
+
+# Plot contours
+X_grid, Y_grid = np.meshgrid(np.linspace(-5, 5, 200), np.linspace(-4, 4, 200))
+Z_grid = loss_fn(X_grid, Y_grid)
+
+plt.figure(figsize=(10, 7))
+plt.contour(X_grid, Y_grid, Z_grid, levels=30, cmap='plasma', alpha=0.6)
+
+for name, col in zip(optimizers, colors):
+    traj = run_optimizer(name, steps=60)
+    plt.plot(traj[:, 0], traj[:, 1], marker='o', markersize=3, label=name, color=col, lw=2)
+
+plt.plot(0, 0, 'r*', markersize=15, label='Global Minimum (0,0)')
+plt.title("Optimization Trajectories in an Elongated Ravine")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+"""))
+    save_nb(make_nb(cells, "03_Adam_Optimizer_Demystified"), "03_Adam_Optimizer_Demystified")
+
+# ----------------------------------------------------------------------
+# 4. 04_Attention_Mechanism_Step_by_Step.ipynb
+# ----------------------------------------------------------------------
+def build_04_attention():
+    cells = []
+    cells.append(md("""# 04. The Attention Mechanism: Step-by-Step
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/04_Attention_Mechanism_Step_by_Step.ipynb)
+
+> **Tutorial Overview**: Demystify Scaled Dot-Product Attention ($Q, K, V$), the softmax temperature factor $\\sqrt{d_k}$, causal masking, and Multi-Head Attention with tensor tracking and attention heatmap visualizations.
+> **Original Source**: `attention.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
