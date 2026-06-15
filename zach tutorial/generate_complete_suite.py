@@ -527,3 +527,41 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 torch.manual_seed(42)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Running on: {device}")
+"""))
+
+    process_and_add_blocks(cells, "transformer.md")
+
+    cells.append(md("""## **Interactive Playground: Train Mini-GPT & Generate Character Text**"""))
+    cells.append(code("""# Complete working Mini-GPT Definition
+class CausalSelfAttention(nn.Module):
+    def __init__(self, d_model=64, n_head=4, block_size=64, dropout=0.1):
+        super().__init__()
+        assert d_model % n_head == 0
+        self.n_head = n_head
+        self.d_head = d_model // n_head
+        self.c_attn = nn.Linear(d_model, 3 * d_model)
+        self.c_proj = nn.Linear(d_model, d_model)
+        self.drop = nn.Dropout(dropout)
+        self.register_buffer("bias", torch.tril(torch.ones(block_size, block_size)).view(1, 1, block_size, block_size))
+
+    def forward(self, x):
+        B, T, C = x.size()
+        q, k, v = self.c_attn(x).split(C, dim=2)
+        q = q.view(B, T, self.n_head, self.d_head).transpose(1, 2)
+        k = k.view(B, T, self.n_head, self.d_head).transpose(1, 2)
+        v = v.view(B, T, self.n_head, self.d_head).transpose(1, 2)
+
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.d_head))
+        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float('-inf'))
+        att = F.softmax(att, dim=-1)
+        att = self.drop(att)
+        y = att @ v
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        return self.c_proj(y)
+
+class MLP(nn.Module):
+    def __init__(self, d_model=64, dropout=0.1):
+        super().__init__()
+        self.c_fc = nn.Linear(d_model, 4 * d_model)
