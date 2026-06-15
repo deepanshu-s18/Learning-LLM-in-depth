@@ -452,3 +452,40 @@ def build_04_attention():
 
     cells.append(code("""# Setup & Imports
 !pip install -q torch matplotlib numpy
+
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "attention.md")
+
+    cells.append(md("""## **Interactive Playground: Multi-Head Attention & Dynamic Attention Heatmap**"""))
+    cells.append(code("""# Scaled Dot-Product Attention with Attention Weights Output
+def scaled_dot_product_attention(Q, K, V, mask=None):
+    d_k = Q.size(-1)
+    scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(d_k)
+    if mask is not None:
+        scores = scores.masked_fill(mask == 0, -1e9)
+    weights = F.softmax(scores, dim=-1)
+    output = torch.matmul(weights, V)
+    return output, weights
+
+# Example sentence tokens
+tokens = ["The", "animal", "didn't", "cross", "the", "street", "because", "it", "was", "tired"]
+seq_len = len(tokens)
+d_model = 16
+
+# Generate random Query, Key, Value representations
+X = torch.randn(1, seq_len, d_model)
+W_q = nn.Linear(d_model, d_model, bias=False)
+W_k = nn.Linear(d_model, d_model, bias=False)
+W_v = nn.Linear(d_model, d_model, bias=False)
+
+Q, K, V = W_q(X), W_k(X), W_v(X)
+output, attn_weights = scaled_dot_product_attention(Q, K, V)
+
