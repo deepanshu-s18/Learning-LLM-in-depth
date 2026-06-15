@@ -641,3 +641,41 @@ print("Generated Tokens Output:", decode(gen_out[0].cpu().tolist()))
 # ----------------------------------------------------------------------
 def build_06_kv_cache():
     cells = []
+    cells.append(md("""# 06. KV Cache: Accelerating Transformer Inference
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/06_KV_Cache_Optimization.ipynb)
+
+> **Tutorial Overview**: Demystify KV Caching in Autoregressive LLM generation. Understand why recomputing attention keys and values is $O(N^2)$ wasteful, implement dynamic KV Cache buffers, and benchmark latency speedups.
+> **Original Source**: `kv_cache.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import time
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+"""))
+
+    process_and_add_blocks(cells, "kv_cache.md")
+
+    cells.append(md("""## **Interactive Playground: Naive vs KV-Cache Generation Speed Benchmark**"""))
+    cells.append(code("""# Benchmark Naive generation vs KV-Cached Generation
+class CachedAttention(nn.Module):
+    def __init__(self, d_model=128, n_head=4):
+        super().__init__()
+        self.d_model = d_model
+        self.n_head = n_head
+        self.d_head = d_model // n_head
+        self.c_attn = nn.Linear(d_model, 3 * d_model)
+        self.c_proj = nn.Linear(d_model, d_model)
+
+    def forward(self, x, kv_cache=None):
+        B, T, C = x.size()
