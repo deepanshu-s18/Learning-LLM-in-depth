@@ -376,3 +376,41 @@ class CustomAdam:
                 # 2. Second Moment (RMSprop)
                 self.v[i] = self.beta2 * self.v[i] + (1 - self.beta2) * (g ** 2)
                 # 3. Bias Correction
+                m_hat = self.m[i] / (1 - self.beta1 ** self.t)
+                v_hat = self.v[i] / (1 - self.beta2 ** self.t)
+                # 4. Update
+                p -= self.lr * m_hat / (torch.sqrt(v_hat) + self.eps)
+
+    def zero_grad(self):
+        for p in self.params:
+            if p.grad is not None:
+                p.grad.zero_()
+
+# Define an elongated ravine function
+def loss_fn(x, y):
+    return 0.1 * (x ** 2) + 2.0 * (y ** 2)
+
+def run_optimizer(opt_name, steps=50):
+    point = torch.tensor([-4.0, 3.0], requires_grad=True)
+    history = [point.detach().numpy().copy()]
+    
+    if opt_name == "SGD":
+        opt = torch.optim.SGD([point], lr=0.15)
+    elif opt_name == "SGD+Momentum":
+        opt = torch.optim.SGD([point], lr=0.08, momentum=0.9)
+    elif opt_name == "RMSprop":
+        opt = torch.optim.RMSprop([point], lr=0.1)
+    elif opt_name == "Custom Adam":
+        opt = CustomAdam([point], lr=0.2)
+        
+    for _ in range(steps):
+        opt.zero_grad()
+        loss = loss_fn(point[0], point[1])
+        loss.backward()
+        opt.step()
+        history.append(point.detach().numpy().copy())
+    return np.array(history)
+
+# Run simulations
+optimizers = ["SGD", "SGD+Momentum", "RMSprop", "Custom Adam"]
+colors = ['red', 'purple', 'green', 'blue']
