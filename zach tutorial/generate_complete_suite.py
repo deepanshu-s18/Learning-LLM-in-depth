@@ -338,3 +338,41 @@ def build_03_adam():
 ---"""))
 
     cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import torch
+import numpy as np
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "adam.md")
+
+    cells.append(md("""## **Interactive Playground: SGD vs Momentum vs RMSprop vs Adam on a Ravine Surface**
+Let's build custom optimizers from scratch and compare their trajectories navigating an elongated ravine (an ill-conditioned quadratic surface $f(x, y) = 0.1 x^2 + 2.0 y^2$)."""))
+
+    cells.append(code("""# Custom implementation of Adam from scratch
+class CustomAdam:
+    def __init__(self, params, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8):
+        self.params = list(params)
+        self.lr = lr
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.eps = eps
+        self.t = 0
+        self.m = [torch.zeros_like(p) for p in self.params]
+        self.v = [torch.zeros_like(p) for p in self.params]
+
+    def step(self):
+        self.t += 1
+        with torch.no_grad():
+            for i, p in enumerate(self.params):
+                if p.grad is None:
+                    continue
+                g = p.grad
+                # 1. First Moment (Momentum)
+                self.m[i] = self.beta1 * self.m[i] + (1 - self.beta1) * g
+                # 2. Second Moment (RMSprop)
+                self.v[i] = self.beta2 * self.v[i] + (1 - self.beta2) * (g ** 2)
+                # 3. Bias Correction
