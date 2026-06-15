@@ -565,3 +565,41 @@ class MLP(nn.Module):
     def __init__(self, d_model=64, dropout=0.1):
         super().__init__()
         self.c_fc = nn.Linear(d_model, 4 * d_model)
+        self.c_proj = nn.Linear(4 * d_model, d_model)
+        self.drop = nn.Dropout(dropout)
+    def forward(self, x):
+        return self.drop(self.c_proj(F.gelu(self.c_fc(x))))
+
+class Block(nn.Module):
+    def __init__(self, d_model=64, n_head=4, block_size=64, dropout=0.1):
+        super().__init__()
+        self.ln_1 = nn.LayerNorm(d_model)
+        self.attn = CausalSelfAttention(d_model, n_head, block_size, dropout)
+        self.ln_2 = nn.LayerNorm(d_model)
+        self.mlp = MLP(d_model, dropout)
+    def forward(self, x):
+        x = x + self.attn(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
+        return x
+
+class MiniGPT(nn.Module):
+    def __init__(self, vocab_size=65, d_model=64, n_layer=2, n_head=4, block_size=64):
+        super().__init__()
+        self.block_size = block_size
+        self.wte = nn.Embedding(vocab_size, d_model)
+        self.wpe = nn.Embedding(block_size, d_model)
+        self.blocks = nn.ModuleList([Block(d_model, n_head, block_size) for _ in range(n_layer)])
+        self.ln_f = nn.LayerNorm(d_model)
+        self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
+        self.lm_head.weight = self.wte.weight
+
+    def forward(self, idx, targets=None):
+        B, T = idx.size()
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device).unsqueeze(0)
+        x = self.wte(idx) + self.wpe(pos)
+        for block in self.blocks:
+            x = block(x)
+        x = self.ln_f(x)
+        logits = self.lm_head(x)
+        
+        loss = None
