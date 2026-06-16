@@ -754,3 +754,41 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 
 torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "rope.md")
+
+    cells.append(md("""## **Interactive Playground: Verifying RoPE Relative Distance Invariance**"""))
+    cells.append(code("""# Precompute RoPE frequencies & apply rotation
+def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
+    freqs = 1.0 / (theta ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim))
+    t = torch.arange(end, device=freqs.device)
+    freqs = torch.outer(t, freqs).float()
+    freqs_cis = torch.polar(torch.ones_like(freqs), freqs)  # complex e^(i*m*theta)
+    return freqs_cis
+
+def apply_rotary_emb(xq, xk, freqs_cis):
+    xq_ = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2))
+    xk_ = torch.view_as_complex(xk.float().reshape(*xk.shape[:-1], -1, 2))
+    freqs_cis = freqs_cis[:xq_.shape[1], :]
+    xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(-2)
+    xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(-2)
+    return xq_out.type_as(xq), xk_out.type_as(xk)
+
+dim = 64
+max_seq_len = 100
+freqs_cis = precompute_freqs_cis(dim, max_seq_len)
+
+# Create identical vectors at different token positions m and n
+v = torch.randn(1, 1, dim)
+q_m = v.expand(1, max_seq_len, dim)
+k_n = v.expand(1, max_seq_len, dim)
+
+q_rot, k_rot = apply_rotary_emb(q_m, k_n, freqs_cis)
+
+# Compute attention score between position 0 and all positions d = 0..99
+scores = (q_rot[:, [0], :] @ k_rot.transpose(-2, -1)).squeeze().detach().numpy()
+
+plt.figure(figsize=(9, 4))
+plt.plot(range(max_seq_len), scores, color='indigo', lw=2)
+plt.title("RoPE Attention Score vs Relative Token Distance (m - n)")
