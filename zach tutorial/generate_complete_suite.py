@@ -830,3 +830,41 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     cells.append(md("""## **Interactive Playground: Next-Token Pretraining & Perplexity Tracking**"""))
     cells.append(code("""# Mini Language Model for Pre-training Demonstration
+class TinyLM(nn.Module):
+    def __init__(self, vocab_size=50, d_model=32, seq_len=16):
+        super().__init__()
+        self.emb = nn.Embedding(vocab_size, d_model)
+        self.gru = nn.GRU(d_model, d_model, batch_first=True)
+        self.head = nn.Linear(d_model, vocab_size)
+
+    def forward(self, idx):
+        x = self.emb(idx)
+        out, _ = self.gru(x)
+        logits = self.head(out)
+        return logits
+
+# Synthetic pre-training tokens sequence
+vocab_size = 50
+seq_len = 16
+batch_size = 16
+
+data = torch.randint(0, vocab_size, (100, seq_len)).to(device)
+model = TinyLM(vocab_size=vocab_size).to(device)
+optimizer = torch.optim.AdamW(model.parameters(), lr=0.01)
+
+loss_history = []
+ppl_history = []
+
+for epoch in range(100):
+    for batch in data.split(batch_size):
+        # Autoregressive shifting: x is tokens 0..T-1, y is tokens 1..T
+        x_in = batch[:, :-1]
+        y_tgt = batch[:, 1:]
+        
+        logits = model(x_in)
+        loss = F.cross_entropy(logits.view(-1, vocab_size), y_tgt.contiguous().view(-1))
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
