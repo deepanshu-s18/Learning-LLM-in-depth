@@ -792,3 +792,41 @@ scores = (q_rot[:, [0], :] @ k_rot.transpose(-2, -1)).squeeze().detach().numpy()
 plt.figure(figsize=(9, 4))
 plt.plot(range(max_seq_len), scores, color='indigo', lw=2)
 plt.title("RoPE Attention Score vs Relative Token Distance (m - n)")
+plt.xlabel("Relative Token Distance (Tokens Apart)")
+plt.ylabel("Query-Key Dot Product")
+plt.grid(True, alpha=0.3)
+plt.show()
+"""))
+    save_nb(make_nb(cells, "07_Rotary_Positional_Encoding_RoPE"), "07_Rotary_Positional_Encoding_RoPE")
+
+# ----------------------------------------------------------------------
+# 8. 08_LLM_Pretraining_From_Scratch.ipynb
+# ----------------------------------------------------------------------
+def build_08_pretrain():
+    cells = []
+    cells.append(md("""# 08. LLM Pre-Training: The Foundation of Large Models
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/08_LLM_Pretraining_From_Scratch.ipynb)
+
+> **Tutorial Overview**: Understand self-supervised next-token prediction, tokenization pipelines, causal masking, cross-entropy loss, perplexity, and the full training loop with learning rate scheduling.
+> **Original Source**: `pretrain.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+"""))
+
+    process_and_add_blocks(cells, "pretrain.md")
+
+    cells.append(md("""## **Interactive Playground: Next-Token Pretraining & Perplexity Tracking**"""))
+    cells.append(code("""# Mini Language Model for Pre-training Demonstration
