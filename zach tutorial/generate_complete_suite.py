@@ -906,3 +906,40 @@ def build_09_sft():
 !pip install -q torch matplotlib numpy
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "sft.md")
+
+    cells.append(md("""## **Interactive Playground: SFT Loss Masking Visualizer**"""))
+    cells.append(code("""# SFT Loss Masking Example
+def prepare_sft_sample(instruction_tokens, response_tokens):
+    # Full input is prompt + response
+    input_ids = instruction_tokens + response_tokens
+    # Mask instruction tokens with -100 so CrossEntropy ignores them
+    labels = [-100] * len(instruction_tokens) + response_tokens
+    return torch.tensor([input_ids]), torch.tensor([labels])
+
+inst = [101, 2054, 2003, 1037, 2182] # "What is a cat?"
+resp = [1037, 2182, 2003, 1037, 2833] # "A cat is an animal"
+
+inputs, targets = prepare_sft_sample(inst, resp)
+
+print("Full Input IDs:", inputs.tolist()[0])
+print("Target Labels (with -100 masking):", targets.tolist()[0])
+
+# Simulate cross-entropy computation with ignore_index=-100
+vocab_size = 5000
+logits = torch.randn(1, inputs.shape[1], vocab_size, requires_grad=True)
+
+# Notice how ignore_index skips all -100 tokens automatically!
+loss = F.cross_entropy(logits.view(-1, vocab_size), targets.view(-1), ignore_index=-100)
+print(f"Computed Loss over Assistant tokens only: {loss.item():.4f}")
+"""))
+    save_nb(make_nb(cells, "09_Supervised_Fine_Tuning_SFT"), "09_Supervised_Fine_Tuning_SFT")
+
+# ----------------------------------------------------------------------
+# 10. 10_LoRA_Low_Rank_Adaptation.ipynb
