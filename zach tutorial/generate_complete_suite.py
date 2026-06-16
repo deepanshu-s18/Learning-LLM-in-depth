@@ -716,3 +716,41 @@ for step in range(1, steps + 1):
     new_token = torch.randn(1, 1, 128).to(device)
     t0 = time.perf_counter()
     _, kv_cache = attn(new_token, kv_cache=kv_cache)
+    cached_times.append(time.perf_counter() - t0)
+
+# Plot comparison
+plt.figure(figsize=(9, 5))
+plt.plot(range(1, steps + 1), [t * 1000 for t in naive_times], label='Naive (O(N^2) Recomputation)', color='crimson', lw=2)
+plt.plot(range(1, steps + 1), [t * 1000 for t in cached_times], label='KV-Cached (O(1) Step Latency)', color='teal', lw=2)
+plt.xlabel("Generation Step (Sequence Length)")
+plt.ylabel("Step Time (ms)")
+plt.title("Latency per Generated Token: Naive vs KV-Cache")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+"""))
+    save_nb(make_nb(cells, "06_KV_Cache_Optimization"), "06_KV_Cache_Optimization")
+
+# ----------------------------------------------------------------------
+# 7. 07_Rotary_Positional_Encoding_RoPE.ipynb
+# ----------------------------------------------------------------------
+def build_07_rope():
+    cells = []
+    cells.append(md("""# 07. Rotary Positional Encoding (RoPE): Math & Implementation
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/07_Rotary_Positional_Encoding_RoPE.ipynb)
+
+> **Tutorial Overview**: Master Rotary Positional Embeddings (RoPE) used in LLaMA, Mistral, and DeepSeek. Learn how 2D complex rotations inject relative positional awareness into self-attention.
+> **Original Source**: `rope.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import math
+import torch
+import torch.nn as nn
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
