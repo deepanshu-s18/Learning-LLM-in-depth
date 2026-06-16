@@ -868,3 +868,41 @@ for epoch in range(100):
         loss.backward()
         optimizer.step()
         
+    loss_val = loss.item()
+    loss_history.append(loss_val)
+    ppl_history.append(math.exp(min(loss_val, 20)))
+
+# Plot Loss & Perplexity
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+axes[0].plot(loss_history, color='tab:blue', lw=2)
+axes[0].set_title("Pre-Training Cross-Entropy Loss")
+axes[0].set_xlabel("Epoch")
+axes[0].grid(True, alpha=0.3)
+
+axes[1].plot(ppl_history, color='tab:green', lw=2)
+axes[1].set_title("Language Model Perplexity (PPL)")
+axes[1].set_xlabel("Epoch")
+axes[1].grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+"""))
+    save_nb(make_nb(cells, "08_LLM_Pretraining_From_Scratch"), "08_LLM_Pretraining_From_Scratch")
+
+# ----------------------------------------------------------------------
+# 9. 09_Supervised_Fine_Tuning_SFT.ipynb
+# ----------------------------------------------------------------------
+def build_09_sft():
+    cells = []
+    cells.append(md("""# 09. Supervised Fine-Tuning (SFT): Transforming Base Models into Assistants
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/09_Supervised_Fine_Tuning_SFT.ipynb)
+
+> **Tutorial Overview**: Learn how Supervised Fine-Tuning turns text completion engines into conversational assistants. Understand prompt formatting, conversational token templates, and loss masking with `label = -100`.
+> **Original Source**: `sft.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import torch
