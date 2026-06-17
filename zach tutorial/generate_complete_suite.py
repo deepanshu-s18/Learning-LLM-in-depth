@@ -1057,3 +1057,41 @@ def quantize_asymmetric_int8(x: torch.Tensor):
 def dequantize(q_x: torch.Tensor, scale: float, zero_point: int):
     return (q_x.float() - zero_point) * scale
 
+# Test with Gaussian weights
+weights_fp32 = torch.randn(1000) * 2.5
+weights_int8, s, z = quantize_asymmetric_int8(weights_fp32)
+weights_rec = dequantize(weights_int8, s, z)
+
+mse = torch.mean((weights_fp32 - weights_rec)**2).item()
+snr = 10 * torch.log10(torch.mean(weights_fp32**2) / torch.mean((weights_fp32 - weights_rec)**2)).item()
+
+print(f"Scale: {s:.6f}, Zero-Point: {z}")
+print(f"Mean Squared Error (MSE): {mse:.6f}")
+print(f"Signal-to-Noise Ratio (SNR): {snr:.2f} dB (High quality reconstruction!)")
+
+# Plot distribution
+plt.figure(figsize=(10, 4))
+plt.hist(weights_fp32.numpy(), bins=50, alpha=0.6, label='Original FP32', color='blue')
+plt.hist(weights_rec.numpy(), bins=50, alpha=0.6, label='Dequantized from INT8', color='orange')
+plt.title("FP32 vs Dequantized INT8 Weights Distribution")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+"""))
+    save_nb(make_nb(cells, "11_LLM_Quantization_INT8_INT4"), "11_LLM_Quantization_INT8_INT4")
+
+# ----------------------------------------------------------------------
+# 12. 12_RLHF_and_PPO_Alignment.ipynb
+# ----------------------------------------------------------------------
+def build_12_rlhf():
+    cells = []
+    cells.append(md("""# 12. RLHF + PPO: Aligning LLMs with Human Preferences
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/12_RLHF_and_PPO_Alignment.ipynb)
+
+> **Tutorial Overview**: The mathematics behind ChatGPT alignment. Learn how Bradley-Terry reward models score completions and how Proximal Policy Optimization (PPO) fine-tunes the policy with a KL divergence anchor.
+> **Original Source**: `rlhf.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
