@@ -1019,3 +1019,41 @@ print(f"Parameter Reduction: {100.0 * (1 - trainable_lora_params / orig_params):
 # 11. 11_LLM_Quantization_INT8_INT4.ipynb
 # ----------------------------------------------------------------------
 def build_11_quantization():
+    cells = []
+    cells.append(md("""# 11. LLM Quantization: FP32 to INT8 & INT4
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/11_LLM_Quantization_INT8_INT4.ipynb)
+
+> **Tutorial Overview**: Decode how model compression works through linear quantization. Implement scale and zero-point calibration, symmetric vs asymmetric mapping, and evaluate quantization error SNR/MSE.
+> **Original Source**: `quantization.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import torch
+import numpy as np
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "quantization.md")
+
+    cells.append(md("""## **Interactive Playground: Asymmetric INT8 Quantizer & Signal-to-Noise Ratio (SNR)**"""))
+    cells.append(code("""# Full Quantize and Dequantize implementation
+def quantize_asymmetric_int8(x: torch.Tensor):
+    qmin, qmax = -128, 127
+    rmin, rmax = x.min().item(), x.max().item()
+    
+    scale = (rmax - rmin) / (qmax - qmin)
+    zero_point = round(-rmin / scale) + qmin
+    zero_point = max(qmin, min(qmax, zero_point))
+    
+    q_x = torch.clamp(torch.round(x / scale) + zero_point, qmin, qmax).to(torch.int8)
+    return q_x, scale, zero_point
+
+def dequantize(q_x: torch.Tensor, scale: float, zero_point: int):
+    return (q_x.float() - zero_point) * scale
+
