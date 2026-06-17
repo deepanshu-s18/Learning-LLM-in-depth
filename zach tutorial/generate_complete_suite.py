@@ -943,3 +943,41 @@ print(f"Computed Loss over Assistant tokens only: {loss.item():.4f}")
 
 # ----------------------------------------------------------------------
 # 10. 10_LoRA_Low_Rank_Adaptation.ipynb
+# ----------------------------------------------------------------------
+def build_10_lora():
+    cells = []
+    cells.append(md("""# 10. LoRA: Low-Rank Adaptation for LLMs From Scratch
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/10_LoRA_Low_Rank_Adaptation.ipynb)
+
+> **Tutorial Overview**: Master Parameter-Efficient Fine-Tuning (PEFT) with LoRA. Learn the intrinsic rank hypothesis, implement `LoRALinear`, freeze base weights, train $<1\\%$ of parameters, and merge weights for inference.
+> **Original Source**: `lora.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "lora.md")
+
+    cells.append(md("""## **Interactive Playground: LoRA Parameter Savings & Weight Merging**"""))
+    cells.append(code("""# Complete LoRALinear module with merge/unmerge functionality
+class LoRALinear(nn.Module):
+    def __init__(self, base_layer: nn.Linear, r: int = 4, alpha: float = 16.0):
+        super().__init__()
+        self.base = base_layer
+        self.r = r
+        self.alpha = alpha
+        self.scaling = alpha / r
+        self.merged = False
+        
+        # Freeze base parameters
+        self.base.weight.requires_grad_(False)
