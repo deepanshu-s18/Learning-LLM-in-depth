@@ -981,3 +981,41 @@ class LoRALinear(nn.Module):
         
         # Freeze base parameters
         self.base.weight.requires_grad_(False)
+        if self.base.bias is not None:
+            self.base.bias.requires_grad_(False)
+            
+        # Low-rank adapter matrices
+        self.lora_A = nn.Parameter(torch.empty(r, base_layer.in_features))
+        self.lora_B = nn.Parameter(torch.zeros(base_layer.out_features, r))
+        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
+
+    def forward(self, x):
+        if self.merged:
+            return self.base(x)
+        # base(x) + (x @ A^T @ B^T) * scaling
+        return self.base(x) + (F.linear(F.linear(x, self.lora_A), self.lora_B) * self.scaling)
+
+    def merge(self):
+        if not self.merged:
+            # W_merged = W_0 + scaling * (B @ A)
+            self.base.weight.data += (self.lora_B @ self.lora_A) * self.scaling
+            self.merged = True
+
+# Test parameter comparison
+d_in, d_out, r = 4096, 4096, 8
+base_linear = nn.Linear(d_in, d_out)
+lora_layer = LoRALinear(base_linear, r=r)
+
+orig_params = d_in * d_out
+trainable_lora_params = (d_in * r) + (d_out * r)
+
+print(f"Original Linear Parameters: {orig_params:,}")
+print(f"Trainable LoRA Parameters (rank={r}): {trainable_lora_params:,}")
+print(f"Parameter Reduction: {100.0 * (1 - trainable_lora_params / orig_params):.2f}% memory saved!")
+"""))
+    save_nb(make_nb(cells, "10_LoRA_Low_Rank_Adaptation"), "10_LoRA_Low_Rank_Adaptation")
+
+# ----------------------------------------------------------------------
+# 11. 11_LLM_Quantization_INT8_INT4.ipynb
+# ----------------------------------------------------------------------
+def build_11_quantization():
