@@ -1133,3 +1133,40 @@ plt.plot(ratios, ppo_objective, label='PPO Clipped Objective (min(r*A, clip(r)*A
 plt.axvline(1.0 - eps, color='red', linestyle=':', label='Clip Boundaries [1-eps, 1+eps]')
 plt.axvline(1.0 + eps, color='red', linestyle=':')
 plt.title("PPO Clipped Surrogate Objective (Advantage > 0)")
+plt.xlabel("Probability Ratio r(theta)")
+plt.ylabel("Surrogate Value")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+"""))
+    save_nb(make_nb(cells, "12_RLHF_and_PPO_Alignment"), "12_RLHF_and_PPO_Alignment")
+
+# ----------------------------------------------------------------------
+# 13. 13_Direct_Preference_Optimization_DPO.ipynb
+# ----------------------------------------------------------------------
+def build_13_dpo():
+    cells = []
+    cells.append(md("""# 13. Direct Preference Optimization (DPO): Direct Alignment
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/13_Direct_Preference_Optimization_DPO.ipynb)
+
+> **Tutorial Overview**: Master Direct Preference Optimization (DPO). Learn how DPO mathematically eliminates the separate reward model and unstable RL loop, directly optimizing LLM policy probabilities on pairwise human preferences.
+> **Original Source**: `dpo.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "dpo.md")
+
+    cells.append(md("""## **Interactive Playground: DPO Loss Function & Implicit Reward Margin**"""))
+    cells.append(code("""# Complete DPO Loss Implementation
