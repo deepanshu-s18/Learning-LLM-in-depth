@@ -1170,3 +1170,41 @@ torch.manual_seed(42)
 
     cells.append(md("""## **Interactive Playground: DPO Loss Function & Implicit Reward Margin**"""))
     cells.append(code("""# Complete DPO Loss Implementation
+class DPOTrainer:
+    def __init__(self, beta=0.1):
+        self.beta = beta
+        
+    def loss(self, pi_logps_win, pi_logps_lose, ref_logps_win, ref_logps_lose):
+        # Log ratio differences
+        pi_logratios = pi_logps_win - pi_logps_lose
+        ref_logratios = ref_logps_win - ref_logps_lose
+        
+        logits = self.beta * (pi_logratios - ref_logratios)
+        loss = -F.logsigmoid(logits).mean()
+        
+        # Implicit rewards
+        r_win = self.beta * (pi_logps_win - ref_logps_win).detach()
+        r_lose = self.beta * (pi_logps_lose - ref_logps_lose).detach()
+        return loss, r_win, r_lose
+
+dpo = DPOTrainer(beta=0.1)
+
+# Simulating log probabilities for batch of 3 pairs
+pi_w = torch.tensor([-1.2, -0.8, -1.5])
+pi_l = torch.tensor([-2.5, -2.1, -3.0])
+ref_w = torch.tensor([-1.8, -1.2, -2.0])
+ref_l = torch.tensor([-1.9, -1.5, -2.1])
+
+loss, r_win, r_lose = dpo.loss(pi_w, pi_l, ref_w, ref_l)
+
+print(f"DPO Loss: {loss.item():.4f}")
+print("Implicit Won Rewards:", r_win.numpy())
+print("Implicit Lost Rewards:", r_lose.numpy())
+print("Reward Margins (Won - Lost):", (r_win - r_lose).numpy())
+"""))
+    save_nb(make_nb(cells, "13_Direct_Preference_Optimization_DPO"), "13_Direct_Preference_Optimization_DPO")
+
+# ----------------------------------------------------------------------
+# 14. 14_Diffusion_Models_From_Scratch.ipynb
+# ----------------------------------------------------------------------
+def build_14_diffusion():
