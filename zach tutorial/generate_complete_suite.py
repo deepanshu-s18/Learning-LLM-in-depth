@@ -1208,3 +1208,41 @@ print("Reward Margins (Won - Lost):", (r_win - r_lose).numpy())
 # 14. 14_Diffusion_Models_From_Scratch.ipynb
 # ----------------------------------------------------------------------
 def build_14_diffusion():
+    cells = []
+    cells.append(md("""# 14. Diffusion Models From Scratch (DDPM)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/14_Diffusion_Models_From_Scratch.ipynb)
+
+> **Tutorial Overview**: Build a complete Denoising Diffusion Probabilistic Model (DDPM) from scratch. Master the forward Gaussian noise schedule ($\\beta_t, \\alpha_t, \\bar{\\alpha}_t$), time embeddings, and reverse denoising loops.
+> **Original Source**: `diffusion.md`
+
+---"""))
+
+    cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import math
+import torch
+import torch.nn as nn
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+"""))
+
+    process_and_add_blocks(cells, "diffusion.md")
+
+    cells.append(md("""## **Interactive Playground: 2D Toy Diffusion Model & Step-by-Step Denoising**"""))
+    cells.append(code("""# Complete DDPM Noise Schedule & Forward/Reverse Sampling
+class DiffusionSchedule:
+    def __init__(self, T=100, beta_start=1e-4, beta_end=0.02):
+        self.T = T
+        self.betas = torch.linspace(beta_start, beta_end, T)
+        self.alphas = 1.0 - self.betas
+        self.alphas_bar = torch.cumprod(self.alphas, dim=0)
+
+    def q_sample(self, x0, t, noise=None):
+        if noise is None:
+            noise = torch.randn_like(x0)
+        a_bar = self.alphas_bar[t].view(-1, 1)
+        return torch.sqrt(a_bar) * x0 + torch.sqrt(1.0 - a_bar) * noise, noise
