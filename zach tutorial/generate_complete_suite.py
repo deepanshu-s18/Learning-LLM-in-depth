@@ -1095,3 +1095,41 @@ def build_12_rlhf():
 ---"""))
 
     cells.append(code("""# Setup & Imports
+!pip install -q torch matplotlib numpy
+
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+
+torch.manual_seed(42)
+"""))
+
+    process_and_add_blocks(cells, "rlhf.md")
+
+    cells.append(md("""## **Interactive Playground: Bradley-Terry Reward Loss & PPO Clipping Objective**"""))
+    cells.append(code("""# 1. Bradley-Terry Preference Loss
+def bradley_terry_reward_loss(r_chosen, r_rejected):
+    return -torch.mean(F.logsigmoid(r_chosen - r_rejected))
+
+r_win = torch.tensor([2.5, 1.8, 3.2])
+r_lose = torch.tensor([0.2, -0.5, 1.1])
+loss = bradley_terry_reward_loss(r_win, r_lose)
+print(f"Reward Model Loss: {loss.item():.4f}")
+
+# 2. PPO Clipped Surrogate Loss Curve
+ratios = np.linspace(0.5, 1.5, 100)
+advantage = 1.0
+eps = 0.2
+
+unclipped = ratios * advantage
+clipped = np.clip(ratios, 1.0 - eps, 1.0 + eps) * advantage
+ppo_objective = np.minimum(unclipped, clipped)
+
+plt.figure(figsize=(8, 5))
+plt.plot(ratios, unclipped, '--', label='Unclipped Objective (r * A)', color='gray')
+plt.plot(ratios, ppo_objective, label='PPO Clipped Objective (min(r*A, clip(r)*A))', color='teal', lw=3)
+plt.axvline(1.0 - eps, color='red', linestyle=':', label='Clip Boundaries [1-eps, 1+eps]')
+plt.axvline(1.0 + eps, color='red', linestyle=':')
+plt.title("PPO Clipped Surrogate Objective (Advantage > 0)")
