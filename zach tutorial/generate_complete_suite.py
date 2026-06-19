@@ -1284,3 +1284,41 @@ Every notebook is designed to be **100% self-contained**, runnable with a single
 
 ---
 
+## **Curriculum & Suggested Learning Roadmap**
+
+### **Phase 1: Foundations of Deep Learning & PyTorch**
+1. [01_Neural_Networks_From_Scratch.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/01_Neural_Networks_From_Scratch.ipynb)
+   * *Core Topics*: Perceptrons, Forward Pass, Chain Rule, Backpropagation, Non-linear Decision Boundaries in pure NumPy.
+2. [02_PyTorch_Deep_Dive.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/02_PyTorch_Deep_Dive.ipynb)
+   * *Core Topics*: Tensors, Autograd, `nn.Module`, Loss functions, Optimizers, Production Training Loop.
+3. [03_Adam_Optimizer_Demystified.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/03_Adam_Optimizer_Demystified.ipynb)
+   * *Core Topics*: SGD, Momentum, RMSprop, Bias Correction, Custom Adam Optimizer, 2D Ravine Trajectory contours.
+
+### **Phase 2: The Core Transformer Architecture**
+4. [04_Attention_Mechanism_Step_by_Step.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/04_Attention_Mechanism_Step_by_Step.ipynb)
+   * *Core Topics*: $Q, K, V$ Matrices, Softmax Scaling Factor $\\sqrt{d_k}$, Multi-Head Attention, Alignment Heatmaps.
+5. [05_Transformer_From_Scratch.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/05_Transformer_From_Scratch.ipynb)
+   * *Core Topics*: Complete GPT-2 Model, Positional Embeddings, Pre-LN Blocks, Autoregressive Text Generation.
+6. [06_KV_Cache_Optimization.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/06_KV_Cache_Optimization.ipynb)
+   * *Core Topics*: Autoregressive Decoding Bottleneck, $O(N^2)$ vs $O(1)$ Step Latency, KV Cache Implementation & Benchmarks.
+7. [07_Rotary_Positional_Encoding_RoPE.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/07_Rotary_Positional_Encoding_RoPE.ipynb)
+   * *Core Topics*: 2D Complex Rotation Matrix, High-dimensional RoPE, Relative Distance Invariance.
+
+### **Phase 3: Training, Fine-Tuning & Quantization**
+8. [08_LLM_Pretraining_From_Scratch.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/08_LLM_Pretraining_From_Scratch.ipynb)
+   * *Core Topics*: Self-supervised Pretraining, Tokenization, Next-token Cross-Entropy Loss, Perplexity (PPL).
+9. [09_Supervised_Fine_Tuning_SFT.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/09_Supervised_Fine_Tuning_SFT.ipynb)
+   * *Core Topics*: Chat Templates, Instruction Tuning, Prompt-Response Loss Masking (`label = -100`).
+10. [10_LoRA_Low_Rank_Adaptation.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/10_LoRA_Low_Rank_Adaptation.ipynb)
+    * *Core Topics*: PEFT, Low-Rank Decomposition $W + \\frac{\\alpha}{r}BA$, Parameter Efficiency, Zero-Overhead Weight Merging.
+11. [11_LLM_Quantization_INT8_INT4.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/11_LLM_Quantization_INT8_INT4.ipynb)
+    * *Core Topics*: INT8/INT4 Numerical Precision, Scale & Zero-Point Mapping, Symmetric vs Asymmetric, Quantized Linear Layer.
+
+### **Phase 4: Alignment & Generative Diffusion**
+12. [12_RLHF_and_PPO_Alignment.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/12_RLHF_and_PPO_Alignment.ipynb)
+    * *Core Topics*: 3-Step Alignment Pipeline, Bradley-Terry Reward Modeling, PPO Clipped Surrogate Loss, KL Penalty.
+13. [13_Direct_Preference_Optimization_DPO.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/13_Direct_Preference_Optimization_DPO.ipynb)
+    * *Core Topics*: Closed-form Policy derivation, DPO Loss Function, Eliminating the Reward Model & RL instability.
+14. [14_Diffusion_Models_From_Scratch.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/14_Diffusion_Models_From_Scratch.ipynb)
+    * *Core Topics*: DDPM Forward Gaussian Noise Schedule, Noise Prediction UNet, Reverse Denoising Sampling.
+
