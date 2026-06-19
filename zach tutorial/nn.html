@@ -1449,3 +1449,1455 @@ y_pred = w3*h1 + w4*h2 + w5
                     <td style="border: 1px solid #666; padding: 6px;">2×3×2 = 12</td>
                     <td style="border: 1px solid #666; padding: 6px;">1×25+1×12+0 = 37</td>
                     <td style="border: 1px solid #666; padding: 6px; color: #ff6b6b;">37-24 = 13</td>
+                </tr>
+                <tr class="fragment fade-in">
+                    <td style="border: 1px solid #666; padding: 6px;">(1, 4)</td>
+                    <td style="border: 1px solid #666; padding: 6px;">14</td>
+                    <td style="border: 1px solid #666; padding: 6px;">(1+1×4)² = 5² = 25</td>
+                    <td style="border: 1px solid #666; padding: 6px;">2×1×4 = 8</td>
+                    <td style="border: 1px solid #666; padding: 6px;">1×25+1×8+0 = 33</td>
+                    <td style="border: 1px solid #666; padding: 6px; color: #ff6b6b;">33-14 = 19</td>
+                </tr>
+                <tr class="fragment fade-in">
+                    <td style="border: 1px solid #666; padding: 6px;">(2, 1)</td>
+                    <td style="border: 1px solid #666; padding: 6px;">11</td>
+                    <td style="border: 1px solid #666; padding: 6px;">(2+1×1)² = 3² = 9</td>
+                    <td style="border: 1px solid #666; padding: 6px;">2×2×1 = 4</td>
+                    <td style="border: 1px solid #666; padding: 6px;">1×9+1×4+0 = 13</td>
+                    <td style="border: 1px solid #666; padding: 6px; color: #ff6b6b;">13-11 = 2</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Because this slide is a simple, emotional reaction to the poor results, it's a POWER TEXT slide. Text analysis: "Ouch. Not great." (16 characters) is short and relatable. The second line, "...off by a massive 19 points," highlights the worst error for emphasis, validating the negative reaction. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">Ouch. Not great.</h1>
+    <h2 class="fragment fade-in r-fit-text">For the second example, it was off by a <span style="color: #ff6b6b;">massive 19 points.</span></h2>
+</section>
+
+<!-- Because this slide transitions to the need for a single error metric, it's a POWER TEXT slide. Text analysis: "But how do we quantify this failure?" (36 characters) poses the next logical question. The second line, "...We need a single number that tells us how wrong our network is," clarifies the goal, setting up the introduction of the loss function. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">But how do we quantify this failure?</h1>
+    <h2 class="fragment fade-in r-fit-text">We need a <mark>single number</mark> that tells us, overall, how wrong our network is.</h2>
+</section>
+
+<!-- Because this slide explains the problem with simply adding errors, it's a POWER TEXT slide. Text analysis: "We can't just add them up..." (26 characters) states the problem. The second line explains *why* with a clear example of errors canceling out, which is a critical insight for understanding why we need a better method. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">We can't just add them up...</h2>
+    <h1 class="fragment fade-in r-fit-text">...because a <code style="color: #ff6b6b;">-19</code> and a <code>+19</code> would cancel out, making it look <mark>perfect</mark> when it's terrible.</h1>
+</section>
+
+<!-- Because this slide reveals the key solution to the error quantification problem, it's a POWER TEXT slide. Text analysis: "The solution?" (13 characters) creates a pause for anticipation. The answer, "We SQUARE the differences," (25 characters) is revealed as a fragment for maximum impact. The word 'SQUARE' is highlighted in green to signal this is a positive, foundational technique. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">The solution?</h2>
+    <h1 class="fragment fade-in r-fit-text" style="color: #4CAF50;">We <mark>SQUARE</mark> the differences.</h1>
+</section>
+
+<!-- Because this slide explains the benefits of squaring errors, it's an EDUCATIONAL slide. It uses a simple two-column layout to clearly present the two main advantages. The slide provides concrete examples, showing how a small error of -2 becomes a small penalty of 4, while a large error of -19 becomes a huge penalty of 361. This makes the concept of punishing large errors very clear. -->
+<section data-transition="slide">
+    <h2 style="color: #4CAF50; text-align: center; margin-bottom: 60px;">Why Squaring Works:</h2>
+    <div style="display: flex; justify-content: space-between; gap: 50px; font-size: 1.4em; margin: 40px auto; width: 90%;">
+        <div style="background-color: #333; padding: 40px; border-radius: 15px; text-align: center; flex: 1;">
+            <h3 style="color: #4CAF50; margin-bottom: 30px;">1. Makes Every Error Positive</h3>
+            <p style="margin-bottom: 20px;">No more canceling out!</p>
+            <div class="fragment fade-in" style="background-color: #444; padding: 20px; border-radius: 10px; font-family: monospace; font-size: 1.2em;">
+                (-13)² = <strong style="color: #4CAF50;">169</strong>
+            </div>
+        </div>
+        <div style="background-color: #333; padding: 40px; border-radius: 15px; text-align: center; flex: 1;">
+            <h3 style="color: #ff6b6b; margin-bottom: 30px;">2. Punishes Big Mistakes</h3>
+            <p style="margin-bottom: 20px;">Huge penalties for large errors!</p>
+            <div class="fragment fade-in" style="background-color: #444; padding: 20px; border-radius: 10px; font-family: monospace; font-size: 1em;">
+                <p>Error 2 → Penalty <strong>4</strong></p>
+                <p>Error 19 → Penalty <strong style="color: #ff6b6b;">361</strong></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide walks through the final error calculation, it's a TECHNICAL slide. It clearly labels the calculation as the "Total Squared Error." The math is shown step-by-step, with each squared term displayed before the sum, making the process easy to follow. The final result is highlighted for emphasis. -->
+<section data-transition="fade">
+    <h2 style="font-size: 2em;">Let's calculate the <strong style="color: #4CAF50;">Total Squared Error</strong>.</h2>
+    <div style="font-size: 2em; margin-top: 40px;">
+        <p class="fragment fade-in">Error = (-13)² + (-19)² + (-2)²</p>
+        <p class="fragment fade-in">Error = 169 + 361 + 4</p>
+        <p class="fragment fade-in" style="margin-top: 30px; color: #ff6b6b; font-size: 1.5em;">Total Squared Error = 534</p>
+    </div>
+</section>
+
+<!-- Because this slide isolates the final error number and personifies it, it's a POWER TEXT slide. The original text is broken into two parts for dramatic effect. Text analysis: "There it is. 534." (15 characters) is a stark reveal. The second part, "...That is our antagonist. Our enemy," frames the rest of the presentation as a battle against this number, creating a strong narrative hook. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">There it is: <span style="color: #ff6b6b;">534</span></h2>
+    <h1 class="fragment fade-in r-fit-text">That is our antagonist. Our enemy.</h1>
+</section>
+
+<!-- Because this slide clearly states the goal for the rest of the presentation, it's a POWER TEXT slide. Text analysis: The text is broken down into a three-part reveal to build emphasis. "Our goal..." sets the stage. "...is to make this number..." focuses on the target. "...as close to zero as possible" delivers the final objective. This pacing makes the goal feel important and clear. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">Our goal for the rest of this video...</h2>
+    <h1 class="fragment fade-in r-fit-text">...is to make this number—534—</h1>
+    <h1 class="fragment fade-in r-fit-text" style="color: #4CAF50;">...as close to zero as possible.</h1>
+</section>
+
+<!-- Because this slide serves as a summary and transition, it's a POWER TEXT slide. Text analysis: "We've completed the Forward Pass." (31 characters) provides a clean summary of the chapter's achievement. The second line, "...Our network has made its first, terrible predictions," reinforces the current state before pivoting to the solution in the next chapter. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">We've completed the Forward Pass.</h1>
+    <h2 class="fragment fade-in r-fit-text">Our network has made its first, terrible predictions, and we've measured its failure.</h2>
+</section>
+
+<!-- Because this slide creates a strong cliffhanger for the next chapter, it's a POWER TEXT slide. Text analysis: "Now for the 'Aha!' moment." (26 characters) is a perfect hook. The second line lists the powerful tools they've already learned, building anticipation for how these tools will be unleashed on the problem they just defined. This creates a perfect transition into Chapter 6. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Now for the <span style="color: #4CAF50;">'Aha!' moment.</span></h1>
+    <h2 class="fragment fade-in r-fit-text">We're going to take all the tools we've learned</h2>
+    <h2 class="fragment fade-in r-fit-text">—Gradient Descent, Partial Derivatives, and the Chain Rule—</h2>
+    <h2 class="fragment fade-in r-fit-text">and unleash them on this network.</h2>
+</section>
+
+<!-- END CHAPTER 5 -->
+
+<!-- START CHAPTER 6 -->
+
+<!-- Because this slide opens the chapter by connecting back to a previously established core concept ("The Blame Game"), it's a POWER TEXT slide. Text analysis: The text recalls two key ideas from previous chapters ("Blame Game" and the nested function) to ground the audience before revealing the chapter's main insight. This serves as a quick, effective recap to set the stage. -->
+<section data-transition="slide">
+    <h2 class="r-fit-text">Remember the <mark>"Blame Game"</mark> with the <span style="color: #4CAF50;">Chain Rule</span>?</h2>
+    <h2 class="fragment fade-in r-fit-text">Tracing <span style="color: #ff6b6b;">responsibility</span> back through a <mark>complex chain</mark>?</h2>
+    <h2 class="fragment fade-in r-fit-text">And remember our <span style="color: #4CAF50;">complex nested function</span> from that section?</h2>
+</section>
+
+<!-- Because this slide displays a specific formula that is central to the upcoming analogy, it is a TECHNICAL slide. The LaTeX formula `f = ((2x1 + x2)² + 3x2²)³` is displayed prominently, reminding the audience of the specific kind of complex, nested structure they have already learned how to handle. This creates a direct point of comparison for the next slide's revelation. -->
+<section data-transition="fade">
+    <div style="font-size: 2.5em; text-align: center;">
+        \[ f = ((2x_1 + x_2)^2 + 3x_2^2)^3 \]
+    </div>
+</section>
+
+<!-- Because this slide delivers the single most important insight of the entire presentation, it is a POWER TEXT slide designed for maximum impact. Text analysis: The sentence "Here is the single most important insight of this entire video." (64 characters) is a perfect setup. It's a drumroll that builds anticipation for the core 'Aha!' moment. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Here is the single most important insight of this entire video.</h1>
+</section>
+
+<!-- Because this is the central "Aha!" moment, it's a POWER TEXT slide. Text analysis: "A Neural Network IS just a giant, nested function." (50 characters) is short, powerful, and perfectly suited for r-fit-text. The phrase 'giant, nested function' is highlighted in green to frame this as a positive, simplifying realization. This is the conceptual breakthrough the entire presentation has been building towards. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">A Neural Network <mark>IS</mark> just a <span style="color: #4CAF50;">giant, nested function.</span></h1>
+</section>
+
+<!-- Because this slide provides a direct, declarative statement of the core secret, it's a POWER TEXT slide. Text analysis: "That's it. That's the whole secret." (33 characters) - the brevity and confidence of this statement reinforce the simplicity of the core idea, demystifying the entire field for the audience. The slide serves to let the previous major insight sink in. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">That's it. That's the whole secret.</h1>
+</section>
+
+<!-- Because this slide presents a direct comparison between the two concepts (the abstract function and the AI brain), it's an EDUCATIONAL slide. It uses a two-column layout to draw clear parallels between the nested operations and layered operations. The question marks highlight the unknown variables in the AI brain, setting up the next key question. -->
+<section data-auto-animate data-transition="slide">
+    <h2 style="font-size: 2em; text-align: center;">Look at the comparison.</h2>
+    <table style="margin: 50px auto; font-size: 1.2em; border-collapse: collapse; width: 85%;">
+        <thead>
+            <tr>
+                <th style="border: 2px solid #666; padding: 15px; background-color: #444; color: #fff; width: 20%; text-align: center;"></th>
+                <th style="border: 2px solid #00bfff; padding: 15px; background-color: #333; color: #00bfff; width: 40%; text-align: center;">Math Functions</th>
+                <th style="border: 2px solid #4CAF50; padding: 15px; background-color: #333; color: #4CAF50; width: 40%; text-align: center;">Neural Networks</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #666; padding: 15px; background-color: #444; color: #fff; font-weight: bold; text-align: center;">Structure</td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; font-size: 0.85em;">
+                    Nested operations<br>
+                    <code style="font-size: 1.1em;">f(g(h(x)))</code>
+                </td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; font-size: 0.85em;">
+                    Layered operations<br>
+                    <code style="font-size: 1.1em;">Layer2(Layer1(inputs))</code>
+                </td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 15px; background-color: #444; color: #fff; font-weight: bold; text-align: center;">Variables</td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; font-size: 0.85em;">
+                    We control<br>
+                    <code style="font-size: 1.1em;">x1, x2</code>
+                </td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; font-size: 0.85em;" data-id="variables">
+                    We control<br>
+                    <strong style="color: #ff6b6b; font-size: 1.3em;">???</strong>
+                </td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 15px; background-color: #444; color: #fff; font-weight: bold; text-align: center;">Target</td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; font-size: 0.85em;">
+                    Minimize<br>
+                    <code style="font-size: 1.1em;">f(x1,x2)</code>
+                </td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; font-size: 0.85em;" data-id="goal">
+                    Minimize<br>
+                    <code style="font-size: 1.1em;">Error(<span style="color: #ff6b6b;">???</span>)</code>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Because this slide poses the most critical question of the chapter, it's a POWER TEXT slide. Text analysis: The question is broken into two parts for impact. The first line sets up the context of "knobs," and the second clarifies that we are looking for the "variables." This creates a clear, focused question that drives the next section of the presentation. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">This raises the <mark>most critical question</mark>:</h2>
+    <h1 class="fragment fade-in r-fit-text">What are the <span style="color: #ff6b6b;">"knobs"</span> we are allowed to tune in our neural network? What are the <span style="color: #4CAF50;">variables</span>?</h1>
+</section>
+
+<!-- Because this slide presents and immediately refutes a common misconception, it's a POWER TEXT slide designed for a dramatic two-beat reveal. Text analysis: First, it poses the plausible but incorrect answer, "Is it the inputs, x1 and x2?". The second part, a giant red "NO!", delivers a surprising and definitive refutation, forcing the audience to reconsider their assumptions. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">Is it the <mark>inputs</mark>, <code>x1</code> and <code>x2</code>?</h1>
+    <h1 class="fragment fade-in" style="font-size: 12em; color: #ff6b6b;">NO!</h1>
+</section>
+
+<!-- Because this slide explains *why* the inputs are not the variables, it's a POWER TEXT slide. Text analysis: "The inputs are the data we're given. We can't change the fact that we were given (x1=3, x2=2)." (96 characters) - this fits perfectly. This slide provides the logical reasoning for the previous "NO!", clarifying that the data is the problem, not the solution. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">The inputs are the <mark>data we're given</mark>.</h1>
+    <h2 class="r-fit-text fragment fade-in">We <span style="color: #ff6b6b;">can't change</span> the fact that we were given <code>(x1=3, x2=2)</code>.</h2>
+    <h2 class="r-fit-text fragment fade-in">That's the <span style="color: #4CAF50;">problem we have to solve</span>.</h2>
+</section>
+
+<!-- Because this slide reveals the true variables in a neural network, it's a POWER TEXT slide. Text analysis: "The ONLY things we have control over... are the weights." (60 characters). The word 'weights' is highlighted in green to signal that this is the correct, crucial answer. This is the second major 'Aha!' moment of the chapter. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">The ONLY things we have control over...</h2>
+    <h1 class="fragment fade-in r-fit-text">... are the <span style="color: #4CAF50;">weights</span>. `w1, w2, w3, w4, w5`.</h1>
+</section>
+
+<!-- Because this slide delivers the final breakthrough insight, it is a POWER TEXT slide. Text analysis: "This is the breakthrough." (24 characters) - short, definitive, and impactful. It serves as a declarative statement that solidifies the importance of the previous revelation about the weights. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">This is the breakthrough.</h1>
+</section>
+
+<!-- Because this slide updates the previous comparison table with the new, correct information, it's an EDUCATIONAL slide using data-auto-animate. The transition will smoothly update the '???' fields from the previous table with the correct answers (the weights). This provides a visually satisfying and clear resolution to the question posed earlier. -->
+<section data-auto-animate data-transition="slide">
+    <h2 style="font-size: 2em; text-align: center;">The <mark>Real</mark> Comparison</h2>
+    <div style="display: flex; justify-content: space-between; gap: 50px; font-size: 1.3em; margin: 50px auto; width: 90%;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 30px; border-radius: 15px; border: 2px solid #00bfff;">
+            <h2 style="color: #00bfff; margin-bottom: 30px;">Math Functions</h2>
+            <div style="font-size: 0.9em; line-height: 1.6;">
+                <p><strong>Variables we controlled:</strong><br><code style="color: #00bfff;">x1, x2</code></p>
+                <p style="margin-top: 25px;"><strong>Target:</strong> Minimize<br><code style="color: #00bfff;">f(x1, x2)</code></p>
+            </div>
+        </div>
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 30px; border-radius: 15px; border: 2px solid #4CAF50;">
+            <h2 style="color: #4CAF50; margin-bottom: 30px;">Neural Networks</h2>
+            <div style="font-size: 0.9em; line-height: 1.6;">
+                <p data-id="variables"><strong>Variables we control:</strong><br><code style="color: #4CAF50; font-weight: bold;">w1, w2, w3, w4, w5</code></p>
+                <p style="margin-top: 25px;" data-id="goal"><strong>Target:</strong> Minimize<br><code style="color: #4CAF50; font-weight: bold;">Error(w1, w2, w3, w4, w5)</code></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide makes the final connection between the problem (finding the best weights) and the solution (Gradient Descent), it's a POWER TEXT slide. It explicitly states that we are not finding the best inputs, but the best weights. This reinforces the core concept before moving on to the implementation. -->
+<section data-transition="slide">
+    <h2 class="r-fit-text">We're not trying to find the best inputs.</h2>
+    <h1 class="r-fit-text">We're trying to find the best <mark>weights</mark> that turn the inputs into the correct outputs.</h1>
+</section>
+
+<!-- Because this slide connects the current problem back to all the tools learned so far, it's a POWER TEXT slide. Text analysis: "We already know exactly how to do this!" (39 characters) is a confident, empowering statement. It reassures the audience that they are fully equipped to solve this seemingly complex problem, leveraging knowledge they already possess. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">We already know <mark>exactly</mark> how to do this!</h1>
+    <h2 class="fragment fade-in r-fit-text">We use <span style="color: #4CAF50;">Gradient Descent</span> to find the values of our variables...</h2>
+    <h2 class="fragment fade-in r-fit-text">...that minimize a function's output.</h2>
+    <h2 class="fragment fade-in r-fit-text">The process is <mark>identical</mark>.</h2>
+</section>
+
+<!-- Because this slide sets up the main technical walkthrough, it's a POWER TEXT slide that re-introduces the "Blame Game" analogy. It focuses the audience on a single, concrete example (the first terrible prediction from Chapter 5) to make the upcoming calculations tangible and purposeful. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">It's time to play the <mark>Blame Game</mark>.</h1>
+    <h2 class="fragment fade-in r-fit-text">Let's focus on that <span style="color: #ff6b6b;">first terrible prediction</span>.</h2>
+</section>
+
+<!-- Because this slide establishes the full problem context for the backpropagation walkthrough, it's a TECHNICAL slide. This persistent context is CRITICAL for all following calculation slides. It displays the specific inputs, target, prediction, and resulting error, along with the detailed calculations of the forward pass. Viewers need this information visible to understand the derivatives. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div data-id="context-box-backprop" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">The Crime Scene</h3>
+            <p style="font-size: 1.4em; margin: 10px 0;">Input: `(3, 2)`, Target: `24`, Prediction: `37`, Error = (24 - 37)² = <strong style="color: #ff6b6b;">169</strong></p>
+            <p style="font-size: 1.4em; margin: 10px 0;">Weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 90%; margin: 20px auto;">
+            <div style="text-align: left; font-size: 1.1em; width: 50%;">
+                <p><strong style="color: #4CAF50; font-size: 0.9em;">Layer 1 (Hidden):</strong></p>
+                <pre style="font-size: 0.8em;"><code class="language-python" data-trim>
+neuron 1: h1 = (x1 + w1*x2)²
+             = (3 + 1*2)² = 25
+neuron 2: h2 = w2*x1*x2
+             = 2*3*2 = 12
+                </code></pre>
+                <p><strong style="color: #4CAF50; font-size: 0.9em;">Layer 2 (Output):</strong></p>
+                <pre style="font-size: 0.8em;"><code class="language-python" data-trim>
+y_pred = w3*h1 + w4*h2 + w5
+       = 1*25 + 1*12 + 0 = 37
+                </code></pre>
+            </div>
+            <div style="width: 50%; display: flex; justify-content: center; align-items: center; height: 100%;">
+                <div class="mermaid" style="zoom: 2.5;">
+                    %%{init: {'theme': 'dark'}}%%
+                    graph LR
+                        x1((x1)) --> h1((h1))
+                        x1 --> h2((h2)) 
+                        x2((x2)) --> h1
+                        x2 --> h2
+                        h1 --> y((Y))
+                        h2 --> y
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide begins the investigation with the first "suspect" (w5), it's a TECHNICAL slide. It maintains the problem context from the previous slide for reference. It introduces `w5` and visually represents its short, direct path to the error using a simple text arrow format. This makes the chain of influence easy to see before showing the math. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div data-id="context-box-backprop" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">The Crime Scene</h3>
+            <p style="font-size: 1.4em; margin: 10px 0;">Input: `(3, 2)`, Target: `24`, Prediction: `37`, Error = (24 - 37)² = <strong style="color: #ff6b6b;">169</strong></p>
+            <p style="font-size: 1.4em; margin: 10px 0;">Weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 90%; margin: 20px auto;">
+            <div style="text-align: left; font-size: 1.1em; width: 50%;">
+                <p><strong style="color: #4CAF50; font-size: 0.9em;">Layer 1 (Hidden):</strong></p>
+                <pre style="font-size: 0.8em;"><code class="language-python" data-trim>
+neuron 1: h1 = (x1 + w1*x2)²
+             = (3 + 1*2)² = 25
+neuron 2: h2 = w2*x1*x2
+             = 2*3*2 = 12
+                </code></pre>
+                <p><strong style="color: #4CAF50; font-size: 0.9em;">Layer 2 (Output):</strong></p>
+                <pre style="font-size: 0.8em;"><code class="language-python" data-trim>
+y_pred = w3*h1 + w4*h2 + w5
+       = 1*25 + 1*12 + 0 = 37
+                </code></pre>
+            </div>
+            <div style="width: 50%; display: flex; justify-content: center; align-items: center; height: 100%; flex-direction: column;">
+                <h2 style="font-size: 1.6em; text-align: center; margin-bottom: 20px;">Let's start the investigation with our first suspect: <code style="color: #ff6b6b;">w5</code>.</h2>
+                <p style="font-size: 1.2em; text-align: center; margin-bottom: 20px;">Its path to the error is short and direct:</p>
+                <p>Error ← y_pred ← <span style="color: #ff6b6b;">w5</span></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide shows the step-by-step calculation for the first weight, it's a TECHNICAL slide. It maintains the full problem context while showing the w5 calculation. The layout is compressed but keeps all essential information visible for reference during the calculation. -->
+<section data-auto-animate>
+    <div style="padding: 15px;">
+        <div data-id="context-box-backprop" style="background-color: #333; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.2em;">Investigating `w5` - The Crime Scene Context</h3>
+            <p style="font-size: 1.0em; margin: 5px 0;">Input: `(3, 2)`, Target: `24`, Prediction: `37`, Error = (24 - 37)² = <strong style="color: #ff6b6b;">169</strong></p>
+            <p style="font-size: 1.0em; margin: 5px 0;">Weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 95%; margin: 10px auto;">
+            <div style="width: 45%; font-size: 1.2em; ">
+                <p><strong style="color: #4CAF50; font-size:1em;">Forward Pass:</strong></p>
+                <pre style="margin: 5px 0; line-height: 1.3;"><code class="language-python" data-trim style="max-height: 60vh">
+x1 = 3, x2 = 2
+w1 = 1, w2 = 2, w3 = 1,
+w4 = 1, w5 = 0
+
+h1 = (x1 + w1*x2)² 
+   = (3 + 1*2)² = 5² = 25
+
+h2 = w2*x1*x2 = 2*3*2 = 12
+
+y_pred = w3*h1 + w4*h2 + w5 
+       = 1*25 + 1*12 + 0 = 37
+
+Error = (y_true - y_pred)² 
+      = (24 - 37)² = 169
+                </code></pre>
+                <p style="margin: 10px 0; font-size: 0.9em;">Path: Error ← y_pred ← <span style="color: #ff6b6b;">w5</span></p>
+            </div>
+            <div style="width: 55%;">
+                <p style="text-align: center; font-size: 1.2em; margin-bottom: 15px;">\[ \frac{\partial Error}{\partial w_5} = \frac{\partial Error}{\partial y_{pred}} \times \frac{\partial y_{pred}}{\partial w_5} \]</p>
+                <div style="font-size: 1.0em; text-align: left;">
+                    <p class="fragment fade-in" style="margin: 8px 0;">1. \( \frac{\partial Error}{\partial y_{pred}} \): deriv of \( (y_{true} - y_{pred})^2 \) w.r.t. `y_pred` is \( 2(y_{pred} - y_{true}) \) So, \( 2 \times (37 - 24) = \mathbf{26} \)</p>
+                    <p class="fragment fade-in" style="margin: 8px 0;">2. \( \frac{\partial y_{pred}}{\partial w_5} \): deriv of \( w_3 h_1 + w_4 h_2 + w_5 \) w.r.t. `w5` is <span style="font-size: 1.3em; color: #ff6b6b;"><strong>1</strong></span>
+                    (because the rest are constants)</p>
+                    <div class="fragment fade-in" style="text-align: center; margin-top: 15px; padding: 10px; background-color: #1a1a1a; border-radius: 5px;">
+                        <p style="font-size: 1.3em; margin: 0;">Total Blame for `w5` = \( 26 \times 1 = \mathbf{\color{#ff6b6b}{26}} \)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide introduces a more complex "suspect" (w1), it's a TECHNICAL slide. It maintains the problem context and detailed forward pass. It highlights the longer path of influence for `w1`, visually demonstrating why its Chain Rule calculation will be more involved. This sets up the next calculation slide. -->
+<section data-auto-animate>
+    <div style="padding: 15px;">
+        <div data-id="context-box-backprop" style="background-color: #333; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.2em;">Next Suspect: `w1` - The Crime Scene Context</h3>
+            <p style="font-size: 1.0em; margin: 5px 0;">Input: `(3, 2)`, Target: `24`, Prediction: `37`, Error = (24 - 37)² = <strong style="color: #ff6b6b;">169</strong></p>
+            <p style="font-size: 1.0em; margin: 5px 0;">Weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 95%; margin: 10px auto;">
+            <div style="width: 45%; font-size: 1.2em;">
+                <p><strong style="color: #4CAF50; font-size:1em;">Forward Pass:</strong></p>
+                <pre style="margin: 5px 0; line-height: 1.3;"><code class="language-python" data-trim style="max-height: 60vh">
+x1 = 3, x2 = 2
+w1 = 1, w2 = 2, w3 = 1,
+w4 = 1, w5 = 0
+
+h1 = (x1 + w1*x2)² 
+   = (3 + 1*2)² = 5² = 25
+
+h2 = w2*x1*x2 = 2*3*2 = 12
+
+y_pred = w3*h1 + w4*h2 + w5 
+       = 1*25 + 1*12 + 0 = 37
+
+Error = (y_true - y_pred)² 
+      = (24 - 37)² = 169
+                </code></pre>
+                <p style="margin: 10px 0; font-size: 0.9em;">Path: Error ← y_pred ← h1 ← <span style="color: #ff6b6b;">w1</span></p>
+            </div>
+            <div style="width: 55%;">
+                <h2 style="font-size: 1.8em; text-align: center; margin-bottom: 20px;">Now for a tougher suspect: <code style="color: #ff6b6b;">w1</code></h2>
+                <p style="font-size: 1.3em; text-align: center; margin-bottom: 30px;">It's buried much deeper. Its path to the error is longer:</p>
+                <div style="text-align: center; font-size: 1.4em; background-color: #1a1a1a; padding: 20px; border-radius: 10px;">
+                    <code>Error ← y_pred ← h1 ← w1</code>
+                </div>
+                <p style="font-size: 1.1em; text-align: center; margin-top: 20px; color: #ff9999;">This means more chain rule steps!</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide shows the calculation for the more complex weight `w1`, it's a TECHNICAL slide. It maintains the full context and forward pass while showing the w1 calculation. It displays the longer Chain Rule formula and then calculates each new link step-by-step using fragments. A key moment is pointing out that the first term, ∂Error/∂y_pred, has already been calculated, foreshadowing the main insight about backpropagation. -->
+<section data-auto-animate>
+    <div style="padding: 15px;">
+        <div data-id="context-box-backprop" style="background-color: #333; padding: 10px; border-radius: 10px; margin-bottom: 15px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.2em;">Investigating `w1` - The Crime Scene Context</h3>
+            <p style="font-size: 1.0em; margin: 5px 0;">Input: `(3, 2)`, Target: `24`, Prediction: `37`, Error = (24 - 37)² = <strong style="color: #ff6b6b;">169</strong></p>
+            <p style="font-size: 1.0em; margin: 5px 0;">Weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 95%; margin: 10px auto;">
+            <div style="width: 45%; font-size: 1.2em;">
+                <p><strong style="color: #4CAF50; font-size:1em;">Forward Pass:</strong></p>
+                <pre style="margin: 5px 0; line-height: 1.3;"><code class="language-python" data-trim style="max-height: 60vh">
+x1 = 3, x2 = 2
+w1 = 1, w2 = 2, w3 = 1,
+w4 = 1, w5 = 0
+
+h1 = (x1 + w1*x2)² 
+   = (3 + 1*2)² = 5² = 25
+
+h2 = w2*x1*x2 = 2*3*2 = 12
+
+y_pred = w3*h1 + w4*h2 + w5 
+       = 1*25 + 1*12 + 0 = 37
+
+Error = (y_true - y_pred)² 
+      = (24 - 37)² = 169
+                </code></pre>
+                <p style="margin: 10px 0; font-size: 0.9em;">Path: Error ← y_pred ← h1 ← <span style="color: #ff6b6b;">w1</span></p>
+            </div>
+            <div style="width: 55%;">
+                <p style="text-align: center; font-size: 1.2em; margin-bottom: 15px;">\[ \frac{\partial Error}{\partial w_1} = \frac{\partial Error}{\partial y_{pred}} \times \frac{\partial y_{pred}}{\partial h_1} \times \frac{\partial h_1}{\partial w_1} \]</p>
+                <div style="font-size: 1.0em; text-align: left;">
+                    <p class="fragment fade-in" style="margin: 8px 0;">1. \( \frac{\partial Error}{\partial y_{pred}} \): Wait... we already calculated this. It's <span style="font-size: 1.3em;"><strong>26</strong></span>.</p>
+                    <p class="fragment fade-in" style="margin: 8px 0;">2. \( \frac{\partial y_{pred}}{\partial h_1} \): deriv of \( w_3 h_1 + w_4 h_2 + w_5 \) w.r.t. `h1` is just `w3` = <span style="font-size: 1.3em;"><strong>1</strong></span>.</p>
+                    <p class="fragment fade-in" style="margin: 8px 0;">3. \( \frac{\partial h_1}{\partial w_1} \): deriv of \( (x_1 + w_1 x_2)^2 \) is \( 2(x_1+w_1 x_2) \cdot x_2 \)<br>
+                    So, \( 2 \times (3 + 1 \times 2) \times 2 = 2 \times 5 \times 2 = \mathbf{20} \).</p>
+                    <div class="fragment fade-in" style="text-align: center; margin-top: 15px; padding: 10px; background-color: #1a1a1a; border-radius: 5px;">
+                        <p style="font-size: 1.3em; margin: 0;">Total Blame for `w1` = \( 26 \times 1 \times 20 = \mathbf{\color{#ff6b6b}{520}} \)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide is a dramatic pause designed to make the audience reflect, it's a POWER TEXT slide. Text analysis: "Now stop. Look at what we just did. Look closer." (49 characters) - this creates a moment of suspense and signals that a major insight is about to be revealed. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Now stop.</h1>
+    <h1 class="r-fit-text">Look at what we just did. Look closer.</h1>
+</section>
+
+<!-- Because this slide reveals the key insight about reusing calculations, it's an EDUCATIONAL slide. It displays the two Chain Rule formulas side-by-side. The shared term `∂Error/∂y_pred` is highlighted in red to make the pattern of reuse immediately obvious. This visual comparison is the core of the "Aha!" moment. -->
+<section data-transition="fade">
+    <div style="font-size: 1.4em; text-align: center; margin: 40px 0;">
+        <p>\[ \frac{\partial Error}{\partial w_5} = {\color{#ff6b6b}{\frac{\partial Error}{\partial y_{pred}}}} \times \frac{\partial y_{pred}}{\partial w_5} = {\color{#ff6b6b}{26}} \times 1 = 26 \]</p>
+        <p>\[ \frac{\partial Error}{\partial w_1} = {\color{#ff6b6b}{\frac{\partial Error}{\partial y_{pred}}}} \times \frac{\partial y_{pred}}{\partial h_1} \times \frac{\partial h_1}{\partial w_1} = {\color{#ff6b6b}{26}} \times 1 \times 20 = 520 \]</p>
+    </div>
+    <h1 class="fragment fade-in r-fit-text">Do you see it? The term <code style="color: #ff6b6b;">∂Error/∂y_pred = 26</code> is in BOTH calculations!</h1>
+</section>
+
+<!-- Because this slide gives a name to the powerful trick just revealed, it's a POWER TEXT slide. Text analysis: "This is the multi-trillion dollar trick that makes deep learning efficient." (77 characters) - this frames the insight not just as clever, but as economically world-changing, emphasizing its immense importance. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">This is the <mark>multi-trillion dollar trick</mark> that makes deep learning efficient.</h1>
+</section>
+
+<!-- Because this slide explains the trick in plain language, it's a POWER TEXT slide. It breaks down the process into two clear steps, explaining that we calculate the final error gradient once and then "propagate it backwards," reusing the work. Highlighting 'propagate it backwards' introduces the core idea of backpropagation intuitively before naming it. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">We don't recalculate everything from scratch for every weight.</h2>
+    <h1 class="fragment fade-in r-fit-text">We calculate the error gradient once...</h1>
+    <h1 class="fragment fade-in r-fit-text">...then <span style="color: #4CAF50;">propagate it backwards</span>, reusing calculations.</h1>
+</section>
+
+<!-- Because this slide formally names the process, it's a POWER TEXT slide. Text analysis: "This is Backpropagation." (24 characters) - short and definitive. The following lines demystify it, explaining it's "not magic" but simply an efficiency trick. This makes the famously intimidating concept feel accessible and simple. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">This is <span style="color: #4CAF50;">Backpropagation</span>.</h1>
+    <h2 class="fragment fade-in r-fit-text">It's not magic.</h2>
+    <h2 class="fragment fade-in r-fit-text">It's just being clever and not re-doing work you've already done.</h2>
+</section>
+
+<!-- Because this slide shows the complete set of gradient calculations, it's a TECHNICAL slide. It displays all weight derivatives systematically, highlighting the shared terms with different colors to show how backpropagation reuses calculations. This provides a comprehensive view of the entire backpropagation process for this network. -->
+<section data-auto-animate data-transition="slide">
+    <h2 style="font-size: 1.8em;">Systematically Finding the Blame</h2>
+    <div style="font-size: 0.8em; text-align: center; margin: 30px 0;">
+        <p>\[ \frac{\partial Error}{\partial w_5} = {\color{#ff6b6b}{\frac{\partial Error}{\partial y_{pred}}}} \times \frac{\partial y_{pred}}{\partial w_5}, \quad \frac{\partial Error}{\partial w_4} = {\color{#ff6b6b}{\frac{\partial Error}{\partial y_{pred}}}} \times \frac{\partial y_{pred}}{\partial w_4}, \quad \frac{\partial Error}{\partial w_3} = {\color{#ff6b6b}{\frac{\partial Error}{\partial y_{pred}}}} \times \frac{\partial y_{pred}}{\partial w_3} \]</p>
+        <p>\[ \frac{\partial Error}{\partial w_2} = {\color{#ff6b6b}{\frac{\partial Error}{\partial y_{pred}}}} \times {\color{#4CAF50}{\frac{\partial y_{pred}}{\partial h_2}}} \times \frac{\partial h_2}{\partial w_2}, \quad \frac{\partial Error}{\partial w_1} = {\color{#ff6b6b}{\frac{\partial Error}{\partial y_{pred}}}} \times {\color{#00bfff}{\frac{\partial y_{pred}}{\partial h_1}}} \times \frac{\partial h_1}{\partial w_1} \]</p>
+    </div>
+</section>
+
+<!-- Because this slide shows the forward pass formulas alongside the network diagram, it's a TECHNICAL slide. The left side presents the mathematical formulas for each layer's computation, while the right side visualizes the network structure and data flow. -->
+<section data-auto-animate data-transition="slide">
+    <h2 style="font-size: 1.8em;">Forward Pass: Computing the Output</h2>
+    <div style="display: flex; justify-content: space-around; align-items: center; margin: 40px 0;">
+        <div style="text-align: left; flex: 1; padding-right: 30px;">
+            <pre style="font-size: 1.0em; line-height: 1.5;"><code class="language-python" data-trim>
+# Inputs: x1, x2
+# Weights: w1, w2, w3, w4, w5
+
+# Hidden Layer
+h1 = (x1 + w1*x2)²
+h2 = w2*x1*x2
+
+# Output Layer  
+y_pred = w3*h1 + w4*h2 + w5
+
+# Error
+Error = (y_true - y_pred)²
+            </code></pre>
+        </div>
+        <div style="text-align: center; flex: 1;">
+            <div class="mermaid" style="zoom: 2.5;">
+                %%{init: {'theme': 'dark'}}%%
+                graph LR
+                    input1[ ] --> |"x1,x2"| h1((h1))
+                    input2[ ] --> |"x1,x2"| h2((h2))
+                    w1[w1] --> h1
+                    w2[w2] --> h2
+                    h1 --> y((Y))
+                    h2 --> y
+                    w345[w3,w4,w5] --> y
+                    y --> |"y_true"| error((Error))
+                    
+                    style input1 fill:transparent,stroke:transparent
+                    style input2 fill:transparent,stroke:transparent
+                    
+                    classDef weightNode fill:#4CAF50,stroke:#fff
+                    classDef variableNode fill:#333,stroke:#fff
+                    
+                    class w1,w2,w345 weightNode
+                    class h1,h2,y,error variableNode
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide shows the backward pass gradients alongside the network diagram, it's a TECHNICAL slide. The left side presents the gradient formulas using the chain rule, while the right side visualizes how gradients flow backward through the network. -->
+<section data-auto-animate data-transition="slide">
+    <h2 style="font-size: 1.8em;">Backward Pass: Computing Gradients</h2>
+    <div style="display: flex; justify-content: space-around; align-items: center; margin: 40px 0;">
+        <div style="text-align: left; flex: 1; padding-right: 30px;">
+            <pre style="font-size: 0.8em; line-height: 1.5;"><code class="language-python" data-trim>
+# Start with error gradient
+∂E/∂y_pred = 2(y_pred - y_true)
+
+# Output layer weights
+∂E/∂w5 = ∂E/∂y_pred * 1
+∂E/∂w4 = ∂E/∂y_pred * h2  
+∂E/∂w3 = ∂E/∂y_pred * h1
+
+# Hidden layer gradients
+∂E/∂h1 = ∂E/∂y_pred * w3
+∂E/∂h2 = ∂E/∂y_pred * w4
+
+# Hidden layer weights  
+∂E/∂w1 = ∂E/∂h1 * 2(x1+w1*x2)*x2
+∂E/∂w2 = ∂E/∂h2 * x1*x2
+            </code></pre>
+        </div>
+        <div style="text-align: center; flex: 1;">
+            <div class="mermaid" style="zoom: 2.5;">
+                %%{init: {'theme': 'dark'}}%%
+                graph RL
+                    h1((h1)) --> |"x1,x2"| input1[ ]
+                    h2((h2)) --> |"x1,x2"| input2[ ]
+                    h1 --> |"∂h1/∂w1"| w1[w1]
+                    h2 --> |"∂h2/∂w2"| w2[w2]
+                    y((Y)) --> |"∂Y/∂h1"| h1
+                    y --> |"∂Y/∂h2"| h2
+                    y --> |"∂Y/∂w3,w4,w5"| w345[w3,w4,w5]
+                    error((Error)) --> |"∂E/∂Y"| y
+                    
+                    style input1 fill:transparent,stroke:transparent
+                    style input2 fill:transparent,stroke:transparent
+                    
+                    classDef weightNode fill:#4CAF50,stroke:#fff
+                    classDef variableNode fill:#333,stroke:#fff
+                    
+                    class w1,w2,w345 weightNode
+                    class h1,h2,y,error variableNode
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide shows the step-by-step calculation of all gradients for each weight, it's a TECHNICAL slide. We maintain full context and show formulas on the left with actual calculations on the right. -->
+<section data-auto-animate>
+    <div style="padding: 20px; max-width: 85%; margin: 0 auto;">
+        <div data-id="context-box" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.3em;">Computing All Gradients: ∂E/∂w</h3>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin: 5px 0;">
+                <div><strong>Inputs:</strong> x1=3, x2=2, y_true=24</div>
+                <div><strong>Weights:</strong> w1=1, w2=2, w3=1, w4=1, w5=0</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin: 5px 0;">
+                <div><strong>Forward Pass:</strong> h1=25, h2=12, y_pred=37</div>
+                <div><strong>Error:</strong> E=(37-24)²=169</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10%; justify-content: space-between;">
+            <div style="width: 45%; text-align: left;">
+                <h4 style="color: #87ceeb; margin-bottom: 15px; text-align: center;">Gradient Formulas:</h4>
+                <pre style="font-size: 0.75em; line-height: 1.4; margin: 0;"><code class="language-python" data-trim>
+# Start with error gradient
+∂E/∂y_pred = 2(y_pred - y_true)
+
+# Output layer weights
+∂E/∂w5 = ∂E/∂y_pred * 1
+∂E/∂w4 = ∂E/∂y_pred * h2  
+∂E/∂w3 = ∂E/∂y_pred * h1
+
+# Hidden layer gradients
+∂E/∂h1 = ∂E/∂y_pred * w3
+∂E/∂h2 = ∂E/∂y_pred * w4
+
+# Hidden layer weights  
+∂E/∂w1 = ∂E/∂h1 * 2(x1+w1*x2)*x2
+∂E/∂w2 = ∂E/∂h2 * x1*x2
+                </code></pre>
+            </div>
+            <div style="width: 45%;">
+                <h4 style="color: #ff6b6b; margin-bottom: 15px; text-align: center;">Actual Calculations:</h4>
+                <div style="font-size: 0.9em; line-height: 1.6;">
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a2a2a; border-radius: 5px;">
+                        <strong>∂E/∂y_pred</strong> = 2(37 - 24) = <span style="color: #ff6b6b; font-weight: bold;">26</span>
+                    </div>
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w5</strong> = 26 × 1 = <span style="color: #ff6b6b; font-weight: bold;">26</span>
+                    </div>
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w4</strong> = 26 × 12 = <span style="color: #ff6b6b; font-weight: bold;">312</span>
+                    </div>
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w3</strong> = 26 × 25 = <span style="color: #ff6b6b; font-weight: bold;">650</span>
+                    </div>
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a2a2a; border-radius: 5px;">
+                        <strong>∂E/∂h1</strong> = 26×1 = <span style="color: #ff6b6b; font-weight: bold;">26</span>
+                    </div>
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a2a2a; border-radius: 5px;">
+                        <strong>∂E/∂h2</strong> = 26×1 = <span style="color: #ff6b6b; font-weight: bold;">26</span>
+                    </div>
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w2</strong> = 26 × (3×2) = 26 × 6 = <span style="color: #ff6b6b; font-weight: bold;">156</span>
+                    </div>
+                    <div style="margin: 8px 0; padding: 8px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w1</strong> = 26 × 2×(3+1×2)×2 = 26 × 2×5×2 = <span style="color: #ff6b6b; font-weight: bold;">520</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide shows the application of the calculated gradients, it's a TECHNICAL slide. We use auto-animate and show gradients on left, weight updates on right. -->
+<section data-auto-animate>
+    <div style="padding: 20px; max-width: 85%; margin: 0 auto;">
+        <div data-id="context-box" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.3em;">Gradient Descent: Using Our Computed Gradients</h3>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin: 5px 0;">
+                <div><strong>Learning Rate:</strong> η = 0.0001</div>
+                <div><strong>Update Rule:</strong> new_weight = old_weight - η × gradient</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10%; justify-content: space-between;">
+            <div style="width: 45%;">
+                <h4 style="color: #ff6b6b; margin-bottom: 15px; text-align: center;">Computed Gradients:</h4>
+                <div style="font-size: 0.9em; line-height: 1.6;">
+                    <div style="margin: 10px 0; padding: 10px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w5</strong> = <span style="color: #ff6b6b; font-weight: bold;">26</span>
+                    </div>
+                    <div style="margin: 10px 0; padding: 10px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w4</strong> = <span style="color: #ff6b6b; font-weight: bold;">312</span>
+                    </div>
+                    <div style="margin: 10px 0; padding: 10px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w3</strong> = <span style="color: #ff6b6b; font-weight: bold;">650</span>
+                    </div>
+                    <div style="margin: 10px 0; padding: 10px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w2</strong> = <span style="color: #ff6b6b; font-weight: bold;">156</span>
+                    </div>
+                    <div style="margin: 10px 0; padding: 10px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>∂E/∂w1</strong> = <span style="color: #ff6b6b; font-weight: bold;">520</span>
+                    </div>
+                </div>
+            </div>
+            <div style="width: 45%;">
+                <h4 style="color: #4CAF50; margin-bottom: 15px; text-align: center;">Weight Updates:</h4>
+                <table style="font-size: 0.85em; border-collapse: collapse; width: 100%; margin: 10px 0;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #666; padding: 8px;">Weight</th>
+                            <th style="border: 1px solid #666; padding: 8px;">Old</th>
+                            <th style="border: 1px solid #666; padding: 8px;">Calculation</th>
+                            <th style="border: 1px solid #666; padding: 8px; color: #4CAF50;">New</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="border: 1px solid #666; padding: 8px;">w5</td>
+                            <td style="border: 1px solid #666; padding: 8px;">0</td>
+                            <td style="border: 1px solid #666; padding: 8px;">0 - 0.0001×26</td>
+                            <td style="border: 1px solid #666; padding: 8px; color: #4CAF50; font-weight: bold;">-0.0026</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #666; padding: 8px;">w4</td>
+                            <td style="border: 1px solid #666; padding: 8px;">1</td>
+                            <td style="border: 1px solid #666; padding: 8px;">1 - 0.0001×312</td>
+                            <td style="border: 1px solid #666; padding: 8px; color: #4CAF50; font-weight: bold;">0.9688</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #666; padding: 8px;">w3</td>
+                            <td style="border: 1px solid #666; padding: 8px;">1</td>
+                            <td style="border: 1px solid #666; padding: 8px;">1 - 0.0001×650</td>
+                            <td style="border: 1px solid #666; padding: 8px; color: #4CAF50; font-weight: bold;">0.935</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #666; padding: 8px;">w2</td>
+                            <td style="border: 1px solid #666; padding: 8px;">2</td>
+                            <td style="border: 1px solid #666; padding: 8px;">2 - 0.0001×156</td>
+                            <td style="border: 1px solid #666; padding: 8px; color: #4CAF50; font-weight: bold;">1.9844</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #666; padding: 8px;">w1</td>
+                            <td style="border: 1px solid #666; padding: 8px;">1</td>
+                            <td style="border: 1px solid #666; padding: 8px;">1 - 0.0001×520</td>
+                            <td style="border: 1px solid #666; padding: 8px; color: #4CAF50; font-weight: bold;">0.948</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide is a declarative statement marking the completion of the learning step, it's a POWER TEXT slide. Text analysis: "That's it. The learning has happened." (34 characters) - simple, direct, and satisfying. It provides a moment of finality after the complex calculations, confirming that the core process is now complete. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">That's it. The learning has happened.</h1>
+    <h2 class="fragment fade-in r-fit-text">We played the Blame Game, and we commanded each weight to adjust itself.</h2>
+</section>
+
+<!-- Because this slide poses the critical question of whether the learning was successful, it's a POWER TEXT slide. Text analysis: "But... did it work?" (17 characters) is short and suspenseful. The second line, "This is the moment of truth," elevates the drama and builds anticipation for the result on the next slide. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">But... did it work?</h1>
+    <h2 class="fragment fade-in r-fit-text">This is the moment of truth.</h2>
+</section>
+
+<!-- Because this slide shows the new forward pass with the updated weights, it's a TECHNICAL slide. We provide full context in the header box and show the calculation with a mermaid diagram. -->
+<section data-auto-animate>
+    <div style="padding: 20px; max-width: 80%; margin: 0 auto;">
+        <div data-id="context-box" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.4em;">Forward Pass with Updated Weights</h3>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin: 5px 0;">
+                <div><strong>Inputs:</strong> x1=3, x2=2, y_true=24</div>
+                <div><strong>NEW Weights:</strong> w1=0.948, w2=1.9844, w3=0.935, w4=0.9688, w5=-0.0026</div>
+            </div>
+            <div style="font-size: 0.8em; margin: 5px 0;">
+                <div><strong>Formulas:</strong> h₁=(x₁+w₁×x₂)², h₂=w₂×x₁×x₂, y=w₃×h₁+w₄×h₂+w₅</div>
+            </div>
+            <div style="font-size: 1.0em; margin: 5px 0;">
+                <div><strong>Question:</strong> Did the weights improve our prediction?</div>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: center; margin: 20px 0;">
+            <div style="width: 50%; text-align: center;">
+                <h4 style="color: #4CAF50; margin-bottom: 15px; text-align: center;">Step-by-Step Calculation:</h4>
+                <div style="font-size: 0.9em; line-height: 1.6;">
+                    <div class="fragment fade-in" style="margin: 8px 0; padding: 8px; background-color: #2a2a2a; border-radius: 5px;">
+                        <strong>h₁ = (x₁ + w₁×x₂)²</strong><br>
+                        = (3 + 0.948×2)² = (4.896)² = <span style="color: #4CAF50; font-weight: bold;">23.97</span>
+                    </div>
+                    <div class="fragment fade-in" style="margin: 8px 0; padding: 8px; background-color: #2a2a2a; border-radius: 5px;">
+                        <strong>h₂ = w₂×x₁×x₂</strong><br>
+                        = 1.9844×3×2 = <span style="color: #4CAF50; font-weight: bold;">11.91</span>
+                    </div>
+                    <div class="fragment fade-in" style="margin: 8px 0; padding: 8px; background-color: #2a2a2a; border-radius: 5px;">
+                        <strong>y = w₃×h₁ + w₄×h₂ + w₅</strong><br>
+                        = 0.935×23.97 + 0.9688×11.91 - 0.0026
+                    </div>
+                    <div class="fragment fade-in" style="margin: 8px 0; padding: 8px; background-color: #2a4a2a; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <strong>y = 22.41 + 11.54 - 0.0026 = <span style="color: #4CAF50; font-weight: bold;">33.95</span></strong>
+                    </div>
+                </div>
+            </div>
+            <div style="width: 50%; text-align: center;">
+                <div class="mermaid" style="zoom: 3.0;">
+                    %%{init: {'theme': 'dark'}}%%
+                    graph LR
+                        x1((x1)) --> h1((h1))
+                        x1 --> h2((h2)) 
+                        x2((x2)) --> h1
+                        x2 --> h2
+                        h1 --> y((Y))
+                        h2 --> y
+                </div>
+                <div class="fragment fade-in" style="margin-top: 15px; font-size: 1.2em; color: #4CAF50; font-weight: bold;">
+                    Improvement: 37 → 33.95 ✓
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide presents the final, triumphant result, it's a TECHNICAL slide formatted for maximum impact. A simple comparison table clearly shows the "Before" and "After" predictions against the target. The improved prediction is highlighted in green, providing a clear, visual confirmation that the learning process was successful. -->
+<section data-transition="zoom">
+    <h2 style="font-size: 2em;">Let's compare.</h2>
+    <table style="margin: 20px auto; font-size: 1.2em; border-collapse: collapse; width: 80%;">
+        <thead>
+            <tr><th></th><th>Before Learning</th><th>After ONE Update</th><th>Target</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Prediction</strong></td>
+                <td style="color: #ff6b6b;">37</td>
+                <td style="color: #4CAF50;"><strong>33.95</strong></td>
+                <td>24</td>
+            </tr>
+            <tr>
+                <td><strong>How far off</strong></td>
+                <td style="color: #ff6b6b;">13 units</td>
+                <td style="color: #4CAF50;"><strong>~10 units</strong></td>
+                <td>0</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Because this slide is a moment of pure celebration, it is a POWER TEXT slide. Text analysis: "YES! It worked!" (14 characters) is a short, exclamatory statement that captures the excitement of the successful result. The green color reinforces the positive outcome. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text" style="color: #4CAF50;">YES! It worked!</h1>
+</section>
+
+<!-- Because this slide explains the result in plain language, it's a POWER TEXT slide. It clearly states the outcome: the prediction moved closer to the target, and the error got smaller. This provides a simple, satisfying summary of the achievement. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">The prediction moved from 37 down to 33.95.</h1>
+    <h1 class="fragment fade-in r-fit-text">It got <mark>closer</mark> to the target of 24. The error got smaller.</h1>
+</section>
+
+<!-- Because this slide delivers the final, grand conclusion of the chapter, it's a POWER TEXT slide. Text analysis: "This is not a guess. This is not magic." (37 characters) refutes any lingering sense of mystery. The second part, "...This is intelligence emerging directly from mathematics," frames the process as a profound and understandable phenomenon. -->
+<section data-transition="slide">
+    <h2 class="r-fit-text">This is not a guess. This is not magic.</h2>
+    <h1 class="fragment fade-in r-fit-text">This is <span style="color: #4CAF50;">intelligence</span> emerging directly from mathematics.</h1>
+</section>
+
+<!-- Because this slide summarizes the core learning loop, it's a POWER TEXT slide. It provides a concise, high-level overview of the entire process they've just witnessed, solidifying the mental model of how learning works in a neural network. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">Following the <span style="color: #ff6b6b;">chain of blame</span> backwards</h1>
+    <h2 class="fragment fade-in r-fit-text">Nudging parameters <span style="color: #4CAF50;">downhill</span></h2>
+    <h2 class="fragment fade-in r-fit-text">The network <mark>learns automatically</mark></h2>
+</section>
+
+<!-- Because this slide serves as a transition to the next chapter by scaling up the concept, it's a POWER TEXT slide. It leaves the audience with a sense of the power and potential of this simple learning loop, creating a perfect lead-in to the topics of batching and optimization in Chapter 7. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">Repeat this process a thousand times, and it will get even closer.</h2>
+    <h1 class="fragment fade-in r-fit-text">A million times, and it will be <mark>nearly perfect</mark>.</h1>
+</section>
+
+<!-- END CHAPTER 6 -->
+
+<!-- START CHAPTER 7 -->
+
+<!-- Because this slide opens Chapter 7 by immediately questioning the previous chapter's method, it's a POWER TEXT slide. Text analysis: "But hang on. Think about what we just did." (41 characters) is short and conversational, creating a dramatic pause that signals a shift in perspective. It encourages the audience to reflect critically on the process they just learned. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">But hang on.</h1>
+    <h2 class="fragment fade-in r-fit-text">Think about what we just did.</h2>
+</section>
+
+<!-- Because this slide reveals the core flaw in the previous method, it's a POWER TEXT slide. Text analysis: "We trained our network on *one single example*." (47 characters) - perfect for r-fit-text. The phrase 'one single example' is highlighted with a mark tag and red color to emphasize this as a critical limitation and a point of failure. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">We trained our network on <span style="color: #ff6b6b;">one single example</span>.</h1>
+    <h2 class="fragment fade-in" style="font-size: 2em;">`(3, 2) -> 24`</h2>
+</section>
+
+<!-- Because this slide uses a powerful analogy to explain the flaw, it's a POWER TEXT slide. Text analysis: The analogy is broken into two parts. "That's like studying for a final exam by memorizing the answer to a single practice question." (95 characters) sets up the scenario. The second part, revealed as a fragment, delivers the negative outcome. -->
+<section data-transition="slide">
+    <h2 class="r-fit-text">That's like studying for a final exam by memorizing the answer to a single practice question.</h2>
+    <h1 class="fragment fade-in r-fit-text">You might ace that one question, but you haven't learned the <mark>concept</mark>.</h1>
+</section>
+
+<!-- Because this slide drives home the negative consequence, it's a POWER TEXT slide. Text analysis: "You'll fail the actual test." (27 characters) is a short, direct, and impactful statement that makes the problem feel real and significant. The red color emphasizes the failure. -->
+<section data-transition="concave">
+    <h1 class="r-fit-text" style="color: #ff6b6b;">You'll fail the actual test.</h1>
+</section>
+
+<!-- Because this slide states the true goal of learning, it's a POWER TEXT slide. Text analysis: "To become truly intelligent, our network can't just memorize one data point." (75 characters). The second part clarifies the goal: finding the 'underlying pattern'. This sets up the need for a new learning strategy. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">To become truly intelligent, our network can't just memorize one data point.</h2>
+    <h1 class="fragment fade-in r-fit-text">It needs to find the underlying <span style="color: #4CAF50;">pattern</span> that works for ALL of our examples.</h1>
+</section>
+
+<!-- Because this slide poses the central question for the chapter, it's a POWER TEXT slide. Text analysis: "So, the next logical question is: How do you learn from the entire crowd of data at once?" (90 characters). This question serves as a perfect transition into the introduction of the two main learning strategies. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">So, the next logical question is:</h1>
+    <h1 class="fragment fade-in r-fit-text">How do you learn from the <mark>entire crowd</mark> of data at once?</h1>
+</section>
+
+<!-- Because this content introduces two competing strategies, this is an EDUCATIONAL slide using a side-by-side comparison format. The "Online Learning" approach (what they just did) is presented first. Then, "Batch Learning" is introduced via a fragment, allowing the presenter to explain each concept before comparing them. This structure makes the differences clear and easy to follow. -->
+<section data-transition="slide">
+    <h2 style="font-size: 2em;">There are two main strategies for this.</h2>
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1.2em; margin-top: 30px;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #00bfff;">Online Learning</h2>
+            <ul style="text-align: left; margin: 20px auto;">
+                <li>Look at one example.</li>
+                <li>Calculate the blame.</li>
+                <li style="color: #ff6b6b;"><strong>Update the weights immediately.</strong></li>
+                <li>Move to the next example.</li>
+            </ul>
+        </div>
+        <div class="fragment fade-in" style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Batch Learning</h2>
+            <ul style="text-align: left; margin: 20px auto;">
+                <li>Look at ALL examples.</li>
+                <li>Calculate the blame for each one.</li>
+                <li>Add up ALL the blame.</li>
+                <li style="color: #4CAF50;"><strong>Update the weights ONCE, at the end.</strong></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide shows the algorithmic comparison between the two strategies, it's a TECHNICAL slide using a side-by-side format. This provides the mathematical formulation of both approaches, making the conceptual differences concrete through pseudocode and mathematical notation. -->
+<section data-transition="slide">
+    <h2 style="font-size: 1.8em;">The Algorithms Side-by-Side</h2>
+    <p style="font-size: 1em; margin: 10px 0;">Let's say we have N training examples: <code>{(x₁, y₁), (x₂, y₂), ..., (xₙ, yₙ)}</code></p>
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1em; margin-top: 20px;">
+        <div style="flex: 1; text-align: left; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="color: #00bfff; text-align: center; margin-bottom: 15px;">Online Learning Formula:</h3>
+            <pre style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; font-size: 0.85em; line-height: 1.4;">
+<span style="color: #ff6b6b;">For each</span> example i = 1 to N:
+  <span style="color: #888;">// Calculate gradient for ONE example</span>
+  gradient_i = ∇Loss(θ, xᵢ, yᵢ)
+  <span style="color: #888;">// Update weights IMMEDIATELY</span>
+  <span style="color: #ff6b6b;">θ = θ - η × gradient_i</span></pre>
+        </div>
+        <div class="fragment fade-in" style="flex: 1; text-align: left; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="color: #4CAF50; text-align: center; margin-bottom: 15px;">Batch Learning Formula:</h3>
+            <pre style="background-color: #2a2a2a; padding: 15px; border-radius: 5px; font-size: 0.85em; line-height: 1.4;">
+total_gradient = 0
+<span style="color: #4CAF50;">For each</span> example i = 1 to N:
+  <span style="color: #888;">// Calculate gradient for this example</span>
+  gradient_i = ∇Loss(θ, xᵢ, yᵢ)
+  <span style="color: #888;">// ADD to the running total</span>
+  total_gradient += gradient_i
+<span style="color: #888;">// Update weights ONCE at the end</span>
+<span style="color: #4CAF50;">θ = θ - η × total_gradient</span></pre>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide personifies the two learning styles, it's a POWER TEXT slide using data-auto-animate. The first part, "Online learning is impulsive," sets up a character trait. This creates a memorable, non-technical way to understand the algorithm's behavior. -->
+<section data-auto-animate data-transition="fade">
+    <h1 class="r-fit-text">Online learning is <span style="color: #ff6b6b;">impulsive</span>.</h1>
+    <h2 class="r-fit-text">It learns from one example and immediately changes its mind.</h2>
+</section>
+
+<!-- Because this slide continues the personification, it's a POWER TEXT slide using data-auto-animate. It adds the contrasting character trait for Batch learning: "more deliberate." The final line about making a "democratic decision" powerfully summarizes the core benefit of this approach in an intuitive way. -->
+<section data-auto-animate data-transition="fade">
+    <h1 class="r-fit-text">Online learning is <span style="color: #ff6b6b;">impulsive</span>.</h1>
+    <h1 class="r-fit-text">Batch learning is more <span style="color: #4CAF50;">deliberate</span>.</h1>
+    <h2 class="r-fit-text">It listens to the opinion of every single example before making a collective, democratic decision.</h2>
+</section>
+
+<!-- Because this slide transitions to the practical walkthrough, it's a POWER TEXT slide. Text analysis: "Let's try it. Let's perform one update using Batch Learning..." (80 characters). This signals a shift from theory to a hands-on demonstration, engaging the audience directly. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Let's try it.</h1>
+    <h2 class="fragment fade-in r-fit-text">Let's perform one update using <span style="color: #4CAF50;">Batch Learning</span> and see what happens.</h2>
+</section>
+
+<!-- Because this slide establishes the initial state for the entire Batch Learning walkthrough, it's a TECHNICAL slide. This persistent context box is CRITICAL for the following slides. It reminds the audience of the "dumb" starting weights, which is the necessary baseline to measure the improvement from the batch update. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div data-id="context-box-batch" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Batch Learning Setup</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">We'll start from our original, dumb weights:</p>
+            <pre style="font-size: 1.1em; margin-top: 10px;"><code class="language-plaintext">w1=1, w2=2, w3=1, w4=1, w5=0</code></pre>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide shows the first step of the batch process (the forward pass), it's a TECHNICAL slide. CRITICAL: The problem context box from the previous slide is maintained at the top. The table clearly shows the network's initial (terrible) predictions for all three data points, establishing the baseline error that we need to correct. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div data-id="context-box-batch" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Batch Learning Setup</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">Start weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <h2 style="font-size: 1.8em;">Step 1: The Forward Pass for ALL Examples</h2>
+        <table style="margin: 20px auto; font-size: 1em; border-collapse: collapse; width: 100%;">
+            <thead><tr><th>Example</th><th>(x1,x2)</th><th>y_true</th><th>h1</th><th>h2</th><th style="color: #ff6b6b;">y_pred</th><th style="color: #ff6b6b;">Error²</th></tr></thead>
+            <tbody>
+                <tr style="background-color: #2a4a2a;"><td>1 (already done)</td><td>(3, 2)</td><td>24</td><td>25</td><td>12</td><td style="color: #ff6b6b;"><strong>37</strong></td><td style="color: #ff6b6b;"><strong>169</strong></td></tr>
+                <tr class="fragment fade-in"><td>2</td><td>(1, 4)</td><td>14</td><td>25</td><td>8</td><td style="color: #ff6b6b;"><strong>33</strong></td><td style="color: #ff6b6b;"><strong>361</strong></td></tr>
+                <tr class="fragment fade-in"><td>3</td><td>(2, 1)</td><td>11</td><td>9</td><td>4</td><td style="color: #ff6b6b;"><strong>13</strong></td><td style="color: #ff6b6b;"><strong>4</strong></td></tr>
+            </tbody>
+        </table>
+        <p class="fragment fade-in" style="text-align: center; font-size: 1.2em; color: #4CAF50; margin-top: 20px;">
+            <strong>Total Error: 169 + 361 + 4 = 534</strong>
+        </p>
+    </div>
+</section>
+
+<!-- Because this slide shows the second step (calculating individual gradients), it's a TECHNICAL slide. CRITICAL: The context box persists. The table displays the "blame" for each weight for each example. The text explicitly states the key rule of batch learning: "we don't update the weights yet," which is a crucial distinction from online learning. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div data-id="context-box-batch" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Batch Learning Setup</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">Start weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <h2 style="font-size: 1.8em;">Step 2: Calculate Gradients for ALL Examples</h2>
+        <p style="font-size: 1.2em;">We play the blame game for each example, but <strong style="color: #ff6b6b;">we don't update the weights yet.</strong></p>
+        <table style="margin: 10px auto; font-size: 0.9em; border-collapse: collapse; width: 100%;">
+            <thead><tr><th>Example</th><th>∂E/∂w1</th><th>∂E/∂w2</th><th>∂E/∂w3</th><th>∂E/∂w4</th><th>∂E/∂w5</th></tr></thead>
+            <tbody>
+                <tr style="background-color: #2a4a2a;"><td>1 (already done)</td><td>520</td><td>156</td><td>650</td><td>312</td><td>26</td></tr>
+                <tr class="fragment fade-in"><td>2</td><td>380</td><td>152</td><td>950</td><td>304</td><td>38</td></tr>
+                <tr class="fragment fade-in"><td>3</td><td>24</td><td>16</td><td>36</td><td>16</td><td>4</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Because this slide shows the third step (summing the gradients), it's a TECHNICAL slide. CRITICAL: The context box persists. The table from the previous slide is shown again, but this time with a "TOTAL" row revealed as a fragment. This visually demonstrates the core "democratic decision" of batch learning: summing all the individual opinions. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div data-id="context-box-batch" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Batch Learning Setup</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">Start weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <h2 style="font-size: 1.8em;">Step 3: Sum the Blame and Update ONCE</h2>
+        <table style="margin: 10px auto; font-size: 0.9em; border-collapse: collapse; width: 100%;">
+            <thead><tr><th>Example</th><th>∂E/∂w1</th><th>∂E/∂w2</th><th>∂E/∂w3</th><th>∂E/∂w4</th><th>∂E/∂w5</th></tr></thead>
+            <tbody>
+                <tr style="background-color: #2a4a2a;"><td>1 (already done)</td><td>520</td><td>156</td><td>650</td><td>312</td><td>26</td></tr>
+                <tr><td>2</td><td>380</td><td>152</td><td>950</td><td>304</td><td>38</td></tr>
+                <tr><td>3</td><td>24</td><td>16</td><td>36</td><td>16</td><td>4</td></tr>
+                <tr class="fragment fade-in" style="border-top: 3px solid #4CAF50;">
+                    <td style="color: #4CAF50;"><strong>TOTAL</strong></td>
+                    <td style="color: #4CAF50;"><strong>924</strong></td>
+                    <td style="color: #4CAF50;"><strong>324</strong></td>
+                    <td style="color: #4CAF50;"><strong>1636</strong></td>
+                    <td style="color: #4CAF50;"><strong>632</strong></td>
+                    <td style="color: #4CAF50;"><strong>68</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Because this slide shows the final update calculation based on the summed gradients, it's a TECHNICAL slide. CRITICAL: The context box persists. A new table clearly shows the update process for each weight, using the "Total Gradient" values from the previous slide. This completes the batch learning calculation walkthrough. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div data-id="context-box-batch" style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Batch Learning Setup</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">Start weights: <code>w1=1, w2=2, w3=1, w4=1, w5=0</code></p>
+        </div>
+        <p style="font-size: 1em;">Now we use these <em>total</em> gradients to update our weights one time. (η = 0.0001)</p>
+        <table style="margin: 10px auto; font-size: 1em; border-collapse: collapse; width: 100%;">
+            <thead><tr><th>Weight</th><th>Old</th><th>Total Gradient</th><th>Update</th><th style="color: #4CAF50;">New Value</th></tr></thead>
+            <tbody>
+                <tr><td>w1</td><td>1</td><td>924</td><td>1 - 0.0001×924</td><td style="color: #4CAF50;"><strong>0.9076</strong></td></tr>
+                <tr><td>w2</td><td>2</td><td>324</td><td>2 - 0.0001×324</td><td style="color: #4CAF50;"><strong>1.9676</strong></td></tr>
+                <tr><td>w3</td><td>1</td><td>1636</td><td>1 - 0.0001×1636</td><td style="color: #4CAF50;"><strong>0.8364</strong></td></tr>
+                <tr><td>w4</td><td>1</td><td>632</td><td>1 - 0.0001×632</td><td style="color: #4CAF50;"><strong>0.9368</strong></td></tr>
+                <tr><td>w5</td><td>0</td><td>68</td><td>0 - 0.0001×68</td><td style="color: #4CAF50;"><strong>-0.0068</strong></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Because this slide provides the key insight from the batch update, it's a POWER TEXT slide. Text analysis: "This update direction is a compromise." (35 characters) is short and impactful. The following line explains that it's the "average best direction" for all data, which is the core concept of generalization. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">This update direction is a <mark>compromise</mark>.</h1>
+    <h2 class="fragment fade-in r-fit-text">It’s the average best direction that helps reduce the error across ALL our data, not just one example.</h2>
+</section>
+
+<!-- Because this slide poses the critical question of whether the complex process actually worked, it's a POWER TEXT slide. Text analysis: "But did it work? Let's verify." (30 characters). This creates a moment of suspense and transitions into the verification phase, which is the payoff for the entire walkthrough. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">But did it work?</h1>
+    <h2 class="fragment fade-in r-fit-text">Let's verify.</h2>
+</section>
+
+<!-- Because this slide shows the final, triumphant result of the batch update, it's a TECHNICAL slide formatted for maximum impact. It provides full context including the network architecture, updated weights, and step-by-step forward pass calculations for all examples. -->
+<section data-transition="fade">
+    <div style="padding: 20px; max-width: 95%; margin: 0 auto;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.4em;">Verification: Forward Pass with Batch-Updated Weights</h3>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin: 5px 0;">
+                <div><strong>OLD Weights:</strong> w1=1, w2=2, w3=1, w4=1, w5=0</div>
+                <div><strong style="color: #4CAF50;">NEW Weights:</strong> w1=0.9076, w2=1.9676, w3=0.8364, w4=0.9368, w5=-0.0068</div>
+            </div>
+            <div style="font-size: 0.8em; margin: 5px 0;">
+                <div><strong>Architecture:</strong> h₁=(x₁+w₁×x₂)², h₂=w₂×x₁×x₂, y=w₃×h₁+w₄×h₂+w₅</div>
+            </div>
+        </div>
+
+        <h2 style="font-size: 1.5em; text-align: center;">Step-by-Step Forward Pass for ALL Examples</h2>
+        
+        <table style="margin: 20px auto; font-size: 0.75em; border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr><th>Example</th><th>Target</th><th>h₁ = (x₁+w₁×x₂)²</th><th>h₂ = w₂×x₁×x₂</th><th>y_pred = w₃×h₁+w₄×h₂+w₅</th><th>BEFORE</th><th>AFTER</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>(3, 2)</strong></td>
+                    <td><strong>24</strong></td>
+                    <td style="text-align: left;">
+                        (3+0.9076×2)²<br/>
+                        = (4.8152)²<br/>
+                        = <strong style="color: #4CAF50;">23.19</strong>
+                    </td>
+                    <td style="text-align: left;">
+                        1.9676×3×2<br/>
+                        = <strong style="color: #4CAF50;">11.81</strong>
+                    </td>
+                    <td style="text-align: left;">
+                        0.8364×23.19 + 0.9368×11.81 - 0.0068<br/>
+                        = 19.40 + 11.06 - 0.01<br/>
+                        = <strong style="color: #4CAF50;">30.45</strong>
+                    </td>
+                    <td style="color: #ff6b6b; font-size: 1.1em; text-align: center;"><strong>37</strong><br/><small style="color: #ff9999;">Error²: (24-37)² = 169</small></td>
+                    <td class="fragment fade-in" style="color: #4CAF50; font-size: 1.1em; text-align: center;"><strong>30.45</strong><br/><small style="color: #90EE90;">Error²: (24-30.45)² = 41.6</small></td>
+                </tr>
+                <tr>
+                    <td><strong>(1, 4)</strong></td>
+                    <td><strong>14</strong></td>
+                    <td style="text-align: left;">
+                        (1+0.9076×4)²<br/>
+                        = (4.6304)²<br/>
+                        = <strong style="color: #4CAF50;">21.44</strong>
+                    </td>
+                    <td style="text-align: left;">
+                        1.9676×1×4<br/>
+                        = <strong style="color: #4CAF50;">7.87</strong>
+                    </td>
+                    <td style="text-align: left;">
+                        0.8364×21.44 + 0.9368×7.87 - 0.0068<br/>
+                        = 17.93 + 7.37 - 0.01<br/>
+                        = <strong style="color: #4CAF50;">25.29</strong>
+                    </td>
+                    <td style="color: #ff6b6b; font-size: 1.1em; text-align: center;"><strong>33</strong><br/><small style="color: #ff9999;">Error²: (14-33)² = 361</small></td>
+                    <td class="fragment fade-in" style="color: #4CAF50; font-size: 1.1em; text-align: center;"><strong>25.29</strong><br/><small style="color: #90EE90;">Error²: (14-25.29)² = 127.5</small></td>
+                </tr>
+                <tr>
+                    <td><strong>(2, 1)</strong></td>
+                    <td><strong>11</strong></td>
+                    <td style="text-align: left;">
+                        (2+0.9076×1)²<br/>
+                        = (2.9076)²<br/>
+                        = <strong style="color: #4CAF50;">8.45</strong>
+                    </td>
+                    <td style="text-align: left;">
+                        1.9676×2×1<br/>
+                        = <strong style="color: #4CAF50;">3.94</strong>
+                    </td>
+                    <td style="text-align: left;">
+                        0.8364×8.45 + 0.9368×3.94 - 0.0068<br/>
+                        = 7.07 + 3.69 - 0.01<br/>
+                        = <strong style="color: #4CAF50;">10.75</strong>
+                    </td>
+                    <td style="color: #ff6b6b; font-size: 1.1em; text-align: center;"><strong>13</strong><br/><small style="color: #ff9999;">Error²: (11-13)² = 4</small></td>
+                    <td class="fragment fade-in" style="color: #4CAF50; font-size: 1.1em; text-align: center;"><strong>10.75</strong><br/><small style="color: #90EE90;">Error²: (11-10.75)² = 0.06</small></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="fragment fade-in" style="text-align: center; margin-top: 20px; font-size: 1.2em;">
+            <p style="color: #4CAF50; font-weight: bold;">🎉 ALL examples improved with a single batch update! 🎉</p>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide delivers the key takeaway from the verification, it's a POWER TEXT slide. Text analysis: The text is broken into two parts. "Look at that! All three predictions improved..." (59 characters) expresses excitement. The second part explains the core concept of generalization, which is the major lesson learned from this exercise. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">ALL examples improved!</h1>
+    <h2 class="fragment fade-in r-fit-text">One update. Works for <mark>everyone</mark>.</h2>
+</section>
+
+<!-- Because this slide formally names the concept of generalization, it's a POWER TEXT slide. Text analysis: "This is how a network learns to generalize." (41 characters). The word 'generalize' is highlighted in green to solidify it as the key vocabulary term and the desired outcome of the learning process. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">This is how a network learns to <span style="color: #4CAF50;">generalize</span>.</h1>
+</section>
+
+<!-- Because this slide compares the pros and cons of the two main strategies, it's an EDUCATIONAL slide using a side-by-side layout. "Pure Online Learning" is described as fast but "noisy and chaotic" (red), while "Full Batch Learning" is stable (green) but "incredibly slow and memory-hungry" (red). This clearly illustrates the trade-off and sets up the need for a compromise solution. -->
+<section data-transition="slide">
+    <h2 class="r-fit-text">So, which one is better?</h2>
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1.2em; margin-top: 30px;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #00bfff;">Pure Online Learning</h2>
+            <p>Fast updates, but the learning is <span style="color: #ff6b6b;">noisy and chaotic</span>.</p>
+        </div>
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Full Batch Learning</h2>
+            <p>Stable direction, but <span style="color: #ff6b6b;">incredibly slow and memory-hungry</span>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide transitions to the real-world solution, it's a POWER TEXT slide. Text analysis: "So what do we use in the real world?" (36 characters) is a simple, direct question that leads the audience from the two extremes to the practical, industry-standard approach. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">So what do we use in the real world?</h1>
+</section>
+
+<!-- Because this slide reveals the compromise solution, it's a POWER TEXT slide. Text analysis: "We compromise." (13 characters) is a short, definitive statement that serves as a punchline to the previous slide's dilemma. It's a simple but effective transition. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">We compromise.</h1>
+</section>
+
+<!-- Because this slide names the industry-standard solution, it's a POWER TEXT slide. Text analysis: "We use Mini-batch Learning." (26 characters). The term 'Mini-batch Learning' is highlighted in green and presented as the definitive answer. The slide also calls it the "sweet spot" and "industry standard" to emphasize its importance. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">We use <span style="color: #4CAF50;">Mini-batch Learning</span>.</h1>
+    <h2 class="fragment fade-in r-fit-text">This is the sweet spot. It's the industry standard that powers virtually all modern AI.</h2>
+</section>
+
+<!-- Because this slide explains the mechanics of Mini-batch Learning, it's an EDUCATIONAL slide. It uses a simple, clear list format to break down the process. The use of fragments allows the presenter to walk through each step, making the elegant and practical solution easy to understand. -->
+<section data-transition="convex">
+    <h2 style="font-size: 2em;">Mini-batch:</h2>
+    <div style="font-size: 1.4em; text-align: center; width: 80%; margin: 40px auto; line-height: 1.6;">
+        <p class="fragment fade-in">1. Take a <strong style="color: #4CAF50;">small batch</strong> (32, 64, or 256 examples)</p>
+        <p class="fragment fade-in">2. Update weights</p>
+        <p class="fragment fade-in">3. Repeat with next batch</p>
+    </div>
+</section>
+
+<!-- Because this slide shows the mini-batch algorithm, it's a TECHNICAL slide using a code format. This provides the mathematical formulation of mini-batch learning, bridging between batch learning and the practical mini-batch approach. -->
+<section data-transition="slide">
+    <h2 style="font-size: 1.8em;">Mini-batch Learning Algorithm</h2>
+    <div style="background-color: #333; padding: 20px; border-radius: 10px; margin: 20px auto; width: 60%;">
+        <pre style="background-color: #2a2a2a; padding: 20px; border-radius: 5px; font-size: 0.9em; line-height: 1.4; text-align: left;">
+<span style="color: #4CAF50;">For each</span> mini-batch of size B (where B < N):
+  total_gradient = 0
+  <span style="color: #4CAF50;">For each</span> example j in mini-batch:
+    <span style="color: #888;">// Calculate gradient for this example</span>
+    gradient_j = ∇Loss(θ, xⱼ, yⱼ)
+    <span style="color: #888;">// ADD to mini-batch total</span>
+    total_gradient += gradient_j
+  <span style="color: #888;">// Update weights using mini-batch average</span>
+  <span style="color: #4CAF50;">θ = θ - η × (total_gradient / B)</span></pre>
+    </div>
+</section>
+
+<!-- Because this slide delivers the final, powerful summary of why Mini-batch is the best approach, it's a POWER TEXT slide. Text analysis: "It's the best of both worlds." (29 characters) provides a satisfying conclusion. The following line explains the benefits in clear, non-technical terms: "stable enough" gradients and "manageable" memory. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">It's the best of both worlds.</h1>
+    <h2 class="fragment fade-in r-fit-text">The gradients are stable enough from the small crowd, and the memory usage is perfectly manageable.</h2>
+</section>
+
+<!-- Because this is the final slide of the chapter and it scales the concept up to a massive level, it's a POWER TEXT slide. Text analysis: "This is how you train a network on a dataset of billions of images. You feed it one small handful at a time." (111 chars) - this is a bit long, so I'll split it. The first part sets the stage for the scale. -->
+<section data-auto-animate data-transition="zoom">
+    <h1 class="r-fit-text">This is how you train a network on a dataset of <mark>billions</mark> of images.</h1>
+</section>
+
+<!-- Because this slide completes the thought from the previous one, it's a POWER TEXT slide using data-auto-animate. The final line, "You feed it one small handful at a time," is a beautiful and simple analogy that makes the incredibly complex process of training large-scale AI feel intuitive and understandable. It's a perfect, memorable conclusion to the chapter. -->
+<section data-auto-animate data-transition="zoom">
+    <h1 class="r-fit-text">This is how you train a network on a dataset of <mark>billions</mark> of images.</h1>
+    <h1 class="r-fit-text" style="color: #4CAF50;">You feed it one small handful at a time.</h1>
+</section>
+
+<!-- END CHAPTER 7 -->
+
+<!-- START CHAPTER 8 -->
+
+<!-- Because this slide opens the final, epic chapter, it's a POWER TEXT slide. Text analysis: "So now we have a complete, practical learning loop that can handle massive datasets." (86 characters) - this fits the r-fit-text sweet spot. The second line, "We have all the pieces," is a short, declarative statement that gives the audience a sense of completion and sets a confident tone for the chapter. A swelling, epic musical theme is imagined to start here. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">So now we have a complete, practical learning loop that can handle massive datasets.</h1>
+    <h2 class="fragment fade-in r-fit-text">We have all the pieces.</h2>
+</section>
+
+<!-- Because this slide poses the final, grand question of the presentation, it's a POWER TEXT slide. Text analysis: The question is broken into two parts for impact. The first part sets up the context of our tiny 5-weight network, and the second part contrasts it with the mind-boggling scale of GPT-4's trillion weights. This creates a dramatic sense of scale and poses the ultimate question: does this simple process actually work for something so massive? -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">The only question left is... how does this simple process, which we ran on a tiny network with only 5 weights...</h2>
+    <h1 class="fragment fade-in r-fit-text">...possibly scale up to train a monster like <mark>GPT-4</mark> with over a <span style="color: #ff6b6b;">trillion</span> weights?</h1>
+</section>
+
+<!-- Because this slide directly answers the previous question with a simple, declarative statement, it's a POWER TEXT slide. Text analysis: "Is it really the same algorithm?" (30 characters) re-states the question for emphasis. The second part, "The answer is the most beautiful part of this entire story," serves as a powerful, emotional hook that promises a satisfying and elegant conclusion. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">Is it really the same algorithm?</h2>
+    <h1 class="fragment fade-in r-fit-text" style="color: #4CAF50;">The answer is the most beautiful part of this entire story.</h1>
+</section>
+
+<!-- Because this is the central "Aha!" moment of the chapter, revealing the universal pattern, it's a TECHNICAL slide formatted for maximum impact. A simple, clean comparison table is used to show the shocking similarity between our toy model and GPT-4. The identical three-step process is highlighted with green checkmarks, providing a powerful visual confirmation that the core algorithm is the same, regardless of scale. -->
+<section data-transition="zoom">
+    <div style="display: flex; justify-content: space-around; margin: 40px auto; width: 80%;">
+        <div style="text-align: center; background-color: #333; padding: 30px; border-radius: 15px; flex: 1; margin: 0 20px;">
+            <h2 style="color: #00bfff; font-size: 1.5em; margin-bottom: 20px;">Our Tiny Network</h2>
+            <p style="font-size: 1.2em;">5 weights</p>
+        </div>
+        <div style="text-align: center; background-color: #333; padding: 30px; border-radius: 15px; flex: 1; margin: 0 20px;">
+            <h2 style="color: #ff6b6b; font-size: 1.5em; margin-bottom: 20px;">GPT-4</h2>
+            <p style="font-size: 1.2em;">1,760,000,000,000 weights</p>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 60px;">
+        <h2 style="font-size: 1.5em; color: #4CAF50; margin-bottom: 30px;"><strong>Identical Process:</strong></h2>
+        <div style="font-size: 1.2em; line-height: 1.8;">
+            <p style="color: #4CAF50;">✓ Forward Pass</p>
+            <p style="color: #4CAF50;">✓ Backpropagation</p>
+            <p style="color: #4CAF50;">✓ Gradient Descent</p>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide delivers the key insight from the comparison table, it's a POWER TEXT slide. Text analysis: "It's the same three-step dance." (29 characters) is a short, memorable metaphor. The second part, "Scale changes everything, and yet, it changes nothing," is a beautiful paradox that captures the profound nature of this universal algorithm. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">It's the <span style="color: #4CAF50;">same three-step dance</span>.</h1>
+    <h2 class="fragment fade-in r-fit-text">Scale changes <span style="color: #ff6b6b;">everything</span>, and yet, it changes <span style="color: #00bfff;">nothing</span>.</h2>
+</section>
+
+<!-- Because this slide is a moment of pure triumph and empowerment for the audience, it's a POWER TEXT slide. Text analysis: "The stunning truth is this: You just mastered the core algorithm running inside every AI system on Earth." (111 characters) - this is a bit long, so I'll split it. The first part establishes the "stunning truth." -->
+<section data-auto-animate data-transition="zoom">
+    <h2 class="r-fit-text">The stunning truth is this:</h2>
+    <h1 class="r-fit-text" style="color: #4CAF50;">You just mastered the core algorithm running inside <mark>every AI system on Earth.</mark></h1>
+</section>
+
+<!-- Because this slide provides concrete examples to reinforce the previous statement, it's a POWER TEXT slide using data-auto-animate. It lists major AI applications and confirms they are all just scaled-up versions of the process the audience has learned, solidifying their sense of mastery and understanding. -->
+<section data-auto-animate data-transition="zoom">
+    <h2 class="r-fit-text">ChatGPT, autonomous vehicles, medical diagnosis AI...</h2>
+    <h1 class="r-fit-text">...they are all just <mark>scaled-up, engineered versions</mark> of what we just built together from scratch.</h1>
+</section>
+
+<!-- Because this slide serves as a transition to the final technical explanations, it's a POWER TEXT slide. Text analysis: "So, how do we get from our simple model to these massive ones?" (63 characters) - a perfect length. This question guides the audience into the final section, which explains the "engineering details" that enable this massive scale. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">So, how do we get from our <span style="color: #00bfff;">simple model</span> to these <span style="color: #ff6b6b;">massive ones</span>?</h1>
+    <h2 class="fragment fade-in r-fit-text">The <span style="color: #4CAF50;">core principles don't change</span>. Same engine, bigger scale.</h2>
+</section>
+
+<!-- Because this slide explains the first and most obvious scaling factor, it's an EDUCATIONAL slide. It uses a simple comparison table to clearly illustrate the difference in scale between our toy network and real-world networks in terms of layers, neurons, and weights. This makes the abstract concept of "more layers" concrete and understandable. -->
+<section data-transition="convex">
+    <h2 style="font-size: 2em;">1. More Layers and More Neurons</h2>
+    <table style="margin: 40px auto; font-size: 1.2em; border-collapse: collapse; width: 80%;">
+        <thead>
+            <tr><th style="padding: 15px;">Our Network</th><th style="padding: 15px;">Real Networks</th></tr>
+        </thead>
+        <tbody>
+            <tr style="border-top: 1px solid #666;"><td style="padding: 10px;">2 layers</td><td style="padding: 10px;">10-100+ layers</td></tr>
+            <tr style="border-top: 1px solid #666;"><td style="padding: 10px;">2 hidden neurons</td><td style="padding: 10px;">Millions-billions of neurons</td></tr>
+            <tr style="border-top: 1px solid #666;"><td style="padding: 10px;">5 weights total</td><td style="padding: 10px;">Trillions of weights</td></tr>
+        </tbody>
+    </table>
+    <p class="fragment fade-in" style="font-size: 1.4em; margin-top: 30px;">This just means the "chain" for the Chain Rule gets much, much longer. The process is identical.</p>
+</section>
+
+<!-- Because this slide introduces the second scaling factor (activation functions), it's a TECHNICAL slide. It uses a clear table to compare our simple `x²` function with the industry-standard ReLU and Sigmoid functions. The table includes the formula, gradient, and a "Why It's Popular" column, providing a comprehensive but easy-to-digest overview of the key differences. -->
+<section data-transition="concave">
+    <h2 style="font-size: 2em;">2. More Practical Activation Functions</h2>
+    <table style="margin: 20px auto; font-size: 1em; border-collapse: collapse; width: 100%;">
+        <thead><tr><th style="padding: 10px;">Function</th><th style="padding: 10px;">Formula</th><th style="padding: 10px;">Gradient</th><th style="padding: 10px;">Why It's Popular</th></tr></thead>
+        <tbody>
+            <tr style="border-top: 1px solid #666;"><td style="color: #4CAF50;"><strong>ReLU</strong></td><td>`max(0, x)`</td><td>1 if x>0, else 0</td><td>Simple, fast, solves a huge problem.</td></tr>
+            <tr style="border-top: 1px solid #666;"><td style="color: #00bfff;"><strong>Sigmoid</strong></td><td>`1/(1+e⁻ˣ)`</td><td>`sigmoid(x) * (1-sigmoid(x))`</td><td>Perfect for probabilities (0 to 1).</td></tr>
+            <tr style="border-top: 1px solid #666;"><td style="color: #ff6b6b;"><strong>Our x²</strong></td><td>`x²`</td><td>`2x`</td><td>Works, but `2x` gradient can explode.</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Because this slide introduces the final scaling factor (loss functions), it's a TECHNICAL slide. It uses a clear table to compare the loss function for regression tasks (Mean Squared Error) with the one for classification tasks (Cross-Entropy Loss). Providing a simple example for each makes the purpose and application of each function easy to understand. -->
+<section data-transition="convex">
+    <h2 style="font-size: 2em;">3. Better Loss Functions for Different Jobs</h2>
+    <table style="margin: 20px auto; font-size: 1em; border-collapse: collapse; width: 100%;">
+        <thead><tr><th style="padding: 10px;">Task</th><th style="padding: 10px;">Loss Function</th><th style="padding: 10px;">Formula</th><th style="padding: 10px;">Example</th></tr></thead>
+        <tbody>
+            <tr style="border-top: 1px solid #666;"><td style="color: #4CAF50;"><strong>Regression</strong></td><td>Mean Squared Error</td><td>`(y_true - y_pred)²`</td><td>Predicting house prices</td></tr>
+            <tr style="border-top: 1px solid #666;"><td style="color: #00bfff;"><strong>Classification</strong></td><td>Cross-Entropy Loss</td><td>`-log(predicted_probability)`</td><td>Image recognition: 80% "cat"</td></tr>
+        </tbody>
+    </table>
+    <p class="fragment fade-in" style="font-size: 1.3em; margin-top: 30px;">The specific formula changes, but its job is always the same: give us a number to kick off the blame game.</p>
+</section>
+
+<!-- Because this slide marks the beginning of the grand conclusion, it's a POWER TEXT slide. Text analysis: "And that’s it. That's the whole secret." (35 characters) - the simple, direct language provides a sense of finality and demystification. The second line, "You have seen the entire process," gives the audience a powerful feeling of accomplishment. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">And that's it. That's the <span style="color: #4CAF50;">whole secret.</span></h1>
+    <h2 class="fragment fade-in r-fit-text">You have seen the <span style="color: #4CAF50;">entire process.</span></h2>
+</section>
+
+<!-- Because this slide summarizes the universal applicability of the learning loop, it's a POWER TEXT slide. Text analysis: "No matter how complex a neural network seems..." (88 characters) sets up the context. The second part emphasizes that all modern AIs, from Midjourney to Tesla, learn through the exact same loop, reinforcing the power of the fundamentals they've learned. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">From Midjourney to Tesla...</h2>
+    <h1 class="fragment fade-in r-fit-text">...they all use the <mark>exact same loop</mark>.</h1>
+</section>
+
+<!-- Because this slide presents the final, definitive summary of the entire learning process, it's an EDUCATIONAL slide formatted for maximum clarity. The five-step loop is presented as a clean, numbered list. Revealing each step with a fragment allows the presenter to recap the entire hour's journey, from guessing to improving, in one final, memorable sequence. -->
+<section data-transition="slide">
+    <h1 style="font-size: 3em;">The Universal Pattern</h1>
+    <div style="font-size: 1.4em; margin-top: 50px; text-align: center; width: 90%; margin: 50px auto; line-height: 1.6;">
+        <p class="fragment fade-in">1. <strong>Forward Pass:</strong> Make a guess.</p>
+        <p class="fragment fade-in">2. <strong>Loss Function:</strong> Measure how wrong the guess is.</p>
+        <p class="fragment fade-in">3. <strong>Backpropagation:</strong> Calculate the "blame" for every weight.</p>
+        <p class="fragment fade-in">4. <strong>Gradient Descent:</strong> Nudge every weight in the right direction.</p>
+        <p class="fragment fade-in">5. <strong>Repeat:</strong> Do this millions, or even billions, of times.</p>
+    </div>
+</section>
+
+<!-- Because this slide is a powerful, emotional payoff, it's a POWER TEXT slide. Text analysis: The text contrasts the audience's initial feeling (impenetrable black box) with their new reality ("But now you know the truth."). This narrative structure validates their learning journey and provides a deeply satisfying conclusion. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">You started this hour thinking neural networks were an <span style="color: #ff6b6b;">impenetrable black box.</span></h2>
+    <h1 class="fragment fade-in r-fit-text">But now you know the truth.</h1>
+</section>
+
+<!-- Because this is the core philosophical takeaway of the entire presentation, it's a POWER TEXT slide. Text analysis: "It's not magic." (14 characters) is the central thesis. The second part reframes the complexity into a beautiful cascade of simple, intuitive ideas, perfectly summarizing the presentation's teaching philosophy. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">It's <span style="color: #ff6b6b;">not magic.</span></h1>
+    <h2 class="fragment fade-in r-fit-text">It's just a <span style="color: #4CAF50;">beautiful cascade</span> of simple, intuitive ideas:</h2>
+    <h2 class="fragment fade-in r-fit-text"><span style="color: #4CAF50;">finding the bottom of a valley</span>, <span style="color: #4CAF50;">tuning one knob at a time</span>, and <span style="color: #4CAF50;">playing a clever game of blame.</span></h2>
+</section>
+
+<!-- Because this slide is the final validation of the audience's effort, it's a POWER TEXT slide. Text analysis: "You've mastered the fundamentals." (31 characters) - a short, powerful, and declarative statement. It acts as a final "graduation" moment, confirming that they have achieved the goal set out in the video's title. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text" style="color: #4CAF50;">You've mastered the fundamentals.</h1>
+</section>
+
+<!-- Because this is the very last slide of the presentation, it's a POWER TEXT slide designed for a warm, welcoming, and epic conclusion. Text analysis: "Welcome to the world of AI." (26 characters) - it's an invitation, a congratulation, and a final, memorable sign-off. The outro music is imagined to swell here, leaving the audience feeling inspired and empowered. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Welcome to the world of AI.</h1>
+</section>
+
+<!-- END CHAPTER 8 -->
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.2.1/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.2.1/plugin/highlight/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.2.1/plugin/math/math.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js-mermaid-plugin@2.1.0/plugin/mermaid/mermaid.js"></script>
+    <script>
+        Reveal.initialize({
+            katex: {
+                version: 'latest',
+                delimiters: [
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true },
+                ],
+                ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            },
+            plugins: [ RevealHighlight, RevealMath.KaTeX, RevealMermaid ],
+            width: 1920,
+            height: 1080,
+            controls: false,
+        });
+    </script>
+</body>
+</html>
