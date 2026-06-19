@@ -1246,3 +1246,41 @@ class DiffusionSchedule:
             noise = torch.randn_like(x0)
         a_bar = self.alphas_bar[t].view(-1, 1)
         return torch.sqrt(a_bar) * x0 + torch.sqrt(1.0 - a_bar) * noise, noise
+
+sched = DiffusionSchedule(T=50)
+
+# Create 2D Swiss Roll / S-curve data points
+n_pts = 300
+theta = torch.linspace(0, 4 * math.pi, n_pts)
+x0 = torch.stack([theta * torch.cos(theta), theta * torch.sin(theta)], dim=1) / 10.0
+
+# Visualize Forward Noise addition at steps t = 0, 10, 25, 49
+fig, axes = plt.subplots(1, 4, figsize=(14, 3.5))
+for i, t_val in enumerate([0, 10, 25, 49]):
+    t_tensor = torch.full((n_pts,), t_val, dtype=torch.long)
+    xt, _ = sched.q_sample(x0, t_tensor)
+    axes[i].scatter(xt[:, 0], xt[:, 1], alpha=0.6, s=15, color='darkviolet')
+    axes[i].set_title(f"Step t = {t_val}")
+    axes[i].set_xlim(-2.5, 2.5)
+    axes[i].set_ylim(-2.5, 2.5)
+plt.suptitle("Forward Diffusion Process: Adding Gaussian Noise")
+plt.tight_layout()
+plt.show()
+"""))
+    save_nb(make_nb(cells, "14_Diffusion_Models_From_Scratch"), "14_Diffusion_Models_From_Scratch")
+
+# ----------------------------------------------------------------------
+# 15. 00_Tutorial_Roadmap_and_Index.ipynb
+# ----------------------------------------------------------------------
+def build_00_index():
+    cells = []
+    cells.append(md("""# Zach's Interactive LLM Mastery Series: Complete Roadmap & Index
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/The-Pocket/PocketFlow-Tutorial-Video-Generator/blob/main/docs/llm/00_Tutorial_Roadmap_and_Index.ipynb)
+
+Welcome to the **Interactive Colab Masterclass Series** for modern AI and Large Language Models, converted from Zach's PocketFlow tutorials into clean, runnable, visual Jupyter/Colab notebooks!
+
+Every notebook is designed to be **100% self-contained**, runnable with a single click, and loaded with math formulas, step-by-step intuition, code implementations from scratch, and interactive playgrounds.
+
+---
+
