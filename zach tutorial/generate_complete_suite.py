@@ -1322,3 +1322,41 @@ Every notebook is designed to be **100% self-contained**, runnable with a single
 14. [14_Diffusion_Models_From_Scratch.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/zach%20tutorial/14_Diffusion_Models_From_Scratch.ipynb)
     * *Core Topics*: DDPM Forward Gaussian Noise Schedule, Noise Prediction UNet, Reverse Denoising Sampling.
 
+---
+"""))
+
+    cells.append(code("""# Verify system and packages for the entire tutorial series
+import torch
+import torchvision
+import matplotlib
+import numpy
+
+print(f" Python environment ready!")
+print(f" - PyTorch: {torch.__version__}")
+print(f" - NumPy: {numpy.__version__}")
+print(f" - Matplotlib: {matplotlib.__version__}")
+print(f" - CUDA Available: {torch.cuda.is_available()}")
+"""))
+    save_nb(make_nb(cells, "00_Tutorial_Roadmap_and_Index"), "00_Tutorial_Roadmap_and_Index")
+
+# ----------------------------------------------------------------------
+# Master Build
+# ----------------------------------------------------------------------
+if __name__ == "__main__":
+    print("Building all 14 Zach LLM Interactive Notebooks with smart AST classifier...")
+    build_01_nn()
+    build_02_pytorch()
+    build_03_adam()
+    build_04_attention()
+    build_05_transformer()
+    build_06_kv_cache()
+    build_07_rope()
+    build_08_pretrain()
+    build_09_sft()
+    build_10_lora()
+    build_11_quantization()
+    build_12_rlhf()
+    build_13_dpo()
+    build_14_diffusion()
+    build_00_index()
+    print("\n All 15 notebooks successfully created in 'zach tutorial/' and 'zach tutorial/notebooks/'!")
