@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Direct Preference Optimization in 1 hour</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.2.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.2.1/theme/black.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css">
+    <script src="https://unpkg.com/function-plot/dist/function-plot.js"></script>
+    <style>
+        .function-plot .tick text {
+            fill: white !important;
+            font-size: 18px !important;
+        }
+        .function-plot .axis-label {
+            fill: white !important;
+            font-size: 20px !important;
+        }
+        .function-plot .axis path,
+        .function-plot .axis line {
+            stroke: white !important;
+        }
+        .function-plot .grid line {
+            stroke: #444 !important;
+            stroke-opacity: 0.7 !important;
+        }
+        code, pre, pre code, [class*="language-"],
+        .reveal pre, .reveal code, .reveal pre code {
+            max-height: 100vh !important;
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+<!-- START CHAPTER 1 -->
+
+<!-- Because this is the opening slide of the entire presentation, it needs to be an impactful hook that creates immediate audience connection. This is a POWER TEXT slide. Text analysis: "You've been there." (16 characters) is short, conversational, and relatable, perfect for r-fit-text. No animation is needed, it should appear instantly to set the stage. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">You've been there.</h1>
+</section>
+
+<!-- Following the hook, this slide provides the concrete example the audience was just primed for. This is an EDUCATIONAL slide. It's designed to look like a chat interface to make the example feel authentic. The structure uses styled divs to create chat bubbles, clearly separating the user's query from the AI's unhelpful response. This visual format is more engaging than plain text. No fragments are used, as the entire exchange should be seen at once to understand the problem. -->
+<section data-transition="slide">
+    <div style="font-size: 1.3em; line-height: 1.6; max-width: 80%; margin: auto;">
+        <div style="background-color: #333; padding: 20px; border-radius: 20px 20px 20px 5px; margin-bottom: 20px; text-align: left;">
+            <strong style="color: #4CAF50;">You:</strong> What is the primary cause of Earth's seasons?
+        </div>
+        <div class="fragment" style="background-color: #222; padding: 20px; border-radius: 20px 20px 5px 20px; text-align: left;">
+            <strong style="color: #ff6b6b;">AI:</strong> What is the primary cause of Earth's seasons? <br>
+            A) The Earth's distance from the sun. <br>
+            B) The tilt of the Earth's axis...
+        </div>
+    </div>
+</section>
+
+<!-- This slide transitions from the concrete example to the underlying problem. It's a POWER TEXT slide designed for impact. Text analysis: "Why does this happen?" (21 characters) is a simple, direct question that engages the audience's curiosity. Using r-fit-text makes the question feel significant and prompts the audience to reflect. -->
+<section data-transition="fade" data-auto-animate>
+    <h1 class="r-fit-text">Why does this happen?</h1>
+</section>
+
+<!-- Building on the previous question, this slide begins to reveal the answer. This is a POWER TEXT slide using data-auto-animate for a smooth reveal. Text analysis: The full statement "This isn't just a bug. It's a fundamental flaw..." is broken into pieces for dramatic pacing. This first part (22 chars) dismisses a simple explanation, creating suspense. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This isn't just a bug.</h1>
+</section>
+
+<!-- This slide continues the animated reveal, delivering the punchline. It's a POWER TEXT slide. The text from the previous slide is preserved, and the new text appears below it. The phrase "fundamental flaw" is highlighted in red to emphasize the seriousness of the problem. This two-part structure builds the idea piece by piece, making it more memorable. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This isn't just a bug.</h1>
+    <h1 class="r-fit-text">It's a <span style="color: #ff6b6b;">fundamental flaw</span>.</h1>
+</section>
+
+<!-- Here, we give a name to the flaw. This is a POWER TEXT slide that introduces a key term. Text analysis: "'statistical parrot' problem" (27 characters) is the perfect length for r-fit-text. The phrase is marked to make it stand out as important terminology that will be referenced later. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">The "<mark>statistical parrot</mark>" problem.</h1>
+</section>
+
+<!-- This is a strong, transitional POWER TEXT slide. Text analysis: "Today, we're going to fix it." (30 characters) is a confident, forward-looking statement that signals a shift from problem to solution. The green color reinforces this positive, solution-oriented tone. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text" style="color: #4CAF50;">Today, we're going to fix it.</h1>
+</section>
+
+<!-- This POWER TEXT slide introduces the hero of our story: the DPO algorithm. It uses a two-part reveal with fragments for dramatic effect. The first part sets up the importance ("revolutionized LLM alignment"), creating anticipation. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">We are going to explore the algorithm that <mark>revolutionized</mark> LLM alignment:</h2>
+</section>
+
+<!-- This is the second part of the reveal, building from the previous slide with data-auto-animate. This POWER TEXT slide names the solution. The full name "Direct Preference Optimization" is highlighted in green for emphasis, clearly presenting the topic of the entire presentation. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">We are going to explore the algorithm that <mark>revolutionized</mark> LLM alignment:</h2>
+    <h1 class="r-fit-text" style="color: #4CAF50;">Direct Preference Optimization</h1>
+    <h2 class="r-fit-text">(DPO)</h2>
+</section>
+
+<!-- This slide is designed to be intentionally intimidating. It's a TECHNICAL slide showing the full DPO loss function. The purpose is to present the complexity head-on, setting up the subsequent promise to demystify it. The LaTeX is rendered large and centered to be the sole focus, creating a "wow, that looks complicated" moment for the viewer. -->
+<section data-transition="fade">
+    <div style="font-size: 1.1em; text-align: center;">
+        \[ \mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = - \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \left( \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)} \right) \right) \right] \]
+    </div>
+</section>
+
+<!-- Immediately following the complex formula, this POWER TEXT slide provides reassurance. Text analysis: "This equation looks intimidating..." (33 characters) directly acknowledges the audience's likely reaction, building rapport. Using data-auto-animate prepares for the follow-up statement. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This equation looks intimidating...</h1>
+</section>
+
+<!-- This slide completes the thought from the previous one. It's a POWER TEXT slide that pivots from acknowledging complexity to asserting importance. The phrase "...but it's the key" is revealed, turning the intimidating formula into an object of interest rather than fear. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This equation looks intimidating...</h1>
+    <h1 class="r-fit-text">...but it's the <span style="color: #4CAF50;">key</span>.</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that introduces the core intuition behind DPO. Text analysis: The sentence "It's built on one incredibly simple and powerful idea that you already know intuitively" (87 chars) is near the sweet spot for r-fit-text. It sets up the main idea as something accessible and familiar. -->
+<section data-transition="concave">
+    <h1 class="r-fit-text">It's built on one incredibly simple and powerful idea you already know intuitively:</h1>
+</section>
+
+<!-- This is the punchline slide, revealing the core concept. It's a POWER TEXT slide for maximum impact. Text analysis: "judging is easier than creating" (32 characters) is short, powerful, and memorable. It's highlighted in green to signify it as a core positive insight. This slide should linger to let the simple but profound idea sink in. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text" style="color: #4CAF50;">judging is easier than creating.</h1>
+</section>
+
+<!-- This slide begins the promise to the audience, setting expectations for the 1-hour presentation. This is a POWER TEXT slide. Text analysis: "My promise to you:" (18 characters) is a direct address to the viewer, making the commitment personal. `data-auto-animate` is used to create a multi-part promise. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">My promise to you:</h2>
+</section>
+
+<!-- Continuing the promise, this POWER TEXT slide specifies the time commitment. The `data-auto-animate` transition makes this feel like a natural continuation. The text "give me 1 hour" is short and impactful, reinforcing the presentation's title. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">My promise to you:</h2>
+    <h1 class="r-fit-text">give me <mark>1 hour</mark></h1>
+</section>
+
+<!-- This is the final part of the core promise. It's a POWER TEXT slide that delivers the payoff. The phrase "master Direct Preference Optimization" is highlighted in green, clearly stating the value proposition for the viewer. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">My promise to you:</h2>
+    <h1 class="r-fit-text">give me <mark>1 hour</mark></h1>
+    <h1 class="r-fit-text" style="color: #4CAF50;">and you will MASTER Direct Preference Optimization.</h1>
+</section>
+
+<!-- This POWER TEXT slide elaborates on what "mastery" means. Text analysis: The full thought is broken into two slides. "You will not only know what it does..." (36 characters) sets up a comparison, creating anticipation for the more important parts of the promise. -->
+<section data-transition="slide" data-auto-animate>
+    <h1 class="r-fit-text">You will not only know <mark>what</mark> it does...</h1>
+</section>
+
+<!-- This slide completes the elaboration on mastery. It's a POWER TEXT slide using `data-auto-animate` to build on the previous statement. The new line emphasizes deeper understanding ("why it works") and practical skill ("how to code it"), which are key differentiators for the presentation. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">You will not only know <mark>what</mark> it does...</h1>
+    <h1 class="r-fit-text">...but <span style="color: #4CAF50;">why</span> it works, and <span style="color: #4CAF50;">how</span> to code it.</h1>
+</section>
+
+<!-- This POWER TEXT slide connects the promise back to the intimidating formula shown earlier. Text analysis: "By the end of this video, you will understand every single component of that formula." (94 characters) is a bold claim that directly addresses the complexity previously introduced, reassuring the viewer that it will all make sense. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">By the end of this video, you will understand <mark>every single component</mark> of that formula.</h1>
+</section>
+
+<!-- This is the final slide of the chapter, summarizing the benefits of DPO and setting the stage for Chapter 2. It's a POWER TEXT slide. It ties the solution (DPO) back to the initial problem ("statistical parrot") and introduces a new benefit (efficiency), creating a compelling reason to continue watching. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">You'll see how it directly solves the "statistical parrot" problem and why it's so much more <span style="color: #4CAF50;">efficient</span>.</h1>
+</section>
+
+<!-- END CHAPTER 1 -->
+
+<!-- START CHAPTER 2 -->
+
+<!-- Because this slide directly follows the intro chapter and asks a rhetorical question to bridge the two, this is a POWER TEXT slide. Text analysis: "So, why did our AI act like a statistical parrot?" (51 characters) is a perfect length for r-fit-text. It re-engages the audience by directly referencing the key problem "statistical parrot" introduced in the previous chapter, providing a smooth transition. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">So, why did our AI act like a <mark>statistical parrot</mark>?</h1>
+</section>
+
+<!-- This is a POWER TEXT slide designed to give the foundational knowledge about pre-trained models. Text analysis: The content is broken into two impactful sentences for a two-beat rhythm. The first part (71 chars) establishes the model's capability, and the second part (55 chars), revealed by a fragment, introduces the core limitation. Highlighting "predict the next most likely word" emphasizes the simplistic, unaligned goal of the base model. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">A pre-trained LLM knows a mind-boggling amount of information.</h2>
+    <h2 class="fragment fade-in r-fit-text">But its only goal is to <mark>predict the next most likely word</mark>.</h2>
+</section>
+
+<!-- This slide revisits the initial problem from Chapter 1 to ground the explanation in a concrete example. This is an EDUCATIONAL slide. It re-uses the same chat bubble format for consistency. The critical addition is the explanatory text below, which reveals the AI's "thought process" and explicitly states the core issue: the lack of understanding "intent". This connects the abstract explanation from the previous slide to the tangible, frustrating user experience. -->
+<section data-transition="zoom">
+    <div style="font-size: 1.1em; max-width: 90%; margin: auto;">
+        <div style="background-color: #333; padding: 20px; border-radius: 20px 20px 20px 5px; margin-bottom: 20px; text-align: left;">
+            <strong>You:</strong> What is the primary cause of Earth's seasons?
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+            <p>...it thinks, "Ah, I've seen thousands of quizzes that start like this online!"</p>
+            <p class="fragment fade-in" style="font-size: 1.4em;">It has absolutely no concept of your <strong style="color: #ff6b6b;">intent</strong>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- This slide introduces the first major concept of the chapter. This is a POWER TEXT slide designed to act as a section header. Using a two-tier text structure with different sizes creates a clear hierarchy. The term "Supervised Fine-Tuning" is highlighted in green as it represents a positive step forward. -->
+<section data-transition="convex">
+    <h2 style="font-size: 4em;">The First Solution:</h2>
+    <h1 class="r-fit-text" style="color: #4CAF50;">Supervised Fine-Tuning (SFT)</h1>
+</section>
+
+<!-- This slide uses a powerful analogy to explain SFT. This is a POWER TEXT slide. Text analysis: The idea is broken into two parts for a smooth transition using data-auto-animate. The first part states what we stop doing, and the second reveals the new approach. Using the "parrot" vs. "apprentice" metaphor makes the abstract concept of SFT instantly understandable and memorable. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">The idea is simple:</h1>
+    <h2 class="r-fit-text">we stop treating the model like a <span style="color: #ff6b6b;">parrot</span>...</h2>
+</section>
+
+<!-- This slide completes the analogy from the previous one, using data-auto-animate for a seamless reveal. This is a POWER TEXT slide. The text "...and start training it like an apprentice" is colored green to signify this is the improved, desired state. This visual storytelling reinforces the conceptual leap from a base model to an SFT model. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">The idea is simple:</h1>
+    <h2 class="r-fit-text">we stop treating the model like a <span style="color: #ff6b6b;">parrot</span>...</h2>
+    <h2 class="r-fit-text">...and start training it like an <span style="color: #4CAF50;">apprentice</span>.</h2>
+</section>
+
+<!-- This is a TECHNICAL slide that shows the data structure for SFT. It's designed to be simple and clear. The code block format makes the `(prompt, ideal_response)` pair look like a data record. This visual representation is more effective than just describing it, making the training process more concrete for the audience. -->
+<section data-transition="fade">
+    <h2 style="color: #4CAF50;">How SFT Works</h2>
+    <p style="font-size: 1.5em;">We show it thousands of high-quality examples:</p>
+    <pre style="font-size: 0.8em; width: 90%; margin: 20px auto;"><code class="language-python" data-trim>
+training_data = [
+  {
+    "prompt": "What is the primary cause of Earth's seasons?",
+
+    "ideal_response": """The primary cause of Earth's seasons is
+    the tilt of the Earth's rotational axis away or toward
+    the sun as it travels through its year-long path
+    around the sun."""
+  },
+  ...
+]
+    </code></pre>
+</section>
+
+<!-- This is a dense TECHNICAL/EDUCATIONAL slide that uses a table for a side-by-side comparison. It's crucial for contrasting the "Parrot" and "Apprentice" states. The table clearly organizes information, making complex differences easy to digest. Using fragments to reveal each row (`<tr>`) one by one allows the presenter to control the flow of information and explain each point deliberately without overwhelming the audience. -->
+<section data-transition="slide">
+    <h2 style="margin-bottom: 20px;">Parrot vs. Apprentice</h2>
+    <table style="width: 100%; font-size: 1em; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="width: 25%; border-bottom: 2px solid #fff; padding: 10px;">Characteristic</th>
+                <th style="border-bottom: 2px solid #fff; padding: 10px; color: #ff6b6b;">Pre-trained Model (The Parrot)</th>
+                <th style="border-bottom: 2px solid #fff; padding: 10px; color: #4CAF50;">SFT Model (The Apprentice)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>Training Goal</strong></td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Predict the next word in *any* text.</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Imitate expert-written responses.</td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>Behavior</strong></td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Completes text patterns; no sense of user intent.</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Follows instructions; adopts a helpful persona.</td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px;"><strong>Key Weakness</strong></td>
+                <td style="padding: 15px;">Doesn't know how to be a helpful assistant.</td>
+                <td style="padding: 15px;">Assumes there is only one "perfect" answer.</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- This is a POWER TEXT slide that introduces the central problem with SFT, acting as a transition. Text analysis: "The SFT Limitation" clearly signals a shift in topic. The phrase "Shades of Gray" (15 characters) is memorable, evocative, and perfect for r-fit-text, making the abstract concept of nuance feel tangible. -->
+<section data-transition="concave" data-auto-animate>
+    <h2 class="r-fit-text">The SFT Limitation:</h2>
+    <h1 class="r-fit-text">The "<mark>Shades of Gray</mark>" Problem</h1>
+</section>
+
+<!-- This POWER TEXT slide explains the core weakness of SFT. Text analysis: The sentence is broken across two slides using data-auto-animate for dramatic effect. "SFT treats alignment as a black-and-white problem." (53 chars) is a clear, concise statement of the issue, setting up the explanation of its consequences. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">SFT treats alignment as a black-and-white problem.</h1>
+</section>
+
+<!-- This POWER TEXT slide continues from the previous one to deliver the punchline of SFT's weakness. The phrase "ANY deviation is implicitly wrong" is highlighted in red to emphasize the rigidity and flawed assumption of the SFT approach. This progressive reveal makes the point more forcefully than a single, longer sentence would. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">SFT treats alignment as a black-and-white problem.</h1>
+    <h2 class="r-fit-text">The response in the dataset is 100% correct, and <span style="color: #ff6b6b;">ANY</span> deviation is implicitly wrong.</h2>
+</section>
+
+<!-- This is a critical EDUCATIONAL slide that provides the concrete example for the "Shades of Gray" problem. It uses a side-by-side comparison format to make the difference between the two responses immediately obvious. Response A is labeled "Correct, but basic" while Response B is labeled "More helpful", guiding the audience's judgment. This visual setup is essential context for the slides that follow. -->
+<section data-transition="zoom">
+    <p style="font-size: 1.4em;">User: "How do I make coffee?"</p>
+    <div style="display: flex; justify-content: space-around; gap: 40px; margin-top: 20px;">
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: #333; padding: 30px; border-radius: 10px; min-height: 300px;">
+            <h3 style="color: #ff6b6b; margin-bottom: 20px;">Response A:</h3>
+            <p style="font-size: 1em; line-height: 1.6;">Add water and coffee.</p>
+            <p style="margin-top: 30px; color: #999; font-size: 0.9em;"><em>(Technically correct, but unhelpful)</em></p>
+        </div>
+        <div class="fragment fade-in" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background-color: #333; padding: 30px; border-radius: 10px; min-height: 300px;">
+            <h3 style="color: #4CAF50; margin-bottom: 20px;">Response B:</h3>
+            <p style="font-size: 1em; line-height: 1.8;">
+                1. Heat water to 195-205°F<br>
+                2. Use 2 tbsp coffee per 6 oz water<br>
+                3. Brew for 4-5 minutes<br>
+                4. Serve immediately
+            </p>
+            <p style="margin-top: 30px; color: #90EE90; font-size: 0.9em;"><em>(Clear, helpful instructions)</em></p>
+        </div>
+    </div>
+</section>
+
+<!-- This is a POWER TEXT slide designed for maximum impact, stating the human preference derived from the previous example. Text analysis: "As a human, you can instantly state a preference" sets the stage. The core message, "B is better than A," is made enormous and colored green to represent the "correct" preference. This makes the simple, intuitive act of human judgment feel powerful and significant. -->
+<section>
+    <h2 class="r-fit-text">As a human, you can instantly state a preference:</h2>
+    <h1 class="r-fit-text" style="font-size: 10em; color: #4CAF50;">B is better than A.</h1>
+</section>
+
+<!-- This POWER TEXT slide connects the human preference back to the limitation of SFT. Text analysis: "SFT has no way to learn this relative judgment." (47 characters) is a concise statement of the problem. Using `r-fit-text` and coloring the text red emphasizes this as a critical failure of the SFT method, motivating the need for a new solution. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text" style="color: #ff6b6b;">SFT has no way to learn this relative judgment.</h1>
+</section>
+
+<!-- This POWER TEXT slide introduces the single most important idea of the presentation. Text analysis: The full quote is too long for one slide, so it's broken up. "It is exponentially easier for a human to JUDGE..." is the first part. Highlighting "JUDGE" in green emphasizes the key action that is easy and scalable. -->
+<section data-transition="slide" data-auto-animate>
+    <h2 class="r-fit-text">This brings us to the core insight:</h2>
+    <h1 class="r-fit-text">It is exponentially easier for a human to <span style="color: #4CAF50;">JUDGE</span>...</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the core insight using data-auto-animate. The contrast between "JUDGE" (green, easy) and "CREATE" (red, hard) is the central economic argument for DPO. This two-slide reveal creates a powerful, memorable dichotomy that the audience will retain. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">This brings us to the core insight:</h2>
+    <h1 class="r-fit-text">It is exponentially easier for a human to <span style="color: #4CAF50;">JUDGE</span>...</h1>
+    <h1 class="r-fit-text">...than it is to <span style="color: #ff6b6b;">CREATE</span> a single perfect response from scratch.</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that translates the abstract insight from the previous slide into practical business terms. Using a side-by-side comparison within a single slide and coloring the terms (red for expensive, green for cheap/scalable) makes the economic tradeoff clear. The word "scalable" is highlighted as it is the key business advantage. -->
+<section data-transition="zoom">
+        <h2 class="r-fit-text">Creating a "perfect" response is <strong style="color: #ff6b6b;">slow & expensive</strong>.</h2>
+        <h2 class="fragment fade-in r-fit-text">Just clicking "B is better" is fast, cheap, and <strong style="color: #4CAF50;">scalable</strong>.</h2>
+</section>
+
+<!-- This is a POWER TEXT slide that poses the question that DPO answers. Text analysis: "If we could build an algorithm that learns directly from these simple preferences..." (84 characters) is a great length for r-fit-text. It's a forward-looking, aspirational statement that builds anticipation for the solution. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">If we could build an algorithm that learns directly from these simple preferences...</h1>
+</section>
+
+<!-- This POWER TEXT slide is the grand reveal of the chapter. Text analysis: The previous slide's cliffhanger is resolved here. "...we could align our models more efficiently and effectively than ever before." provides the motivation. The fragment reveals the name of the solution, "Direct Preference Optimization," highlighted in green to position it as the hero of the story. -->
+<section>
+    <h2 class="r-fit-text">...we could align our models more efficiently and effectively than ever before.</h2>
+    <h1 class="fragment fade-in r-fit-text">That algorithm is <span style="color: #4CAF50;">Direct Preference Optimization</span>.</h1>
+</section>
+
+<!-- This is a TECHNICAL slide designed to reconnect the high-level concept with the mathematical foundation. By showing the DPO formula again, it reminds the audience of the ultimate goal: to understand this equation. This repetition is crucial for reinforcing the presentation's central object of study. The slide should be held while the presenter speaks, letting the formula's presence sink in. -->
+<section data-transition="fade">
+    <div style="font-size: 1.1em; text-align: center;" data-id="dpo-formula">
+        \[ \mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = - \mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \left( \log \frac{\pi_\theta(y_w|x)}{\pi_{\text{ref}}(y_w|x)} - \log \frac{\pi_\theta(y_l|x)}{\pi_{\text{ref}}(y_l|x)} \right) \right) \right] \]
+    </div>
+</section>
+
+<!-- This POWER TEXT slide serves as the conclusion for the chapter, setting the stage for the rest of the presentation. Text analysis: The content is broken into two parts. The first connects the intimidating formula directly to the simple "B is better than A" judgment. The second, revealed by a fragment, makes a promise to the audience, encouraging them to continue to the next chapter. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">This formula is the engine that learns directly from your judgment that "B is better than A."</h2>
+    <h1 class="fragment fade-in r-fit-text" style="color: #4CAF50;">We are going to build it together, piece by piece.</h1>
+</section>
+
+<!-- END CHAPTER 2 -->
+
+<!-- START CHAPTER 3 -->
+
+<!-- Because this slide opens Chapter 3 by restating the core mission from Chapter 2 and setting up the central challenge, this is a POWER TEXT slide. Text analysis: The phrase "to learn directly from human preferences" (40 characters) is concise and perfect for r-fit-text. Highlighting "B is better than A" provides a concrete, memorable example of such a preference, grounding the abstract goal. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">We've established our core mission:</h2>
+    <h1 class="r-fit-text">to learn directly from human preferences like "<span style="color: #4CAF50;">B is better than A</span>."</h1>
+</section>
+
+<!-- This is a transitional POWER TEXT slide that introduces the central problem of the chapter. Text analysis: The phrase "But this presents an immediate challenge" (40 characters) is short and signals a shift from the goal to the obstacle. The red color emphasizes that this is a problem to be solved. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text" style="color: #ff6b6b;">But this presents an immediate challenge.</h1>
+</section>
+
+<!-- This POWER TEXT slide uses a multi-part reveal with data-auto-animate to build the question for the audience. Text analysis: "How do you convert a discrete preference judgment..." (51 characters) sets up the problem clearly and is well-suited for r-fit-text. This staged question-building is more engaging than a single, long sentence. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">How do you convert a discrete preference judgment...</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the question started on the previous slide. The data-auto-animate provides a seamless transition. The key concepts "continuous" and "differentiable" are highlighted in green because they represent the desired state for our solution. This emphasizes the technical requirements for machine learning. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">How do you convert a discrete preference judgment...</h1>
+    <h1 class="r-fit-text">...into a <span style="color: #4CAF50;">continuous</span>, <span style="color: #4CAF50;">differentiable</span> objective?</h1>
+</section>
+
+<!-- This is a simple, impactful POWER TEXT slide that acts as a signpost for the next section. Text analysis: "We need a mathematical model." (29 characters) is a definitive statement that cleanly transitions from the problem to the solution's domain. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">We need a mathematical model.</h1>
+</section>
+
+<!-- This POWER TEXT slide introduces the core intuition of the chapter. It uses a two-tier text structure to create a clear title and subtitle. "Hidden Quality Scores" is the key concept, so it's highlighted for emphasis. This primes the audience for the upcoming explanation. -->
+<section data-transition="slide">
+    <h2 style="font-size: 4em;">The Intuition:</h2>
+    <h1 class="r-fit-text"><mark>Hidden Quality Scores</mark></h1>
+</section>
+
+<!-- This EDUCATIONAL slide makes the abstract concept of quality scores concrete. It re-introduces the summary example from Chapter 2 (Response A vs. B) to maintain a consistent narrative thread. The slide visually connects the preference judgment "B > A" to the mathematical inequality `r_B > r_A`, making the logic clear. -->
+<section data-transition="fade">
+    <h2 style="color: #4CAF50;">The Core Assumption</h2>
+    <p style="font-size: 1.4em;">When a human says they prefer Response B, they are implicitly telling us:</p>
+    <div style="display: flex; justify-content: space-around; gap: 40px; align-items: center; margin-top: 30px; font-size: 1.2em;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px;">
+            <h3 style="color: #4CAF50;">Response B (Winner)</h3>
+            <p>"1. Heat water to 195-205°F<br>2. Use 2 tbsp coffee..."</p>
+        </div>
+        <div style="font-size: 4em;"> > </div>
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px;">
+            <h3 style="color: #ff6b6b;">Response A (Loser)</h3>
+            <p>"Add water and coffee."</p>
+        </div>
+    </div>
+    <div class="fragment fade-in" style="margin-top: 40px; font-size: 2em;">
+        \[ r_B > r_A \]
+    </div>
+</section>
+
+<!-- Because this content establishes the concrete parameters for our running example, this is a TECHNICAL slide. The context box is introduced here and MUST persist across subsequent slides. It defines the problem: "predict the probability of this preference". Assigning specific numbers (2.5 and 0.8) makes the abstract scores tangible and sets the stage for the calculation to come. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Problem: From Scores to Probability</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">Given two hidden quality scores, can we predict the probability a human agrees with the preference?</p>
+        </div>
+        <div style="text-align: center; font-size: 1.6em;">
+            <p>Let's invent some scores:</p>
+            <div class="fragment fade-in" style="margin-top: 30px;">
+                <p>Winner (Detailed coffee instructions) score: <code style="color: #4CAF50;">r_winner = 2.5</code></p>
+                <p>Loser ("Add water and coffee") score: <code style="color: #ff6b6b;">r_loser = 0.8</code></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- This POWER TEXT slide introduces the formal name for the solution. Text analysis: "The Bradley-Terry Model" (24 characters) is the perfect length for r-fit-text. It's a key term, so presenting it on its own slide gives it the necessary importance and acts as a header for the technical explanation that follows. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">The Bradley-Terry Model</h1>
+</section>
+
+<!-- Because this slide introduces the first key formula of DPO and requires explanation of its components, this is a dense TECHNICAL slide. CRITICAL: The problem context box from the previous slide persists here, keeping the concrete scores (2.5 and 0.8) visible while the abstract formula is explained. Fragments are used to break down each part of the formula, preventing information overload and allowing the presenter to explain each term in sequence. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Problem: From Scores to Probability</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">Scores: <code style="color: #4CAF50;">r_winner = 2.5</code>, <code style="color: #ff6b6b;">r_loser = 0.8</code></p>
+        </div>
+        
+        <div style="text-align: center;">
+            <div data-id="bt-formula">\[ P(\text{winner} \succ \text{loser}) = \sigma(r_{\text{winner}} - r_{\text{loser}}) \]</div>
+            <div class="fragment fade-in" style="font-size: 1.1em; text-align: left; margin: 30px auto 0 auto;">
+                <ul>
+                    <li>\( P(\text{winner} \succ \text{loser}) \): The probability the winner is preferred.</li>
+                    <li class="fragment fade-in">\( r_{\text{winner}}, r_{\text{loser}} \): The hidden quality scores.</li>
+                    <li class="fragment fade-in">\( \sigma \): The <strong style="color: #4CAF50;">sigmoid function</strong>, which squashes any number into a probability (0 to 1).</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- This is an EDUCATIONAL slide dedicated to explaining the sigmoid function, which is a critical component. Using function-plot.js provides a clear, professional-looking graph. The two-column layout allows the visual graph and the textual explanation of its properties to be displayed simultaneously, catering to different learning styles. This deep dive is necessary to build intuition for why the Bradley-Terry model works. -->
+<section data-transition="slide">
+    <h2 style="color: #4CAF50;">The Sigmoid Function: Our Probability Engine</h2>
+    <div style="display: flex; align-items: center; justify-content: space-around; gap: 40px;">
+        <div style="flex: 1.2;">
+            <div id="sigmoid-plot" style="margin-top: 20px;"></div>
+        </div>
+        <div style="flex: 1; text-align: left; font-size: 1.2em;">
+            <p>Its only job is to take *any* number and map it to a probability between 0 and 1.</p>
+            <ul class="fragment fade-in" style="margin-top: 20px;">
+                <li>Big positive input → close to 1</li>
+                <li>Zero input → exactly 0.5</li>
+                <li>Big negative input → close to 0</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        functionPlot({
+            target: '#sigmoid-plot',
+            width: 700,
+            height: 500,
+            grid: true,
+            xAxis: { domain: [-6, 6], label: 'Input (e.g., score difference)' },
+            yAxis: { domain: [0, 1], label: 'Output (Probability)' },
+            data: [{
+                fn: '1 / (1 + exp(-x))',
+                color: '#4CAF50',
+                graphType: 'polyline'
+            }]
+        });
+    </script>
+</section>
+
+<!-- Because this slide walks through a multi-step calculation, this is a TECHNICAL slide. CRITICAL: The problem context box with the scores (2.5, 0.8) MUST persist. This allows the audience to see exactly where the numbers in the calculation are coming from. The solution is revealed step-by-step with fragments, guiding the viewer through the logic without overwhelming them, culminating in the final probability. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Problem: From Scores to Probability</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">Scores: <code style="color: #4CAF50;">r_winner = 2.5</code>, <code style="color: #ff6b6b;">r_loser = 0.8</code></p>
+        </div>
+
+        <h2 style="margin-bottom: 20px;">Step-by-Step Calculation</h2>
+        <div style="font-size: 1.3em;">
+            <div class="fragment fade-in">
+                <p><strong>1. Calculate the score difference (\(\Delta r\)):</strong></p>
+                \[ \Delta r = r_{\text{winner}} - r_{\text{loser}} = 2.5 - 0.8 = \mathbf{1.7} \]
+            </div>
+            <div class="fragment fade-in" style="margin-top: 30px;">
+                <p><strong>2. Apply the sigmoid function:</strong></p>
+                \[ P(\text{winner} \succ \text{loser}) = \sigma(1.7) = \frac{1}{1 + e^{-1.7}} \approx \mathbf{0.845} \]
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- This is an EDUCATIONAL slide that uses a table to build intuition for the sigmoid function's behavior. Revealing the table rows with fragments allows the presenter to discuss each case (large positive, zero, negative) individually. Highlighting "Our Example" with a different background color directly connects this general table to the specific calculation we just performed, reinforcing the learning. -->
+<section data-transition="zoom">
+    <h2 style="margin-bottom: 20px;">What the Score Difference Tells Us</h2>
+    <table style="width: 100%; font-size: 1em; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="border-bottom: 2px solid #fff; padding: 10px;">Score Difference (\(\Delta r\))</th>
+                <th style="border-bottom: 2px solid #fff; padding: 10px;">Sigmoid(\(\Delta r\))</th>
+                <th style="border-bottom: 2px solid #fff; padding: 10px;">Interpretation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Large Positive (e.g., 5.0)</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">~0.993</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Almost certain winner is preferred.</td>
+            </tr>
+            <tr class="fragment fade-in" style="background-color: #333;">
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>Our Example (1.7)</strong></td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>~0.845</strong></td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>Confident winner is preferred.</strong></td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Zero (e.g., 0.0)</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.500</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Completely uncertain; a 50/50 toss-up.</td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Negative (e.g., -1.7)</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">~0.155</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">Confident *loser* is preferred (our scores are "wrong").</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- This is a POWER TEXT slide that serves as a summary and conclusion for the chapter. Text analysis: The phrase "And just like that..." (18 characters) is a classic conversational transition that signals the end of a process. It's used here to create a sense of accomplishment and ease. -->
+<section data-transition="fade" data-auto-animate>
+    <h1 class="r-fit-text">And just like that...</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the chapter's conclusion, delivering the final achievement. Using data-auto-animate provides a smooth reveal from the previous slide. Highlighting "quantifiable probability: 84.5%" in green reinforces this as the successful outcome of the chapter's work. It provides a clean, satisfying end before moving to the next topic. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">And just like that...</h1>
+    <h2 class="r-fit-text">we have converted a human preference into a <span style="color: #4CAF50;">quantifiable probability: 84.5%</span>.</h2>
+</section>
+
+<!-- END CHAPTER 3 -->
+
+<!-- START CHAPTER 4 -->
+
+<!-- Because this slide acts as the opening for Chapter 4, bridging the gap from Chapter 3, this is a POWER TEXT slide. It uses a two-part reveal with data-auto-animate to create a smooth transition. Text analysis: The first part, "Now we have a probability" (26 characters), reminds the audience of the previous chapter's accomplishment. The second part introduces the new challenge, creating narrative tension. -->
+<section data-transition="slide" data-auto-animate>
+    <h1 class="r-fit-text">Now we have a probability.</h1>
+</section>
+
+<!-- This slide completes the thought from the previous one, using data-auto-animate for a seamless transition. This is a POWER TEXT slide. Text analysis: The addition of "...but neural networks require a differentiable loss function" (58 chars) clearly states the problem this chapter will solve. Highlighting "loss function" in red emphasizes the missing piece. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Now we have a probability.</h1>
+    <h2 class="r-fit-text">...but neural networks require a differentiable <span style="color: #ff6b6b;">loss function</span>.</h2>
+</section>
+
+<!-- This is a POWER TEXT slide designed to clearly state the chapter's central question. Text analysis: "How do we turn our probability into a loss function?" (51 characters) is a direct and engaging question, perfectly suited for r-fit-text. It sets a clear goal for the viewer. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">How do we turn our probability into a loss function?</h1>
+</section>
+
+<!-- This POWER TEXT slide introduces the solution using a two-part reveal for impact. The first part sets up the answer, and the fragment reveals the key term. Highlighting "Negative Log-Likelihood" in green positions it as the heroic solution. The short, punchy text is ideal for this format. -->
+<section>
+    <h2 class="r-fit-text">The standard, time-tested method is...</h2>
+    <h1 class="fragment fade-in r-fit-text" style="color: #4CAF50;">Negative Log-Likelihood</h1>
+</section>
+
+<!-- Because this slide introduces the core formula for Negative Log-Likelihood, this is a TECHNICAL slide. The formula is kept simple and central for maximum clarity. The supporting text emphasizes its simplicity ("beautifully simple"), making the concept feel approachable before we build on it. -->
+<section data-transition="zoom">
+    <h2 style="color: #4CAF50;">The NLL Formula</h2>
+    <p style="font-size: 1.4em;">The loss is just the negative logarithm of the probability.</p>
+    <div style="font-size: 2em; margin-top: 40px;" data-id="nll-formula-1">
+        \[ \mathcal{L} = -\log \left( P(\text{winner} \succ \text{loser}) \right) \]
+    </div>
+</section>
+
+<!-- Because this slide combines the NLL formula with the Bradley-Terry model from the previous chapter, this is a TECHNICAL slide. Using data-auto-animate creates a powerful visual effect of one formula transforming into another, clearly showing the substitution. The data-id attribute ensures the LaTeX formula transitions smoothly. This reinforces the "piece by piece" building narrative. -->
+<section data-auto-animate>
+    <h2 style="color: #4CAF50;">Building Our Complete Loss Function</h2>
+    <p style="font-size: 1.4em;">We combine NLL with our Bradley-Terry formula:</p>
+    <div style="font-size: 2em; margin-top: 40px;" data-id="nll-formula-1">
+        \[ \mathcal{L} = -\log(\sigma(r_{\text{winner}} - r_{\text{loser}})) \]
+    </div>
+    <p class="fragment fade-in" style="font-size: 1.4em; margin-top: 40px;">You can see how we are building our final formula, <strong style="color: #4CAF50;">piece by piece</strong>.</p>
+</section>
+
+<!-- This is a transitional POWER TEXT slide that anticipates and validates the audience's natural skepticism. Text analysis: "A Quick Detour: Why Use This Complicated Logarithm?" (54 characters) is a clear signpost. The question format engages the viewer and prepares them for an important explanation. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">A Quick Detour:</h1>
+    <h2 class="r-fit-text">Why Use This Complicated Logarithm?</h2>
+</section>
+
+<!-- This POWER TEXT slide presents the simpler alternative, making the audience's potential question feel concrete. Text analysis: "Why not just use something simple, like `Loss = 1 - Probability`?" (68 characters) is well-suited for r-fit-text. This sets up the comparison that will demonstrate NLL's superiority. -->
+<section>
+    <h1 class="r-fit-text">Why not just use something simple, like `Loss = 1 - Probability`?</h1>
+</section>
+
+<!-- This is a dense EDUCATIONAL slide that uses a table to compare the two loss functions. Revealing the rows with fragments allows the presenter to build the argument step-by-step, starting with correct predictions and moving to incorrect ones. This controlled reveal is essential for leading the audience to the "aha!" moment in the final rows. -->
+<section data-transition="slide">
+    <h2 style="margin-bottom: 20px;">Let's Compare the Two</h2>
+    <table style="width: 100%; font-size: 1.1em; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="border-bottom: 2px solid #fff; padding: 10px;">Model's Probability `P`</th>
+                <th style="border-bottom: 2px solid #fff; padding: 10px; color: #ff6b6b;">Simpler Loss (`1 - P`)</th>
+                <th style="border-bottom: 2px solid #fff; padding: 10px; color: #4CAF50;">NLL Loss (`-log(P)`)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.99 (Very Confident & Correct)</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.01</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>0.01</strong></td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.50 (Uncertain)</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.50</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>0.69</strong></td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.10 (Confident & Wrong)</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.90</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>2.30</strong></td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.01 (Very Confident & Wrong)</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;">0.99</td>
+                <td style="padding: 15px; border-bottom: 1px solid #555;"><strong>4.61</strong></td>
+            </tr>
+            <tr class="fragment fade-in" style="background-color: #333;">
+                <td style="padding: 15px;">0.001 (Extremely Confident & Wrong)</td>
+                <td style="padding: 15px;">0.999</td>
+                <td style="padding: 15px;"><strong>6.91</strong></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- This is a POWER TEXT slide designed to create a dramatic pause and focus the audience's attention on the key insight from the table. Text analysis: "Look closely at the last few rows." (34 characters) is a direct instruction that builds anticipation for the reveal. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Look closely at the last few rows.</h1>
+</section>
+
+<!-- This POWER TEXT slide delivers the punchline, building from the previous slide with data-auto-animate. The phrase "the 'aha!' moment" is highlighted in green to signify a key insight. This two-step reveal is more impactful than showing both lines at once. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Look closely at the last few rows.</h1>
+    <h1 class="r-fit-text">This is the <span style="color: #4CAF50;">"aha!" moment</span>.</h1>
+</section>
+
+<!-- This EDUCATIONAL slide uses a side-by-side comparison to visually and textually explain the core difference between the two loss functions. The red and green coloring clearly separates the "bad" (naive) and "good" (NLL) approaches. This format makes the abstract concept of penalty scaling very concrete and easy to understand. -->
+<section data-transition="zoom">
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1.2em;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #ff6b6b;">`1 - P` Loss</h2>
+            <p>The penalty for being wrong and being <mark>extremely wrong</mark> is basically the same.</p>
+            <p class="fragment fade-in" style="font-size: 1.3em; margin-top: 20px;">(0.90 vs 0.999)</p>
+        </div>
+        <div class="fragment fade-in" style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">NLL Loss</h2>
+            <p>It <mark>explodes</mark> towards infinity as P approaches zero. It aggressively penalizes being confident and wrong.</p>
+            <p class="fragment fade-in" style="font-size: 1.3em; margin-top: 20px;">(2.30 vs 6.91)</p>
+        </div>
+    </div>
+</section>
+
+<!-- This is a POWER TEXT slide that summarizes the key benefit of NLL. Text analysis: "This creates a much stronger error signal—a much steeper gradient—that forces the model to fix its biggest mistakes first." (128 characters) is too long for one line. I'll break it into two impactful statements for better readability. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This creates a much steeper gradient...</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the summary using data-auto-animate. The second part, "...forcing the model to fix its biggest mistakes first," delivers the core value proposition of NLL in a clear and memorable way. Highlighting "biggest mistakes" emphasizes this priority. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This creates a much steeper gradient...</h1>
+    <h2 class="r-fit-text">...forcing the model to fix its <mark>biggest mistakes</mark> first.</h2>
+</section>
+
+<!-- Because this slide sets up a specific calculation, it is a TECHNICAL slide. CRITICAL: The problem context box is introduced here and MUST persist on the next slide. It establishes the input value (`P = 0.845`) from the end of Chapter 3, providing the necessary context for the calculation to make sense. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Problem: Calculate Loss For Our Example</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">In the last chapter, we found our probability was:</p>
+            <p style="font-size: 1.4em; margin-top: 10px;"><code>P(winner ≻ loser) = 0.845</code></p>
+        </div>
+        <div style="text-align: center;">
+            <p style="font-size: 1.6em; color: #4CAF50;">Let's calculate the loss for this preference pair.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide performs a step-by-step mathematical calculation, this is a TECHNICAL slide. CRITICAL: The exact same problem context box persists from the previous slide, keeping the input value `P = 0.845` visible. This is essential for the audience to follow the math. The calculation is revealed in two distinct steps using fragments, guiding the viewer through the process and preventing cognitive overload. The final answer is highlighted for emphasis. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Problem: Calculate Loss For Our Example</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">In the last chapter, we found our probability was:</p>
+            <p style="font-size: 1.4em; margin-top: 10px;"><code>P(winner ≻ loser) = 0.845</code></p>
+        </div>
+        <div style="font-size: 1.3em;">
+            <div>
+                <p><strong>1. Take the natural logarithm:</strong></p>
+                \[ \log(0.845) \approx -0.168 \]
+            </div>
+            <div class="fragment fade-in" style="margin-top: 30px;">
+                <p><strong>2. Negate the result:</strong></p>
+                \[ \text{Loss} = -(-0.168) = \mathbf{0.168} \]
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- This is a POWER TEXT slide that provides the interpretation of the final calculated number. Text analysis: "This single number, `0.168`, is our error signal for this one preference pair." (80 characters) is a great length for r-fit-text. Highlighting "error signal" clarifies the purpose of the loss value we just calculated. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">This single number, `0.168`, is our <span style="color: #4CAF50;">error signal</span> for this one preference pair.</h1>
+</section>
+
+<!-- This is the concluding POWER TEXT slide for the chapter, summarizing the major accomplishment. It uses a two-part reveal with data-auto-animate for a strong, definitive finish. The first part, "And with that, we have now built..." sets up the conclusion. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">And with that, we have now built...</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the chapter's conclusion. The data-auto-animate transition provides a seamless reveal. Highlighting "preference modeling engine" in green gives a powerful, memorable name to the system we've constructed. This creates a sense of closure and accomplishment before moving to the next chapter. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">And with that, we have now built...</h1>
+    <h1 class="r-fit-text">a complete, self-contained <span style="color: #4CAF50;">preference modeling engine</span>.</h1>
+</section>
+
+<!-- END CHAPTER 4 -->
+
+<!-- START CHAPTER 5 -->
+
+<!-- Because this opening slide for Chapter 5 directly addresses the unresolved question from the previous chapters (where the `r` scores come from), this is a POWER TEXT slide. It bridges the gap and sets the agenda for this chapter. Text analysis: The question "Now, the fundamental question..." (28 chars) is a great setup, and the follow-up "...where do these scores come from?" (32 chars) is the core challenge. Using a two-part reveal with data-auto-animate creates a smooth, logical flow. -->
+<section data-transition="slide" data-auto-animate>
+    <h2 class="r-fit-text">Now, the fundamental question...</h2>
+</section>
+
+<!-- This POWER TEXT slide continues from the previous one, completing the thought. The data-auto-animate transition ensures a seamless build. The key terms `r_winner` and `r_loser` are presented as code to link back to the mathematical formulas, making the question concrete and technical. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">Now, the fundamental question...</h2>
+    <h1 class="r-fit-text">...where do <code>r_winner</code> and <code>r_loser</code> come from?</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that introduces the core intuition of this chapter's "naive" approach. The idea is broken into two impactful statements using data-auto-animate. Text analysis: "Let's start with our first, most logical attempt." (48 chars) sets the stage. The second part, "The Naive Approach," gives a clear name to the concept. This structure signals to the audience that we are beginning a new line of reasoning. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Let's start with our first, most logical attempt.</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the introduction from the previous slide. The `data-auto-animate` makes the reveal feel natural. The phrase "The Naive Approach" is highlighted in a neutral color, as it's neither inherently good nor bad yet—it's just our starting point. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Let's start with our first, most logical attempt.</h1>
+    <h1 class="r-fit-text"><mark>The Naive Approach</mark></h1>
+</section>
+
+<!-- Because this slide presents the core conceptual idea behind the naive approach, it is a POWER TEXT slide. Text analysis: The sentence is broken into two parts for maximum impact. The first part, "The intuition is simple," prepares the audience for an accessible concept. The second part delivers the core idea, with "highly confident" highlighted in green to signify it as the desired quality. This makes the logic feel intuitive and straightforward. -->
+<section data-transition="convex">
+    <h2 class="r-fit-text">The intuition is simple:</h2>
+    <h1 class="fragment fade-in r-fit-text">A "good" response is one our model is <span style="color: #4CAF50;">highly confident</span> in generating.</h1>
+</section>
+
+<!-- This POWER TEXT slide directly connects the abstract idea of "confidence" to a concrete, measurable quantity. This is a critical bridge from concept to implementation. Text analysis: The question-and-answer format is engaging. Highlighting "sequence log-probability" in green establishes it as the key technical term for this chapter. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">So, how do we measure an LLM's confidence?</h2>
+    <h1 class="fragment fade-in r-fit-text">We use its <span style="color: #4CAF50;">sequence log-probability</span>.</h1>
+</section>
+
+<!-- This slide transitions from the general concept to a formal hypothesis, making it a TECHNICAL slide. It introduces the first reward formula. The context box establishes the problem setup: defining the reward score. This box will persist to anchor the following explanations. The formula itself is the central focus. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Hypothesis: Naive Reward Function</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">The quality score `r` of a response `y` is its total log-probability.</p>
+        </div>
+        <div style="text-align: center; font-size: 2em;" data-id="reward-formula">
+            \[ r(x, y) = \log \pi_{\theta}(y|x) \]
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide explains the underlying probability calculation before the logarithm is applied, it's a TECHNICAL slide. CRITICAL: The context box from the previous slide persists, keeping the core reward hypothesis visible. This slide shows the "problematic" multiplication-based formula, setting up the need for logarithms, which will be explained next. The visual contrast between this and the upcoming sum-based formula is a key teaching moment. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Hypothesis: Naive Reward Function</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">The probability of a sentence is the product of token probabilities:</p>
+        </div>
+        <div style="text-align: center; font-size: 1.4em;">
+            \[ \pi_{\theta}(y|x) = \pi_{\theta}(y_1|x) \times \pi_{\theta}(y_2|x, y_1) \times \dots \times \pi_{\theta}(y_N|x, y_{\lt N}) \]
+        </div>
+    </div>
+</section>
+
+<!-- This POWER TEXT slide is designed for maximum dramatic impact. It directly states the problem with the multiplication-based approach shown on the previous slide. Text analysis: The phrase "Multiplying small probabilities is a recipe for disaster" (59 characters) is evocative and clear. Highlighting "disaster" in red emphasizes the severity of the technical problem. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Multiplying small probabilities is a recipe for <span style="color: #ff6b6b;">disaster</span>.</h1>
+</section>
+
+<!-- This POWER TEXT slide introduces the name of the technical problem. Text analysis: "Numerical Underflow" (19 characters) is a key term, and presenting it alone on a slide with large, red text gives it the necessary weight and makes it memorable. The red color reinforces that this is a critical issue that must be solved. -->
+<section>
+    <h1 class="r-fit-text" style="color: #ff6b6b;">Numerical Underflow</h1>
+</section>
+
+<!-- This POWER TEXT slide reveals the solution to the underflow problem. It's a key insight slide. The text is broken into two parts for impact. Highlighting "multiplication into addition" in green clearly states the benefit of using logarithms. This presents the logarithm not as a complication, but as an elegant solution. -->
+<section data-transition="convex">
+    <h2 class="r-fit-text">The beautiful property of logarithms is...</h2>
+    <h1 class="fragment fade-in r-fit-text">they turn <span style="color: #4CAF50;">multiplication into addition</span>.</h1>
+</section>
+
+<!-- Because this slide shows the final, stable form of the reward function, it is a TECHNICAL slide. CRITICAL: The context box from the beginning of this section persists, maintaining the core hypothesis. This slide visually transforms the product-based formula into a sum-based one, providing a satisfying "aha!" moment. The use of data-auto-animate with a data-id will create a smooth transition from the initial `log π` form to this expanded sum form. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Hypothesis: Naive Reward Function</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;">The quality score `r` is the total log-probability, now calculated as a stable sum.</p>
+        </div>
+        <div style="text-align: center; font-size: 1.6em;" data-id="reward-formula">
+            \[ r(x, y) = \log \pi_{\theta}(y|x) = \sum_{t=1}^{N} \log \pi_{\theta}(y_t | x, y_{\lt t}) \]
+        </div>
+        <p class="fragment fade-in" style="font-size: 1.4em; margin-top: 40px;">The score is just the <strong style="color: #4CAF50;">sum</strong> of the log-probabilities of each word.</p>
+    </div>
+</section>
+
+<!-- To make the abstract formula concrete, this is a TECHNICAL slide that sets up a simple example. A new context box is introduced for this specific problem, defining the prompt and response. This box MUST persist on the next slide to provide context for the step-by-step calculation. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Example: Calculating a Score</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;"><strong>Prompt \( x \)</strong>: "The capital of France"</p>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;"><strong>Response `y`</strong>: " is Paris"</p>
+        </div>
+        <div style="text-align: center;">
+            <p style="font-size: 1.6em; color: #4CAF50;">Let's calculate the score for this response step-by-step.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Because this slide walks through a calculation, this is a TECHNICAL slide. CRITICAL: The exact same context box from the previous slide persists, so the audience can see the prompt and response while following the math. The calculation is revealed using fragments, breaking it down token by token. This makes the process easy to follow and reinforces the concept of summing log-probabilities. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Example: Calculating a Score</h3>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;"><strong>Prompt \( x \)</strong>: "The capital of France"</p>
+            <p style="font-size: 1.4em; margin: 10px 0 0 0;"><strong>Response `y`</strong>: " is Paris"</p>
+        </div>
+        <div style="font-size: 1.3em;">
+            <div class="fade-in">
+                <p>1. Log-prob of " is":</p>
+                <p><code>log P(" is" | "The capital of France")</code> = <strong style="color: #4CAF50;">-0.2</strong></p>
+            </div>
+            <div class="fragment fade-in" style="margin-top: 30px;">
+                <p>2. Log-prob of "Paris":</p>
+                <p><code>log P("Paris" | "... France is")</code> = <strong style="color: #4CAF50;">-0.3</strong></p>
+            </div>
+            <div class="fragment fade-in" style="margin-top: 30px;">
+                <p style="font-size: 1.4em;">Total Score: \((-0.2) + (-0.3) = \mathbf{-0.5}\)</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- This is a POWER TEXT slide that summarizes the chapter's main takeaway and sets the stage for the next part of the presentation. Text analysis: The statement "This approach seems perfectly logical" (34 characters) captures the deceptive simplicity of the naive method. Using `data-auto-animate` allows for a smooth build-up to the final thought. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This approach seems perfectly logical.</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the chapter's conclusion by explicitly stating the training goal under this naive framework. The `data-auto-animate` transition makes it feel like a natural conclusion. Highlighting "higher log-probability" in green reinforces the central mechanism of this approach. It creates a sense of resolution for this chapter, while hinting that this simple logic might not be the whole story. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This approach seems perfectly logical.</h1>
+    <h2 class="r-fit-text">We just need to train our model to produce a <span style="color: #4CAF50;">higher log-probability</span> for the answers we prefer.</h2>
+</section>
+
+<!-- This is a final, transitional POWER TEXT slide that acts as a cliffhanger for the next chapter. Text analysis: "It feels like we have all the pieces." (36 characters) is a forward-looking statement that creates a sense of false confidence. It's the perfect setup for the next chapter, which will reveal the fatal flaw in this "perfectly logical" approach. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">It feels like we have all the pieces.</h1>
+</section>
+
+<!-- END CHAPTER 5 -->
+
+<!-- START CHAPTER 6 -->
+
+<!-- Because this slide opens Chapter 6 by recapping the final formula from Chapter 5, it serves as a crucial bridge and re-establishes the technical context. This is a TECHNICAL slide. The formula is the central focus, reminding the audience of the "naive reward" concept we are about to implement in code. No fragments are needed; the slide serves as a static anchor point. -->
+<section data-transition="slide">
+    <h2 style="color: #4CAF50;">Let's Implement Our Naive Reward</h2>
+    <p style="font-size: 1.4em;">In the last chapter, we defined our score as the sum of log-probabilities:</p>
+    <div style="text-align: center; font-size: 1.6em; margin-top: 50px;">
+        \[ r(x, y) = \sum_{t=1}^{N} \log \pi_{\theta}(y_t | x, y_{\lt t}) \]
+    </div>
+</section>
+
+<!-- This is a POWER TEXT slide that serves as a strong, action-oriented transition from theory to practice. Text analysis: "Let's translate that math into working PyTorch code" (52 characters) is a perfect length for r-fit-text. It clearly states the chapter's objective and creates a sense of forward momentum. Highlighting "PyTorch code" emphasizes the practical, hands-on nature of this chapter. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Let's translate that math into working <mark>PyTorch code</mark>.</h1>
+</section>
+
+<!-- This POWER TEXT slide further clarifies the goal, setting a specific engineering objective. Text analysis: "Our goal is to create a single, robust function that can calculate this score for any given prompt and response." (119 characters) is too long for a single impactful statement. I will break it down for better rhythm and impact. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Our goal is to create a single, robust function...</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the thought from the previous one, using data-auto-animate for a seamless reveal. Text analysis: "...that can calculate this score for *any* given prompt and response" clarifies the function's purpose. It reinforces the generality and utility of the code we are about to write. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Our goal is to create a single, robust function...</h1>
+    <h2 class="r-fit-text">...that can calculate this score for <mark>any</mark> given prompt and response.</h2>
+</section>
+
+<!-- This is a POWER TEXT slide that acts as a section header, clearly signposting a necessary detour into foundational concepts before tackling the main function. The two-tier text structure with different sizes creates a clear visual hierarchy. This prepares the audience for a quick but important refresher. -->
+<section data-transition="convex">
+    <h2 style="font-size: 4em;">A Quick Refresher:</h2>
+    <h1 class="r-fit-text">From Logits to Probabilities</h1>
+</section>
+
+<!-- Because this slide explains a multi-step process, it is an EDUCATIONAL slide. It uses a mermaid diagram to visually represent the flow from input tokens to the final logit vector. This is far more effective than just text. CRITICAL: The mermaid diagram follows all requirements: dark theme, zoom for visibility, and using `[]` for nodes. This visual anchor helps the audience understand the data transformation inside the model. -->
+<section data-transition="fade">
+    <p style="font-size: 1.3em;">When you give a model input tokens, it outputs raw scores called **logits**.</p>
+    <div style="display: flex; justify-content: center; align-items: center; margin-top: 30px;">
+        <div class="mermaid" style="zoom: 2.5;">
+%%{init: {'theme': 'dark'}}%%
+graph TD
+    A[Input Tokens: 1, 2, 3, 4] --> B(Model Forward Pass)
+    B --> C[Logits Tensor: 1, 4, vocab_size]
+    C --> D[Final Logit Vector for Next Token]
+        </div>
+    </div>
+    <p class="fragment fade-in" style="font-size: 1.3em; margin-top: 30px;">This final vector has a score for every word in the dictionary.</p>
+</section>
+
+<!-- This is a TECHNICAL slide that demonstrates the concept from the previous slide with a concrete code example. The code block is the centerpiece, showing how to convert a mock logit tensor into probabilities using `F.softmax`. The comments in the code provide essential context about the vocabulary and the model's "thinking". -->
+<section data-transition="slide">
+    <h2 style="color: #4CAF50;">From Logits to Probabilities</h2>
+    <pre style="font-size: 1em; width: 90%; margin: 20px auto;"><code class="language-python" data-trim data-line-numbers>
+import torch
+import torch.nn.functional as F
+
+# A mock logit vector. The model thinks "is" (index 1) is the most likely next word.
+# Vocab: {"The":0, "is":1, "Paris":2, "Lyon":3}
+mock_logits = torch.tensor([0.1, 3.0, 0.5, 0.2])
+
+# Convert logits to probabilities using the softmax function
+probabilities = F.softmax(mock_logits, dim=-1)
+# probabilities tensor([0.045, 0.819, 0.061, 0.049])
+    </code></pre>
+</section>
+
+<!-- This is a POWER TEXT slide that delivers a key insight, distinguishing DPO's goal from normal text generation. Text analysis: The sentence is broken across two slides for emphasis. The first part, "During normal generation, we would SAMPLE from this distribution," establishes the standard procedure. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">During normal generation, we would <mark>SAMPLE</mark> from this distribution.</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the key insight using data-auto-animate. The second part contrasts the standard procedure with our specific need, highlighting "already have the response" in green to emphasize this crucial difference. This clarification is vital for understanding why our function is structured the way it is. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">During normal generation, we would <mark>SAMPLE</mark> from this distribution.</h1>
+    <h2 class="r-fit-text">But for DPO, we <span style="color: #4CAF50;">already have the response</span>.</h2>
+</section>
+
+<!-- This is a POWER TEXT slide that serves as a major section header, signaling the start of the main code implementation. It's clean, simple, and focuses the audience's attention on the function we are about to build. -->
+<section data-transition="concave">
+    <h1 class="r-fit-text">The `get_sequence_log_probs` Function</h1>
+</section>
+
+<!-- Because this is the first view of the full algorithm, this is a TECHNICAL slide. It presents the entire function without highlights, allowing the audience to see the complete structure at once. This slide acts as the anchor for the following step-by-step breakdown. This "persistent code" pattern is essential for teaching multi-step algorithms. -->
+<section data-auto-animate data-background-color="#1a1a1a">
+    <pre style="font-size: 0.6em;"><code class="language-python" data-trim data-line-numbers>
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single, efficient forward pass.
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions. These are our raw logits.
+    outputs = model(input_ids)
+    logits = outputs.logits
+
+    # 3. Here's the key trick. We only care about the logits that predicted
+    #    the tokens in our *response*. We slice them out.
+    prompt_len = prompt_tokens.size(1)
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. We calculate the log-probabilities for the entire vocabulary.
+    #    We use log_softmax for better numerical stability.
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Now, we use the `gather` function to pick out the specific log-probs
+    #    for the tokens that were actually in our response. This is the magic.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Finally, we sum up the log-probabilities for each token in the sequence
+    #    to get the total score for the entire response.
+    return token_log_probs.sum(dim=1)
+    </code></pre>
+</section>
+
+<!-- This is the first step of the code walkthrough, a TECHNICAL slide. CRITICAL: It uses data-auto-animate and the EXACT SAME code block as the previous slide. Only the line highlight has changed to focus on step 1. The text below provides a clear, concise explanation of this specific step. This pattern ensures the audience always sees the highlighted line in its full context. -->
+<section data-auto-animate data-background-color="#1a1a1a">
+    <h2 style="color: #4CAF50;">Step 1: Combine Inputs</h2>
+    <pre style="font-size: 0.6em;"><code class="language-python" data-trim data-line-numbers="6">
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single, efficient forward pass.
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions. These are our raw logits.
+    outputs = model(input_ids)
+    logits = outputs.logits
+
+    # 3. Here's the key trick. We only care about the logits that predicted
+    #    the tokens in our *response*. We slice them out.
+    prompt_len = prompt_tokens.size(1)
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. We calculate the log-probabilities for the entire vocabulary.
+    #    We use log_softmax for better numerical stability.
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Now, we use the `gather` function to pick out the specific log-probs
+    #    for the tokens that were actually in our response. This is the magic.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Finally, we sum up the log-probabilities for each token in the sequence
+    #    to get the total score for the entire response.
+    return token_log_probs.sum(dim=1)
+    </code></pre>
+    <p style="font-size: 1.3em; margin-top: 20px;">We combine prompt and response for a single, efficient forward pass.</p>
+</section>
+
+<!-- Step 2 of the code walkthrough, a TECHNICAL slide. CRITICAL: The code block remains identical, only the highlight changes. `data-auto-animate` ensures a smooth transition. The explanation below focuses solely on getting the raw logits from the model's output. -->
+<section data-auto-animate data-background-color="#1a1a1a">
+    <h2 style="color: #4CAF50;">Step 2: Get Logits</h2>
+    <pre style="font-size: 0.6em;"><code class="language-python" data-trim data-line-numbers="9-10">
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single, efficient forward pass.
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions. These are our raw logits.
+    outputs = model(input_ids)
+    logits = outputs.logits
+
+    # 3. Here's the key trick. We only care about the logits that predicted
+    #    the tokens in our *response*. We slice them out.
+    prompt_len = prompt_tokens.size(1)
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. We calculate the log-probabilities for the entire vocabulary.
+    #    We use log_softmax for better numerical stability.
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Now, we use the `gather` function to pick out the specific log-probs
+    #    for the tokens that were actually in our response. This is the magic.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Finally, we sum up the log-probabilities for each token in the sequence
+    #    to get the total score for the entire response.
+    return token_log_probs.sum(dim=1)
+    </code></pre>
+    <p style="font-size: 1.3em; margin-top: 20px;">We run the model and get the raw predictions (logits).</p>
+</section>
+
+<!-- Step 3 of the code walkthrough, a TECHNICAL slide. The highlight shifts to the slicing logic. The explanation emphasizes that this is the "key trick" of the function, ensuring we only evaluate the part of the output that corresponds to the response. -->
+<section data-auto-animate data-background-color="#1a1a1a">
+    <h2 style="color: #4CAF50;">Step 3: Slice Out Response Logits</h2>
+    <pre style="font-size: 0.6em;"><code class="language-python" data-trim data-line-numbers="14-15">
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single, efficient forward pass.
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions. These are our raw logits.
+    outputs = model(input_ids)
+    logits = outputs.logits
+
+    # 3. Here's the key trick. We only care about the logits that predicted
+    #    the tokens in our *response*. We slice them out.
+    prompt_len = prompt_tokens.size(1)
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. We calculate the log-probabilities for the entire vocabulary.
+    #    We use log_softmax for better numerical stability.
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Now, we use the `gather` function to pick out the specific log-probs
+    #    for the tokens that were actually in our response. This is the magic.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Finally, we sum up the log-probabilities for each token in the sequence
+    #    to get the total score for the entire response.
+    return token_log_probs.sum(dim=1)
+    </code></pre>
+    <p style="font-size: 1.3em; margin-top: 20px;">This is the key trick: we slice out <mark>only</mark> the logits that predicted the response tokens.</p>
+</section>
+
+<!-- Step 4 of the code walkthrough, a TECHNICAL slide. The highlight focuses on the `log_softmax` function. The explanation points out that this is done for numerical stability, which is an important practical detail for the audience to know. -->
+<section data-auto-animate data-background-color="#1a1a1a">
+    <h2 style="color: #4CAF50;">Step 4: Calculate Log-Probabilities</h2>
+    <pre style="font-size: 0.6em;"><code class="language-python" data-trim data-line-numbers="19">
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single, efficient forward pass.
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions. These are our raw logits.
+    outputs = model(input_ids)
+    logits = outputs.logits
+
+    # 3. Here's the key trick. We only care about the logits that predicted
+    #    the tokens in our *response*. We slice them out.
+    prompt_len = prompt_tokens.size(1)
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. We calculate the log-probabilities for the entire vocabulary.
+    #    We use log_softmax for better numerical stability.
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Now, we use the `gather` function to pick out the specific log-probs
+    #    for the tokens that were actually in our response. This is the magic.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Finally, we sum up the log-probabilities for each token in the sequence
+    #    to get the total score for the entire response.
+    return token_log_probs.sum(dim=1)
+    </code></pre>
+    <p style="font-size: 1.3em; margin-top: 20px;">We convert the response logits into log-probabilities for the entire vocabulary.</p>
+</section>
+
+<!-- Step 5 of the code walkthrough, a TECHNICAL slide. This highlights the `gather` function, which is the most complex step. The explanation calls it "the magic," acknowledging its powerful role in filtering the needed values. -->
+<section data-auto-animate data-background-color="#1a1a1a">
+    <h2 style="color: #4CAF50;">Step 5: Gather the Right Probabilities</h2>
+    <pre style="font-size: 0.6em;"><code class="language-python" data-trim data-line-numbers="23">
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single, efficient forward pass.
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions. These are our raw logits.
+    outputs = model(input_ids)
+    logits = outputs.logits
+
+    # 3. Here's the key trick. We only care about the logits that predicted
+    #    the tokens in our *response*. We slice them out.
+    prompt_len = prompt_tokens.size(1)
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. We calculate the log-probabilities for the entire vocabulary.
+    #    We use log_softmax for better numerical stability.
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Now, we use the `gather` function to pick out the specific log-probs
+    #    for the tokens that were actually in our response. This is the magic.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Finally, we sum up the log-probabilities for each token in the sequence
+    #    to get the total score for the entire response.
+    return token_log_probs.sum(dim=1)
+    </code></pre>
+    <p class="r-fit-text" style="margin-top: 20px;">Using `gather`, we select the specific log-probs for the tokens that were <mark>actually</mark> in our response.</p>
+</section>
+
+<!-- Step 6 of the code walkthrough, a TECHNICAL slide. The final step of summing the probabilities is highlighted. This connects back to the original formula from the start of the chapter, completing the implementation. -->
+<section data-auto-animate data-background-color="#1a1a1a">
+    <h2 style="color: #4CAF50;">Step 6: Sum to Get Final Score</h2>
+    <pre style="font-size: 0.6em;"><code class="language-python" data-trim data-line-numbers="27">
+def get_sequence_log_probs(model, prompt_tokens, response_tokens):
+    """
+    Calculates the total log-probability of generating the response given the prompt.
+    """
+    # 1. Combine prompt and response for a single, efficient forward pass.
+    input_ids = torch.cat([prompt_tokens, response_tokens], dim=1)
+
+    # 2. Get the model's predictions. These are our raw logits.
+    outputs = model(input_ids)
+    logits = outputs.logits
+
+    # 3. Here's the key trick. We only care about the logits that predicted
+    #    the tokens in our *response*. We slice them out.
+    prompt_len = prompt_tokens.size(1)
+    response_logits = logits[:, prompt_len - 1:-1, :]
+
+    # 4. We calculate the log-probabilities for the entire vocabulary.
+    #    We use log_softmax for better numerical stability.
+    log_probs = F.log_softmax(response_logits, dim=-1)
+
+    # 5. Now, we use the `gather` function to pick out the specific log-probs
+    #    for the tokens that were actually in our response. This is the magic.
+    token_log_probs = torch.gather(log_probs, 2, response_tokens.unsqueeze(-1)).squeeze(-1)
+
+    # 6. Finally, we sum up the log-probabilities for each token in the sequence
+    #    to get the total score for the entire response.
+    return token_log_probs.sum(dim=1)
+    </code></pre>
+    <p style="font-size: 1.3em; margin-top: 20px;">We sum the log-probabilities to get the total score for the entire sequence.</p>
+</section>
+
+<!-- This POWER TEXT slide acts as a section header, transitioning from the abstract code breakdown to a concrete, traceable example. This signals to the audience that we are about to make the previous concepts crystal clear. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">A Concrete Example:</h1>
+    <h2 class="r-fit-text">" is Paris"</h2>
+</section>
+
+<!-- This is a TECHNICAL slide that sets up the problem for our concrete example. CRITICAL: A new context box is introduced here, containing the prompt, response, and their tokenized tensor representations. This context box MUST persist across all subsequent slides in this walkthrough to provide the necessary reference data for the audience. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Example: " is Paris"</h3>
+            <p style="font-size: 1.2em; margin: 10px 0 0 0;"><strong>Prompt \( x \)</strong>: "The capital of France"</p>
+            <p style="font-size: 1.2em; margin: 10px 0 0 0;"><strong>Response `y`</strong>: " is Paris"</p>
+        </div>
+        <div style="text-align: center;">
+            <p style="font-size: 1.3em;">Let's assume we've tokenized these into tensors:</p>
+            <pre style="font-size: 1em;"><code class="language-python" data-trim>
+# vocab: {"The":1, "capital":2, "of":3, "France":4, " is":5, "Paris":6, "Lyon":7}
+prompt = torch.tensor([[1, 2, 3, 4]])      # Shape: (1, 4)
+response = torch.tensor([[5, 6]])          # Shape: (1, 2)
+            </code></pre>
+        </div>
+    </div>
+</section>
+
+<!-- This TECHNICAL slide explains the first part of the example walkthrough. CRITICAL: The context box from the previous slide persists, keeping the tokenized inputs visible. This slide focuses on explaining the result of steps 1-3 from our function: how the `response_logits` are obtained through concatenation and slicing. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Example: " is Paris"</h3>
+            <p style="font-size: 1.2em; margin: 10px 0 0 0;"><strong>Prompt:</strong> `[1, 2, 3, 4]` <strong>Response:</strong> `[5, 6]`</p>
+        </div>
+        <h2 style="margin-bottom: 20px;">Steps 1-3: Get `response_logits`</h2>
+        <div style="font-size: 1em; text-align: left; margin: auto;">
+            <p>1. `input_ids` becomes `[1, 2, 3, 4, 5, 6]`. The model outputs `logits` of shape `(1, 6, vocab_size)`.</p>
+            <p class="fragment fade-in" style="margin-top: 20px;">2. The critical slice `logits[:, 3:5, :]` grabs exactly two vectors of logits:</p>
+            <ul class="fragment fade-in" style="margin-top: 20px; padding-left: 40px;">
+                <li>The predictions from context `...France` (for token " is").</li>
+                <li>The predictions from context `...France is` (for token "Paris").</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- This is a dense EDUCATIONAL slide designed to make the most complex step (`gather`) perfectly clear. CRITICAL: The problem context box persists. A detailed HTML table is used to visualize the data flow, showing how the `gather` function uses the response token IDs to filter the correct log-probabilities from the full distribution. This table is the most important visual aid in the chapter for building deep intuition. -->
+<section data-auto-animate>
+    <div style="padding: 20px;">
+        <div style="background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+            <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">Example: " is Paris"</h3>
+            <p style="font-size: 1.2em; margin: 10px 0 0 0;"><strong>Prompt:</strong> `[1, 2, 3, 4]` <strong>Response:</strong> `[5, 6]`</p>
+        </div>
+        <h2 style="margin-bottom: 20px;">Steps 4 & 5: Calculating `token_log_probs`</h2>
+        <table style="width: 100%; font-size: 0.9em; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #fff;">
+                    <th style="padding: 10px;">Context</th>
