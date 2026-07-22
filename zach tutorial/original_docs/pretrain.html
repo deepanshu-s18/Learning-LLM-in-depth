@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>LLM Pre-Training in 30 Minutes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.2.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.2.1/theme/black.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css">
+    <script src="https://unpkg.com/function-plot/dist/function-plot.js"></script>
+    <style>
+        .function-plot .tick text {
+            fill: white !important;
+            font-size: 18px !important;
+        }
+        .function-plot .axis-label {
+            fill: white !important;
+            font-size: 20px !important;
+        }
+        .function-plot .axis path,
+        .function-plot .axis line {
+            stroke: white !important;
+        }
+        .function-plot .grid line {
+            stroke: #444 !important;
+            stroke-opacity: 0.7 !important;
+        }
+        code, pre, pre code, [class*="language-"] {
+            max-height: 100vh !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+<!-- START CHAPTER 1 -->
+
+<!-- Because this content is the opening hook, designed to grab the audience's attention by referencing a common, almost magical experience with LLMs, this is a POWER TEXT slide. The text is kept short and conversational. I'm using a simple fade transition to ease into the presentation. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">You've seen it happen.</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that builds on the previous hook using data-auto-animate for a seamless transition. It presents the first half of a relatable example ("write Python code"), creating anticipation for the outcome. Text analysis: "You ask ChatGPT to write Python code..." (39 chars) is well within the r-fit-text sweet spot. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">You ask ChatGPT to write Python code...</h2>
+</section>
+
+<!-- Continuing the sequence with data-auto-animate, this POWER TEXT slide completes the first example with the surprising result. The second line appears smoothly under the first. By highlighting the key outcome "actually works" in green, we emphasize the "magic" and positive capability of the model. The two-part structure creates a conversational rhythm. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">You ask ChatGPT to write Python code...</h2>
+    <h1 class="r-fit-text" style="color: #4CAF50;">...and it spits out a script that <span style="color: #4CAF50;">actually works</span>.</h1>
+</section>
+
+<!-- This POWER TEXT slide resets the pattern for a second, more academic example ("explain quantum physics") to show the breadth of the LLM's abilities. The transition is set to 'slide' to create a clear separation from the previous code example while maintaining momentum. -->
+<section data-transition="slide">
+    <h2 class="r-fit-text">You ask it to explain quantum physics...</h2>
+</section>
+
+<!-- This POWER TEXT slide completes the second example, again using a fragment to create a punchline effect. The key phrase "better than a textbook" is highlighted in green to reinforce the surprising effectiveness and value, framing the technology as extraordinarily powerful. -->
+<section>
+    <h2 class="r-fit-text">You ask it to explain quantum physics...</h2>
+    <h1 class="r-fit-text fragment" style="color: #4CAF50;">...and it explains it <span style="color: #4CAF50;">better than a textbook</span>.</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that summarizes the audience's feeling about this technology. The text "It feels like magic." is short (21 characters) and impactful, making it ideal for r-fit-text. This serves as a pivot point, acknowledging the user experience before deconstructing it. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">It feels like magic.</h1>
+</section>
+
+<!-- This POWER TEXT slide acts as a direct rebuttal to the previous slide, creating a dramatic turn in the narrative. Using data-auto-animate with a transition from the previous slide would be less impactful than a sharp cut, so I'm using a convex transition to signal a major shift in perspective. The red color emphasizes the negation. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">But the secret <span style="color: #ff6b6b;">isn't magic</span>.</h1>
+</section>
+
+<!-- This POWER TEXT slide delivers the core thesis of the entire presentation. The text "It's just math." is extremely short and powerful. I am using a large, fixed font size instead of r-fit-text because for very short phrases (under 10 chars), fixed size provides more control and impact. The green color reinforces that this is the fundamental, positive truth we'll be exploring. -->
+<section>
+    <h1 style="font-size: 10em; color: #4CAF50;">It's just math.</h1>
+</section>
+
+<!-- This POWER TEXT slide elaborates on the previous statement, adding a qualifier that builds intrigue. The text length is perfect for r-fit-text. This slide serves to bridge the simple idea of "math" to its complex application, setting up the reveal of the core task. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">Relentlessly applied to one, deceptively simple task:</h2>
+</section>
+
+<!-- This is the most critical POWER TEXT slide in the introduction. It reveals the central concept of the entire video: "predict the next token." This phrase is highlighted with a green background for maximum emphasis. A concave transition creates a "zooming in" effect, focusing all attention on this singular, vital idea. -->
+<section data-transition="concave">
+    <h1 class="r-fit-text">predict the <mark style="background-color: #4CAF50; color: white;">next token.</mark></h1>
+</section>
+
+<!-- This POWER TEXT slide officially introduces the presentation title. Breaking the title into two parts creates a better rhythm. The main title uses r-fit-text for impact, while the subtitle is slightly smaller for clear hierarchy. This formally frames the learning journey for the audience. -->
+<section data-transition="slide">
+    <h2 style="font-size: 3em;">In this video</h2>
+    <h1 class="r-fit-text">LLM Pre-Training in 30 Minutes</h1>
+</section>
+
+<!-- This POWER TEXT slide sets the objective for the presentation. Using the metaphor "pull back the curtain" reinforces the theme of demystifying magic. The sentence is concise and direct, making it effective for r-fit-text. -->
+<section>
+    <h1 class="r-fit-text">we are going to pull back the curtain.</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that makes a clear promise to the audience. Text analysis: "You will see the exact pipeline that turns the raw, chaotic text of the internet into the foundation for models like GPT" (131 characters) is a bit long. I'll split it for more impact. First part sets up the transformation. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">You will see the exact pipeline that turns the raw, chaotic text of the internet...</h1>
+</section>
+
+<!-- Continuing with data-auto-animate, this POWER TEXT slide completes the promise. The second part reveals the powerful outcome: "...into the foundation for models like GPT." This two-part reveal makes the long sentence more digestible and impactful. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">You will see the exact pipeline that turns the raw, chaotic text of the internet...</h1>
+    <h1 class="r-fit-text" style="color: #4CAF50;">...into the foundation for models like GPT.</h1>
+</section>
+
+<!-- Because this content lists the key technical topics, this is an EDUCATIONAL slide. It transitions from the high-level promise to a specific preview of the content. Using a two-column layout makes the list of algorithms easy to read and digest. No fragments are used, as these topics should be presented as a complete set of what will be covered. -->
+<section data-background-color="#1a1a1a">
+    <h1 style="color: #4CAF50;">Core Concepts We'll Cover</h1>
+    <div style="display: flex; justify-content: space-around; font-size: 1.8em; margin-top: 50px;">
+        <div style="text-align: left;">
+            <p>✓ Self-supervised learning</p>
+            <p>✓ Subword Tokenization</p>
+        </div>
+        <div style="text-align: left;">
+            <p>✓ Softmax Prediction</p>
+            <p>✓ Cross-Entropy Loss</p>
+        </div>
+    </div>
+</section>
+
+<!-- This POWER TEXT slide serves as a simple, clear transition to the presentation's structure. The statement is direct and sets the expectation for the next slide, which will visually present the roadmap. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">We will follow this simple roadmap from start to finish.</h1>
+</section>
+
+<!-- Because this content visualizes the entire pre-training pipeline, this is a TECHNICAL slide. A mermaid diagram is the perfect tool to provide a high-level, persistent visual anchor for the presentation. I'm using the required dark theme, a 2.0x zoom for readability, and simple rectangular boxes to outline the two main parts that will be discussed. This diagram establishes the mental model for the audience. -->
+<section>
+    <h2>Our Roadmap</h2>
+    <div class="mermaid" style="zoom: 2.0;">
+        %%{init: {'theme': 'dark'}}%%
+        graph LR
+            subgraph "Part 1: Data Preparation"
+                A[Raw Internet Text] --> B[Tokenization]
+                B --> C[Input-Output Pairs]
+            end
+            subgraph "Part 2: The Learning Loop"
+                C --> D[LLM]
+                D --> E[Predicted Token]
+                E --> F[Loss Calculation]
+                F --> D
+            end
+    </div>
+</section>
+
+<!-- Because this content breaks down the two main stages of the roadmap, this is an EDUCATIONAL slide. I'm using a side-by-side layout to clearly define and contrast Part 1 and Part 2. The first box for Part 1 appears immediately to avoid a blank slide. This structure allows the audience to understand the two core phases of the process at a glance. -->
+<section>
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1.2em;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Part 1: Data Preparation</h2>
+            <p>Raw text → millions of <mark>Input → Output pairs</mark></p>
+            <p style="font-size: 1.5em; color: #4CAF50;">Free</p>
+        </div>
+        <div class="fragment fade-in" style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Part 2: The Learning Loop</h2>
+            <p>Predict → Measure Error → <mark>Self-Correct</mark></p>
+            <p style="font-size: 1.5em; color: #4CAF50;">Billions of times</p>
+        </div>
+    </div>
+</section>
+
+<!-- This is a POWER TEXT slide serving as the final promise for the chapter. Text analysis: "By the end of this video, you will understand the exact technical pipeline that turns the raw text of the internet into the foundational intelligence of a Large Language Model." is 196 characters, which is too long. I'll break it into two compelling statements across two slides using data-auto-animate. -->
+<section data-auto-animate data-transition="fade">
+    <h1 class="r-fit-text">By the end of this video, you will understand the exact technical pipeline...</h1>
+</section>
+
+<!-- This final POWER TEXT slide completes the introductory promise with an impactful conclusion. Using data-auto-animate, it seamlessly adds the powerful outcome, framing the content as a journey toward understanding "foundational intelligence." The green color on the final phrase emphasizes the positive, valuable knowledge the viewer will gain. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">By the end of this video, you will understand the exact technical pipeline...</h1>
+    <h1 class="r-fit-text">...that creates the <span style="color: #4CAF50;">foundational intelligence</span> of an LLM.</h1>
+</section>
+
+<!-- END CHAPTER 1 -->
+
+<!-- START CHAPTER 2 -->
+
+<!-- Because this content opens Chapter 2 with a direct, thought-provoking question, this is a POWER TEXT slide. The question "Why did it take so long?" is concise and immediately engages the audience, setting the stage for the chapter's core theme. The use of r-fit-text ensures the text is large and impactful. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">Why did it take so long to build models like GPT?</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that uses data-auto-animate to create a two-part reveal, first presenting a common misconception. Text analysis: "If you think the answer is just more computing power..." (55 characters) is a perfect length for r-fit-text. This sets up a contrast that will be resolved on the next slide. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">If you think the answer is just more computing power...</h2>
+</section>
+
+<!-- This POWER TEXT slide completes the thought from the previous one, using data-auto-animate for a smooth transition. It delivers the punchline that computing power is only "half right," creating intrigue. This progressive reveal is more engaging than presenting the full sentence at once. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">If you think the answer is just more computing power...</h2>
+    <h1 class="r-fit-text">...you're only half right.</h1>
+</section>
+
+<!-- This POWER TEXT slide identifies the true problem, serving as the chapter's thesis. Text analysis: "The real problem... was data" (32 characters) is short and impactful. Highlighting "data" in red emphasizes it as the central bottleneck and problem to be solved. A zoom transition focuses the audience's attention on this key concept. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">The real problem, the true billion-dollar bottleneck, was <span style="color: #ff6b6b;">data</span>.</h1>
+</section>
+
+<!-- Because this content explains a fundamental concept, this is an EDUCATIONAL slide. It introduces "supervised learning" and uses a simple mermaid diagram to visually represent the input-label-output process. This combination of text and a visual model is crucial for anchoring the concept in the audience's mind. The diagram uses the required dark theme and zoom for visibility. -->
+<section data-transition="fade">
+    <h2 style="color: #4CAF50;">The Old Way: Supervised Learning</h2>
+    <p style="font-size: 1.3em;">For decades, AI models learned by mapping a given input to a correct, human-provided label.</p>
+    <div class="mermaid" style="zoom: 2.0; margin-top: 40px;">
+        %%{init: {'theme': 'dark'}}%%
+        graph TD
+            A[Input: Image of a cat] --> B[Model]
+            B -- Learns to Predict --> C[Output: cat]
+            D[Label: cat] -.->|Human provides| A
+            C -.->|Compared against| D
+    </div>
+</section>
+
+<!-- This is a POWER TEXT slide designed to create a dramatic pause and pivot in the narrative. The short, direct phrase "But there's a huge catch." signals a problem with the previously explained method, building suspense for the explanation to follow. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">But there's a huge catch.</h1>
+</section>
+
+<!-- This POWER TEXT slide asks the critical question that exposes the flaw in supervised learning. The question is simple and direct, forcing the audience to consider the source of the labels, which is the core of the bottleneck. -->
+<section>
+    <h1 class="r-fit-text">Where do those labels come from?</h1>
+</section>
+
+<!-- This POWER TEXT slide delivers the answer with maximum impact. By highlighting "human" and using r-fit-text, it emphasizes the manual, non-scalable nature of the labeling process. This is the root of the problem this chapter addresses. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">A <mark>human</mark> has to create them.</h1>
+</section>
+
+<!-- Continuing with data-auto-animate, this POWER TEXT slide drives home the consequence of human labeling. The word "expensive" is colored red to signify a major problem or negative constraint, completing the explanation of the "catch" in a powerful, memorable way. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">A <mark>human</mark> has to create them.</h1>
+    <h1 class="r-fit-text">And that is fundamentally <span style="color: #ff6b6b;">expensive.</span></h1>
+</section>
+
+<!-- Because this content provides concrete examples of the high cost of data labeling, this is an EDUCATIONAL slide. Using a side-by-side comparison format effectively demonstrates how this problem spans different, high-stakes industries (medicine and law). This reinforces the "expensive" point from the previous slide with tangible evidence. -->
+<section data-transition="slide">
+    <h2 style="color: #ff6b6b;">The Real-World Cost of Labels</h2>
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1.2em; margin-top: 30px;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="color: #4CAF50;">🩻 Medical Imaging</h3>
+            <p><mark>Radiologists</mark> label MRI scans</p>
+            <p style="font-size: 1.5em; color: #ff6b6b;">$$$ per hour</p>
+        </div>
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="color: #4CAF50;">⚖️ Legal Documents</h3>
+            <p><mark>Lawyers</mark> classify contracts</p>
+            <p style="font-size: 1.5em; color: #ff6b6b;">$$$$ per hour</p>
+        </div>
+    </div>
+</section>
+
+<!-- This POWER TEXT slide introduces the concept of a "ceiling on progress" to describe the limitation of supervised learning. This metaphor effectively communicates the idea of a hard limit imposed by the cost of data labeling. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This creates a brutal ceiling on progress.</h1>
+</section>
+
+<!-- This EDUCATIONAL slide uses a data-auto-animate sequence to visually contrast the scale of a labeled dataset (ImageNet) with the vastness of unlabeled data. The first state establishes the benchmark, ImageNet, noting its impressive size but also its immense cost. This sets up the comparison. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This creates a brutal ceiling on progress.</h1>
+    <div style="font-size: 1.5em; margin-top: 50px; text-align: center; background-color: #333; padding: 20px; border-radius: 10px;">
+        <p>ImageNet: <strong style="color: #4CAF50;">14 Million</strong> labeled images.</p>
+        <p><small>(Cost: Years of effort and millions of dollars)</small></p>
+    </div>
+</section>
+
+<!-- This EDUCATIONAL slide completes the auto-animate sequence by adding the crucial context. It reveals that the massive ImageNet dataset is just a "microscopic fraction" of what's available, driving home the scale of the missed opportunity and the severity of the data bottleneck. The red text emphasizes the negative limitation. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">This creates a brutal ceiling on progress.</h1>
+    <div style="font-size: 1.5em; margin-top: 50px; text-align: center; background-color: #333; padding: 20px; border-radius: 10px;">
+        <p>ImageNet: <strong style="color: #4CAF50;">14 Million</strong> labeled images.</p>
+        <p><small>(Cost: Years of effort and millions of dollars)</small></p>
+    </div>
+    <h2 class="r-fit-text" style="color: #ff6b6b; margin-top: 40px;">...a tiny fraction of the billions of unlabeled images online.</h2>
+</section>
+
+<!-- This POWER TEXT slide summarizes the core problem with a powerful metaphor. Stating that supervised learning "hits a brick wall" creates a strong, memorable image of an insurmountable obstacle, perfectly encapsulating the scaling issue. The red color reinforces this as a hard stop. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Supervised learning hits a <span style="color: #ff6b6b;">brick wall.</span></h1>
+</section>
+
+<!-- This POWER TEXT slide poses the central question that the rest of the presentation will answer. It frames the problem in terms of scale ("trillions of examples"), making it clear why a new approach was necessary. This slide serves as a perfect transition from problem to solution. -->
+<section data-transition="fade">
+    <h2 class="r-fit-text">How do you scale to trillions of examples if every single one requires an expensive human expert?</h2>
+</section>
+
+<!-- This POWER TEXT slide marks the major turning point of the chapter. The phrase "This is where the revolution happened" signals a significant shift in thinking and technology, creating anticipation for the breakthrough concept that follows. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">This is where the revolution happened.</h1>
+</section>
+
+<!-- This is a POWER TEXT slide using a two-part reveal. Text analysis: "The genius of models like GPT wasn't just a bigger neural network—it was abandoning the need for human labels entirely." (140 chars) is too long for one line. This first part addresses and dismisses a common assumption (bigger network), setting up the real innovation. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">The genius of models like GPT wasn't just a bigger neural network...</h2>
+</section>
+
+<!-- This POWER TEXT slide completes the reveal using data-auto-animate. It delivers the core breakthrough: "abandoning the need for human labels." The key phrase is highlighted in green to signify a positive, game-changing innovation. This two-step delivery makes the point more impactful. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">The genius of models like GPT wasn't just a bigger neural network...</h2>
+    <h1 class="r-fit-text" style="color: #4CAF50;">...it was abandoning the need for human labels entirely.</h1>
+</section>
+
+<!-- This POWER TEXT slide introduces the formal name for the breakthrough concept. "Self-Supervised Learning" is highlighted in green, branding it as the hero solution to the data bottleneck problem. This gives the audience the key vocabulary term for the new paradigm. -->
+<section data-transition="concave">
+    <h1 class="r-fit-text">This breakthrough is called<br><span style="color: #4CAF50;">Self-Supervised Learning.</span></h1>
+    <h2 class="fragment r-fit-text">They found a way to make the data <mark>label itself</mark>.</h2>
+</section>
+
+<!-- Because this content presents a direct comparison of data across different AI eras, this is a TECHNICAL slide. The table format is the most effective way to show the exponential growth in data size and model parameters, and to highlight the critical shift away from human labeling. Fragments are used to reveal each era sequentially, building a narrative of progress. -->
+<section data-background-color="#1a1a1a">
+    <h2>A Paradigm Shift in Scale</h2>
+    <table style="margin: 0 auto; font-size: 1.1em; border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr>
+                <th style="border: 2px solid #4CAF50; padding: 10px;">Era</th>
+                <th style="border: 2px solid #4CAF50; padding: 10px;">Dataset</th>
+                <th style="border: 2px solid #4CAF50; padding: 10px;">Size</th>
+                <th style="border: 2px solid #4CAF50; padding: 10px;">Human Labeling?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="fragment fade-in">
+                <td style="border: 1px solid #666; padding: 10px;">Traditional ML</td>
+                <td style="border: 1px solid #666; padding: 10px;">MNIST Digits</td>
+                <td style="border: 1px solid #666; padding: 10px;">Megabytes</td>
+                <td style="border: 1px solid #666; padding: 10px; color: #ff6b6b; font-weight: bold;">Yes</td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="border: 1px solid #666; padding: 10px;">Deep Learning</td>
+                <td style="border: 1px solid #666; padding: 10px;">ImageNet</td>
+                <td style="border: 1px solid #666; padding: 10px;">Gigabytes</td>
+                <td style="border: 1px solid #666; padding: 10px; color: #ff6b6b; font-weight: bold;">Yes</td>
+            </tr>
+            <tr class="fragment fade-in">
+                <td style="border: 1px solid #666; padding: 10px; background-color: #333;">GPT-2 Era</td>
+                <td style="border: 1px solid #666; padding: 10px; background-color: #333;">WebText</td>
+                <td style="border: 1px solid #666; padding: 10px; background-color: #333;">40GB Text</td>
+                <td style="border: 1px solid #666; padding: 10px; background-color: #333; color: #4CAF50; font-weight: bold; font-size: 1.5em;">NO</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- This POWER TEXT slide emphasizes the significance of the final column from the previous table. By isolating this key insight, it ensures the audience understands that the removal of human labeling is the single most important factor in the recent explosion of AI capabilities. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">That final column<br><mark>changes everything.</mark></h1>
+</section>
+
+<!-- This POWER TEXT slide uses data-auto-animate to build on the previous point, explaining the consequence of removing the labeling bottleneck. The first part states the limitation being removed. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Suddenly, you're not limited by human effort.</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the thought with data-auto-animate, revealing the new reality: an almost infinite source of data. The phrase "infinite source" is colored green to highlight this massive, positive opportunity that self-supervision unlocks. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Suddenly, you're not limited by human effort.</h1>
+    <h1 class="r-fit-text">You have an <span style="color: #4CAF50;">almost infinite source</span> of training data.</h1>
+</section>
+
+<!-- Because this content illustrates the scaling power of self-supervision with a concrete example, this is an EDUCATIONAL slide. It visually transforms a single article into thousands of examples, making the abstract concept of data scaling tangible and easy to grasp. The phrase "all for free" is highlighted in green to emphasize the economic breakthrough. -->
+<section data-transition="slide">
+    <div style="text-align: center;">
+        <div style="font-size: 1.5em; background-color: #333; padding: 20px; border-radius: 10px;">
+            <p>A single 2,000-word Wikipedia article...</p>
+        </div>
+        <div class="fragment fade-in" style="margin-top: 30px;">
+            <p style="font-size: 3em;">⇩</p>
+            <div style="font-size: 1.8em; background-color: #333; padding: 20px; border-radius: 10px;">
+                <p>...is converted into nearly <strong style="color: #4CAF50;">2,000</strong> individual training examples.</p>
+            </div>
+        </div>
+        <div class="fragment fade-in" style="margin-top: 30px;">
+            <p style="font-size: 1.8em">Resulting in billions of learning opportunities, <mark style="background-color: #4CAF50; color: white;">all for free.</mark></p>
+        </div>
+    </div>
+</section>
+
+<!-- This is the concluding POWER TEXT slide for the chapter. It provides a powerful, concise metaphor summarizing the entire chapter's argument: the internet has become a "self-labeling textbook." This memorable phrase encapsulates the solution to the data bottleneck and provides a perfect transition to the next chapter. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">We solved the data bottleneck by turning the internet into an infinitely large, <mark>self-labeling textbook.</mark></h1>
+</section>
+
+<!-- END CHAPTER 2 -->
+
+<!-- START CHAPTER 3 -->
+
+<!-- Because this content opens Chapter 3 with a provocative question that directly addresses the bottleneck from the previous chapter, this is a POWER TEXT slide. The question is framed to highlight the core problem of cost and scale, setting the stage for the chapter's solution. Using r-fit-text ensures the question is large and impactful. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">How do you get trillions of training examples without paying millions of dollars to human experts?</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that provides the punchline answer to the previous question. Using data-auto-animate creates a smooth reveal, making the answer feel like a direct, powerful response. The key phrase "label itself" is highlighted in green to signify this is the positive, breakthrough solution. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">How do you get trillions of training examples without paying millions of dollars to human experts?</h1>
+    <h1 class="r-fit-text">You make the data <span style="color: #4CAF50;">label itself.</span></h1>
+</section>
+
+<!-- This POWER TEXT slide introduces the core idea of the chapter. Text analysis: "The breakthrough idea is deceptively simple" (42 characters) is a perfect length for r-fit-text. It serves as a transition, preparing the audience for the simple yet profound concept that follows. -->
+<section data-transition="convex">
+    <h2 class="r-fit-text">The breakthrough idea is deceptively simple.</h2>
+</section>
+
+<!-- This is a critical POWER TEXT slide revealing the central task of LLM pre-training. It's kept extremely concise for maximum impact. The phrase "predict the next word" is the most important concept in this chapter, so it is strongly marked to be memorable. The zoom transition focuses all attention on this singular task. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">The task is this:</h2>
+    <h1 class="r-fit-text fragment"><mark>predict the next word.</mark></h1>
+</section>
+
+<!-- This is a POWER TEXT slide designed for emphasis and pacing. The short, definitive statement "That's it. That's the entire secret." reinforces the simplicity of the core idea. Using r-fit-text makes this simple phrase fill the screen, giving it weight and allowing the previous point to sink in. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">That’s it.</h1>
+    <h1 class="r-fit-text fragment">That’s the entire secret.</h1>
+</section>
+
+<!-- This POWER TEXT slide explains the immediate consequence of the "predict the next word" task. Highlighting "No human annotation" in red emphasizes the removal of the primary bottleneck discussed in Chapter 2. This directly connects the new solution to the old problem. -->
+<section>
+    <h1 class="r-fit-text" style="color: #ff6b6b;">No human annotation is needed.</h1>
+</section>
+
+<!-- This EDUCATIONAL slide visually explains how self-supervision works. A simple mermaid diagram is perfect here to show how a text sequence naturally provides both the input and the label. This visual anchor makes the abstract concept concrete and easy to understand. The diagram uses the required dark theme and zoom for visibility. -->
+<section data-transition="slide">
+    <p style="font-size: 1.5em;">The text provides both the input (the sequence so far) and the "label" (the very next word).</p>
+    <div class="mermaid" style="zoom: 2.0; margin-top: 50px;">
+        %%{init: {'theme': 'dark'}}%%
+        graph LR
+            A[The cat sat] --> B[Input]
+            C[on] --> D[Label]
+    </div>
+</section>
+
+<!-- This POWER TEXT slide formally names the concept. Highlighting "self-supervised learning" in green brands it as the positive, key technical term for the audience to remember. This slide solidifies the vocabulary for the breakthrough idea just explained. -->
+<section>
+    <h1 class="r-fit-text">This is the core of <span style="color: #4CAF50;">self-supervised learning.</span></h1>
+</section>
+
+<!-- This POWER TEXT slide uses a powerful metaphor to summarize the economic benefit of self-supervision. Calling it a "free lunch" is a memorable way to communicate the value proposition of getting labeled data without cost, directly tying into the chapter's title. -->
+<section data-transition="concave">
+    <h1 class="r-fit-text">It’s the closest thing to a<br><span style="color: #4CAF50;">free lunch</span> in machine learning.</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that serves as a transition into the technical details. It makes a promise to the audience that they will see the specific algorithm, building anticipation for the code that follows. -->
+<section data-transition="zoom">
+    <h2 class="r-fit-text">We promised you an algorithm.</h2>
+    <h1 class="r-fit-text fragment">Here is the simple, powerful engine that creates unlimited training data.</h1>
+</section>
+
+<!-- Because this content presents the core algorithm for generating training data, this is a TECHNICAL slide. The pseudocode is displayed clearly using highlight.js with line numbers. This slide is designed for a slower pace, allowing the audience to read and digest the logic of how any document is turned into input/output pairs. -->
+<section data-background-color="#1a1a1a">
+    <h2 style="color: #4CAF50;">Algorithm: CreateTrainingData</h2>
+    <pre style="width: 100%; font-size: 1.1em;"><code class="language-c" data-trim data-line-numbers>
+INPUT: A document of text, broken into a list of words/tokens T.
+       T = [t_1, t_2, t_3, ..., t_n]
+
+OUTPUT: A set of (input, output) pairs for training.
+
+FOR k FROM 1 TO n-1:
+  input_sequence = [t_1, ..., t_k]
+  target_word = t_{k+1}
+  
+  ADD (input_sequence, target_word) TO output_set
+
+RETURN output_set
+    </code></pre>
+</section>
+
+<!-- This POWER TEXT slide sets up the concrete example that will follow. By stating "Let's make this crystal clear" and presenting the simple sentence, it signals a shift from abstract algorithm to a practical demonstration. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">Let's make this crystal clear.</h1>
+    <h2 class="r-fit-text fragment">Take the simple sentence: <mark>"The cat sat on the mat."</mark></h2>
+</section>
+
+<!-- Because this slide demonstrates the step-by-step application of the algorithm, this is a TECHNICAL slide. A table is the clearest way to show the sliding window process. The table rows are revealed using fragments, which visually simulates the algorithm iterating and generating each new training example. This progressive reveal is crucial for understanding the process. -->
+<section>
+    <h2>One Sentence Becomes a Full Curriculum</h2>
+    <table style="margin: 0 auto; font-size: 0.9em; border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr>
+                <th style="border: 2px solid #4CAF50; padding: 15px;"></th>
+                <th style="border: 2px solid #4CAF50; padding: 15px;">Input Sequence (What the model sees)</th>
+                <th style="border: 2px solid #4CAF50; padding: 15px;">Target Output (What it must predict)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #666; padding: 10px;"><strong>Example 1</strong></td>
+                <td style="border: 1px solid #666; padding: 10px;">["The"]</td>
+                <td style="border: 1px solid #666; padding: 10px;"><code>cat</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 10px;"><strong>Example 2</strong></td>
+                <td style="border: 1px solid #666; padding: 10px;">["The", "cat"]</td>
+                <td style="border: 1px solid #666; padding: 10px;"><code>sat</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 10px;"><strong>Example 3</strong></td>
+                <td style="border: 1px solid #666; padding: 10px;">["The", "cat", "sat"]</td>
+                <td style="border: 1px solid #666; padding: 10px;"><code>on</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 10px;"><strong>Example 4</strong></td>
+                <td style="border: 1px solid #666; padding: 10px;">["The", "cat", "sat", "on"]</td>
+                <td style="border: 1px solid #666; padding: 10px;"><code>the</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 10px;"><strong>Example 5</strong></td>
+                <td style="border: 1px solid #666; padding: 10px;">["The", "cat", "sat", "on", "the"]</td>
+                <td style="border: 1px solid #666; padding: 10px;"><code>mat</code></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- This POWER TEXT slide emphasizes the incredible efficiency of the self-supervision process. Text analysis: "One sentence just generated five high-quality, perfectly labeled training examples for free" is a bit long. I will break it down for impact, highlighting the key numbers and the word "free". -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">One sentence...</h1>
+    <h1 class="r-fit-text fragment" style="color: #4CAF50;">→ 5 high-quality examples, for <mark>free</mark>.</h1>
+</section>
+
+<!-- This POWER TEXT slide drives home the point about scale. It prompts the audience to extrapolate from the single-sentence example to the vastness of the internet, making the leap in scale feel immense and powerful. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">One sentence...</h1>
+    <h1 class="r-fit-text" style="color: #4CAF50;">→ 5 high-quality examples, for <mark>free</mark>.</h1>
+    <h2 class="r-fit-text">Now, scale that up to the size of the internet.</h2>
+</section>
+
+<!-- This POWER TEXT slide poses a skeptical question, anticipating the audience's potential doubt. This technique validates the audience's thinking ("This seems too simple") and creates a perfect setup for the deeper explanation that follows. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">This seems way too simple.</h1>
+    <h2 class="r-fit-text fragment">How can just guessing the next word teach a model to reason, write code, or explain science?</h2>
+</section>
+
+<!-- This POWER TEXT slide begins to answer the "how." It introduces the core reason: the model is "forced" to learn. I'm splitting the long sentence into two slides for better pacing and impact. This first part sets up the condition. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">Because to get <span style="color: #4CAF50;">consistently good</span> at this task, across billions of examples...</h2>
+</section>
+
+<!-- This POWER TEXT slide delivers the punchline using data-auto-animate. The word "forced" is highlighted in red to emphasize that deep understanding isn't an accident, but a necessary consequence of optimizing for the simple prediction task. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">Because to get <span style="color: #4CAF50;">consistently good</span> at this task, across billions of examples...</h2>
+    <h1 class="r-fit-text">...the model is <span style="color: #ff6b6b;">forced</span> to build a deep, internal understanding of the world.</h1>
+</section>
+
+<!-- Because this content introduces a specific, complex example that will be analyzed over the next few slides, this is a TECHNICAL slide. The problem setup—the sentence about Paris—is placed in a persistent context box. This box MUST remain visible on the following slides for the audience to understand the required knowledge. -->
+<section data-auto-animate>
+    <div style="background-color: #333; padding: 15px; border-radius: 10px;">
+        <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">The Prediction Task</h3>
+        <p style="font-size: 1.4em; margin: 10px 0 0 0;">"In Paris, the capital of France, the primary language spoken is..."</p>
+    </div>
+    <h2 class="fragment r-fit-text" style="margin-top: 50px;">What must the model learn to predict the word <mark>French</mark>?</h2>
+</section>
+
+<!-- This TECHNICAL slide breaks down the knowledge required to solve the Paris problem. CRITICAL: The problem context box from the previous slide persists at the top. This is essential for the audience to keep the sentence in mind as the required skills are listed. The list items are revealed with fragments to allow the speaker to explain each point individually. -->
+<section data-auto-animate>
+    <div style="background-color: #333; padding: 15px; border-radius: 10px;">
+        <h3 style="color: #4CAF50; margin: 0; font-size: 1.8em;">The Prediction Task</h3>
+        <p style="font-size: 1.4em; margin: 10px 0 0 0;">"In Paris, the capital of France, the primary language spoken is..."</p>
+    </div>
+    <div style="text-align: left; font-size: 1.4em; margin-top: 30px; line-height: 1.8;">
+        <p>1. <strong style="color: #4CAF50;">Grammar:</strong> Knows "is" is likely followed by a noun.</p>
+        <p class="fragment fade-in">2. <strong style="color: #4CAF50;">Long-distance context:</strong> Connects the end of the sentence back to "Paris".</p>
+        <p class="fragment fade-in">3. <strong style="color: #4CAF50;">World facts:</strong> Knows Paris is in France, and they speak French.</p>
+        <p class="fragment fade-in">4. <strong style="color: #4CAF50;">Ignore distractors:</strong> Knows "France" is more important than "primary".</p>
+    </div>
+</section>
+
+<!-- This POWER TEXT slide serves as the chapter's grand conclusion. It synthesizes the Paris example into a general principle: minimizing prediction error forces the model to develop a rich internal world model. It's a powerful summary of why self-supervision works so well. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">To minimize error → model must learn</h1>
+    <h2 class="r-fit-text" style="color: #4CAF50;">concepts, facts & relationships</h2>
+</section>
+
+<!-- This is a POWER TEXT slide that contrasts a simple, incorrect view (memorization) with the profound reality (learning structure). Using data-auto-animate and splitting the idea into two parts creates a strong final statement. The first part dismisses the simple explanation. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">It's not just <span style="color: #ff6b6b;">memorizing sentences.</span></h1>
+</section>
+
+<!-- This POWER TEXT slide completes the final thought of the chapter with data-auto-animate. The concluding phrase, "learning the underlying structure of reality," is colored green to frame it as the ultimate, positive outcome of the entire pre-training process. This is a strong, philosophical note to end on. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">It's not just <span style="color: #ff6b6b;">memorizing sentences.</span></h1>
+    <h1 class="r-fit-text">It's learning the <span style="color: #4CAF50;">underlying structure of reality.</span></h1>
+</section>
+
+<!-- END CHAPTER 3 -->
+
+<!-- START CHAPTER 4 -->
+
+<!-- Because this content opens the chapter by establishing a fundamental limitation of neural networks, this is a POWER TEXT slide. Text analysis: "A neural network doesn't understand the word 'cat'" (49 characters) is a perfect length for r-fit-text. I'm splitting the full idea across multiple slides for dramatic effect, starting with this core statement. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">A neural network doesn't understand the word <mark style="background-color: #ff6b6b; color: white;">"cat."</mark></h1>
+</section>
+
+<!-- This POWER TEXT slide continues the opening sequence using data-auto-animate for a seamless build-up. It broadens the limitation from single words to the concept of grammar, reinforcing the idea that the model's 'understanding' is not human-like. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">A neural network doesn't understand the word <mark style="background-color: #ff6b6b; color: white;">"cat."</mark></h1>
+    <h2 class="r-fit-text">It doesn't understand <mark style="background-color: #ff6b6b; color: white;">grammar</mark> or <mark style="background-color: #ff6b6b; color: white;">sentences.</mark></h2>
+</section>
+
+<!-- This POWER TEXT slide serves as a pivot in the auto-animate sequence, moving from what the model *doesn't* understand to what it *does*. The colon at the end creates a pause and builds anticipation for the reveal on the next slide. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">A neural network <span style="color: #ff6b6b;">doesn't understand</span> the word "cat."</h1>
+    <h2 class="r-fit-text">It doesn't understand <span style="color: #ff6b6b;">grammar or sentences</span>.</h2>
+    <h1 class="r-fit-text">It understands <span style="color: #4CAF50;">one thing, and one thing only:</span></h1>
+</section>
+
+<!-- This is the punchline of the opening sequence, a POWER TEXT slide that reveals the fundamental unit of computation for an LLM. The word "Numbers" is extremely short, so I'm using a large, fixed font size instead of r-fit-text for maximum visual impact. The green color signifies this is the core, positive truth. -->
+<section>
+    <h1 class="r-fit-text" style="color: #4CAF50;">Numbers.</h1>
+</section>
+
+<!-- This POWER TEXT slide formally introduces the key technical term for the chapter. Text analysis: "The process of converting raw text into a list of numbers the model can actually process is called Tokenization" (124 characters) is a bit long. I'll break it into two parts for a more natural reveal. This slide sets up the definition. -->
+<section data-auto-animate data-transition="convex">
+    <h2 class="r-fit-text">The process of converting raw text into a list of numbers the model can actually process...</h2>
+</section>
+
+<!-- This POWER TEXT slide completes the definition using data-auto-animate. The key term "Tokenization" is revealed and highlighted with a green background, ensuring it stands out as the central concept of this chapter. -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">The process of converting raw text into a list of numbers the model can actually process...</h2>
+    <h1 class="r-fit-text">...is called <mark style="background-color: #4CAF50; color: white;">Tokenization</mark>.</h1>
+</section>
+
+<!-- This POWER TEXT slide acts as a hook, creating intrigue and signaling that the seemingly simple concept of tokenization has hidden complexity. The statement is short and conversational, making it effective with r-fit-text. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">And it's way trickier than it sounds.</h1>
+</section>
+
+<!-- Because this content introduces a concrete example to ground the upcoming technical discussion, this is an EDUCATIONAL slide. It clearly presents the sentence that will be used to compare different tokenization strategies, providing a consistent reference point for the audience. -->
+<section data-transition="fade">
+    <h2 style="font-size: 2em;">At first glance, this seems simple.</h2>
+    <p style="font-size: 1.5em; margin-top: 40px;">Take the sentence:</p>
+    <p style="font-size: 2.5em; margin-top: 40px; background-color: #333; padding: 20px; border-radius: 10px;">"The cat quickly jumped."</p>
+</section>
+
+<!-- This EDUCATIONAL slide presents the first proposed solution, "word-level" tokenization. It clearly labels the approach and shows the resulting tokenized list. This visual demonstration makes the abstract idea of splitting by spaces very easy to understand. -->
+<section data-transition="slide">
+    <h2 style="color: #4CAF50; text-align: center; font-size: 2.5em;">Approach #1: Split by Spaces?</h2>
+    <p style="font-size: 2em; margin-top: 40px; text-align: center;">This gives you <strong style="color: #4CAF50;">word-level tokens:</strong></p>
+    <pre style="width: 100%; margin-top: 40px; text-align: center;"><code class="language-json" style="font-size: 1.8em;">
+["The", "cat", "quickly", "jumped."]
+    </code></pre>
+</section>
+
+<!-- This EDUCATIONAL slide introduces the second proposed solution, "character-level" tokenization. Similar to the previous slide, it labels the approach and shows the output, providing a clear contrast to the word-level method. -->
+<section data-transition="slide">
+    <h2 style="color: #4CAF50; text-align: center; font-size: 2.5em;">Approach #2: Go even smaller?</h2>
+    <p style="font-size: 2em; margin-top: 40px; text-align: center;">This gives you <strong style="color: #4CAF50;">character-level tokens:</strong></p>
+    <pre style="width: 100%; margin-top: 40px; text-align: center;"><code class="language-json" style="font-size: 1.8em;">
+["T", "h", "e", " ", "c", "a", "t", ...]
+    </code></pre>
+</section>
+
+<!-- This POWER TEXT slide acts as a transition, acknowledging that both proposed solutions seem plausible before revealing their flaws. Text analysis: "Both of these ideas sound reasonable" (33 characters) is a good length for r-fit-text. -->
+<section data-auto-animate data-transition="concave">
+    <h1 class="r-fit-text">Both of these ideas sound reasonable.</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the transition with a dramatic turn using data-auto-animate. The word "severe" is colored red to signal that these are not minor issues but critical failures, setting a serious tone for the detailed comparison that follows. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">Both of these ideas sound reasonable.</h1>
+    <h1 class="r-fit-text">But in practice, they create immediate and <span style="color: #ff6b6b;">severe</span> problems.</h1>
+</section>
+
+<!-- This POWER TEXT slide serves as the final transition into the head-to-head comparison, making the next step in the presentation explicit and building anticipation for the detailed analysis. -->
+<section>
+    <h1 class="r-fit-text">Let's put them head-to-head.</h1>
+</section>
+
+<!-- Because this content presents a detailed, structured comparison of the two tokenization methods, this is a TECHNICAL slide. A table is the most effective format for this. I use fragments to reveal each problem category (row) one by one, allowing the audience to digest the trade-offs for each issue before moving to the next. Contrasting colors (red for problems, green for solutions) make the comparison immediately clear. -->
+<section data-background-color="#1a1a1a">
+    <h2>Word vs. Character Tokenization</h2>
+    <table style="margin: 0 auto; font-size: 0.9em; border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr>
+                <th style="border: 2px solid #4CAF50; padding: 8px;">Problem</th>
+                <th style="border: 2px solid #4CAF50; padding: 8px;">Word-Level</th>
+                <th style="border: 2px solid #4CAF50; padding: 8px;">Character-Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #666; padding: 8px; font-weight: bold;">Vocabulary Size</td>
+                <td style="border: 1px solid #666; padding: 8px; color: #ff6b6b;">❌ Huge (jump, jumps, jumping...)</td>
+                <td style="border: 1px solid #666; padding: 8px; color: #4CAF50;">✅ Tiny (A-Z, 0-9)</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 8px; font-weight: bold;">Unknown Words</td>
+                <td style="border: 1px solid #666; padding: 8px; color: #ff6b6b;">❌ Breaks on new words</td>
+                <td style="border: 1px solid #666; padding: 8px; color: #4CAF50;">✅ Can build any word</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 8px; font-weight: bold;">Sequence Length</td>
+                <td style="border: 1px solid #666; padding: 8px; color: #4CAF50;">✅ Short sequences</td>
+                <td style="border: 1px solid #666; padding: 8px; color: #ff6b6b;">❌ Very long sequences</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Because this content summarizes the failure of word-level tokenization, this is a POWER TEXT slide. It breaks down the key issues into a quick, impactful sequence using data-auto-animate. This first slide states the core problem. -->
+<section data-auto-animate data-transition="zoom">
+    <h2 class="r-fit-text">Word-level tokenization fails because:</h2>
+    <h1 class="r-fit-text" style="color: #ff6b6b;">The vocabulary explodes.</h1>
+</section>
+
+<!-- This POWER TEXT slide adds the second, more critical failure point using data-auto-animate. By introducing the "Out-of-Vocabulary" problem on its own line, it gets the emphasis it deserves as a "deal-breaker". -->
+<section data-auto-animate>
+    <h2 class="r-fit-text">Word-level tokenization fails because:</h2>
+    <h1 class="r-fit-text" style="color: #ff6b6b;">The vocabulary explodes.</h1>
+    <h1 class="r-fit-text" style="color: #ff6b6b;">And it breaks on any word it hasn't seen before.</h1>
+</section>
+
+<!-- This POWER TEXT slide delivers the final verdict on word-level tokenization. The phrase "deal-breaker" is short, powerful, and definitive, making it ideal for r-fit-text to close the argument against this method. -->
+<section>
+    <h1 class="r-fit-text">This is a <mark>deal-breaker</mark>.</h1>
+</section>
+
+<!-- This POWER TEXT slide begins the summary for character-level tokenization, starting with its strengths. It uses data-auto-animate to create a two-part summary. This first slide highlights the positive aspects in green. -->
+<section data-auto-animate data-transition="slide">
+    <h1 class="r-fit-text" style="color: #4CAF50;">Characters solve those problems...</h1>
+</section>
+
+<!-- This POWER TEXT slide completes the summary by revealing the critical flaw using data-auto-animate. The word "crippling" is highlighted in red to emphasize the severity of the inefficiency problem, creating a clear trade-off. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text" style="color: #4CAF50;">Characters solve those problems...</h1>
+    <h1 class="r-fit-text">...but create a new, <span style="color: #ff6b6b;">crippling</span> problem:</h1>
+</section>
+
+<!-- This is a POWER TEXT slide that names the crippling problem with maximum impact. The phrase "Massive Inefficiency" is colored red and displayed alone on the slide, ensuring the audience understands this is a major, show-stopping issue. -->
+<section>
+    <h1 class="r-fit-text" style="color: #ff6b6b;">Massive Inefficiency.</h1>
+</section>
+
+<!-- This POWER TEXT slide explains the consequence of the inefficiency. Text analysis: "The model has to learn the concept of 'cat' by looking at c, then a, then t, every single time" is a bit long but very descriptive. I'll rephrase slightly for impact. The key idea is that learning is difficult and expensive. -->
+<section>
+    <h2 class="r-fit-text">Learning relationships across long distances becomes incredibly difficult and computationally <mark>expensive</mark>.</h2>
+</section>
+
+<!-- This is a POWER TEXT slide designed for a dramatic pause. The simple, direct statement "So we're stuck" perfectly captures the dilemma presented so far, allowing the weight of the problem to sink in before moving toward the solution. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">So we're stuck.</h1>
+</section>
+
+<!-- Because this content presents the core dilemma as a direct comparison, this is an EDUCATIONAL slide. The side-by-side layout clearly contrasts the two flawed approaches. Highlighting the key weakness of each ("brittle" vs. "inefficient") in red makes the trade-off visually apparent and memorable. -->
+<section data-transition="zoom">
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1.2em;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Word-Level</h2>
+            <p>Efficient, but <span style="color: #ff6b6b;">brittle</span>.</p>
+        </div>
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Character-Level</h2>
+            <p>Robust, but massively <span style="color: #ff6b6b;">inefficient</span>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- This POWER TEXT slide begins to frame the requirements for an ideal solution. It states the high-level goal, setting the stage for the specific criteria that will follow on the next slides. -->
+<section data-auto-animate data-transition="fade">
+    <h1 class="r-fit-text">We need a solution that gives us the best of both worlds:</h1>
+</section>
+
+<!-- This POWER TEXT slide uses data-auto-animate to build the list of requirements. It presents the first desired quality of the solution: a manageable vocabulary. The progression creates a clear, step-by-step definition of the ideal tokenizer. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">We need a solution that gives us the best of both worlds:</h1>
+    <ul style="font-size: 1.8em; margin-top: 50px;">
+        <li style="margin-bottom: 20px;">A manageable vocabulary...</li>
+    </ul>
+</section>
+
+<!-- This POWER TEXT slide adds the second requirement using data-auto-animate. This continues to build the picture of the ideal solution, emphasizing the need to handle any possible word without failing. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">We need a solution that gives us the best of both worlds:</h1>
+    <ul style="font-size: 1.8em; margin-top: 50px;">
+        <li style="margin-bottom: 20px;">A manageable vocabulary...</li>
+        <li style="margin-bottom: 20px;">...that can still represent any word...</li>
+    </ul>
+</section>
+
+<!-- This POWER TEXT slide completes the list of requirements with the final criterion. The three-part reveal using data-auto-animate makes the complete definition of the problem clear and sets a high bar for the solution that will be introduced next. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">We need a solution that gives us the best of both worlds:</h1>
+    <ul style="font-size: 1.8em; margin-top: 50px;">
+        <li style="margin-bottom: 20px;">A manageable vocabulary...</li>
+        <li style="margin-bottom: 20px;">...that can still represent any word...</li>
+        <li style="margin-bottom: 20px;">...<span style="color: #ff6b6b;">without</span> creating absurdly long sequences.</li>
+    </ul>
+</section>
+
+<!-- This POWER TEXT slide serves as the chapter's climax and the transition to the next. It frames the upcoming topic not just as a solution, but as a "clever, elegant" one, building anticipation and giving it a sense of importance. -->
+<section data-transition="concave">
+    <h2 class="r-fit-text">And this leads us to the clever, elegant solution that modern language models actually use.</h2>
+</section>
+
+<!-- This is the final POWER TEXT slide of the chapter, officially revealing the name of the solution. The title of the next chapter, "The Genius of Subword Tokenization," is presented with "Subword Tokenization" highlighted in green to brand it as the hero concept. This provides a perfect, forward-looking conclusion. -->
+<section>
+    <h1 class="r-fit-text">The Genius of</h1>
+    <h1 class="r-fit-text" style="color: #4CAF50;"><mark style="background-color: #4CAF50; color: white;">Subword Tokenization</mark></h1>
+</section>
+
+<!-- END CHAPTER 4 -->
+
+<!-- START CHAPTER 5 -->
+
+<!-- Because this content opens the chapter by directly stating the problem left over from the previous chapter, this is a POWER TEXT slide. The phrase "So we're stuck" is short, dramatic, and serves as an immediate hook, reminding the audience of the unresolved dilemma between word and character tokenization. -->
+<section data-transition="convex">
+    <h1 class="r-fit-text">So we're stuck.</h1>
+</section>
+
+<!-- Because this content recaps the core conflict from Chapter 4, this is an EDUCATIONAL slide. It uses a side-by-side layout to visually reinforce the trade-offs between the two failed approaches. Highlighting the key flaws "brittle" and "inefficient" in red provides a quick, memorable summary of the problem we need to solve. -->
+<section data-transition="zoom">
+    <div style="display: flex; justify-content: space-around; gap: 40px; font-size: 1.2em;">
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Word-level tokenization</h2>
+            <p>Efficient, but it's <span style="color: #ff6b6b;">brittle</span>. It breaks the moment it sees a new word.</p>
+        </div>
+        <div style="flex: 1; text-align: center; background-color: #333; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <h2 style="color: #4CAF50;">Character-level tokenization</h2>
+            <p>Robust, but it's massively <span style="color: #ff6b6b;">inefficient</span>.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Because this content sets up the goal for the solution, this is a POWER TEXT slide. Text analysis: "We need the best of both worlds" (31 characters) is a perfect concise statement for r-fit-text. It clearly frames the objective for the audience before diving into the solution. -->
+<section data-auto-animate data-transition="fade">
+    <h1 class="r-fit-text">We need the best of both worlds.</h1>
+</section>
+
+<!-- Because this content elaborates on the requirements for the solution, this is a POWER TEXT slide that builds on the previous one using data-auto-animate. The text is broken down into a list to make the criteria clear and digestible. The gradual reveal of the list focuses attention on each requirement. -->
+<section data-auto-animate>
+    <h1 class="r-fit-text">We need the best of both worlds.</h1>
+    <h1 class="r-fit-text" style="margin-top: 50px;">Manageable vocabulary + <mark>any</mark> word</h1>
+    <h1 class="r-fit-text" style="color: #4CAF50;">Without long sequences</h1>
+</section>
+
+<!-- Because this content introduces the name of the solution, this is a POWER TEXT slide. It serves as the chapter's big reveal. "Subword Tokenization" is highlighted in green to brand it as the heroic solution to the problems we've established. -->
+<section data-transition="concave">
+    <h2 class="r-fit-text">This leads us to the clever, elegant solution that modern language models actually use.</h2>
+    <h1 class="r-fit-text fragment" style="color: #4CAF50;">Subword Tokenization.</h1>
+</section>
+
+<!-- Because this content explains the core concept of the solution, this is a POWER TEXT slide. Text analysis: "The core idea is brilliant: Don't treat words as the smallest unit" (66 characters) is an ideal length for r-fit-text. It's a simple but profound shift in thinking that needs to be presented with impact. -->
+<section data-transition="slide">
+    <h1 class="r-fit-text">The core idea is brilliant: <mark>Don't treat words as the smallest unit.</mark></h1>
+</section>
+
+<!-- Because this content provides a powerful metaphor to explain the core idea, this is a POWER TEXT slide. The LEGO brick analogy is highly intuitive and memorable, so it's presented alone for maximum effect. This helps solidify the mental model for the audience. -->
+<section>
+    <h2 class="r-fit-text">Instead, break them down into smaller, common pieces, just like building things with LEGO bricks.</h2>
+</section>
+
+<!-- Because this content reveals a key insight about how the tokenizer works, this is a POWER TEXT slide. Highlighting the word "learns" is critical, as it differentiates this method from a fixed, rule-based dictionary and connects it to the data-driven nature of machine learning. -->
+<section>
+    <h1 class="r-fit-text">The tokenizer <mark>learns</mark> common subword pieces</h1>
+    <h2 class="r-fit-text" style="color: #4CAF50;">from the training data itself</h2>
+</section>
+
+<!-- Because this content serves as a simple transition to the practical examples, this is a POWER TEXT slide. The phrase is short, direct, and manages the audience's expectation that they are about to see the concept in action. -->
+<section data-transition="zoom">
+    <h1 class="r-fit-text">Let's see how this works in practice.</h1>
+</section>
+
+<!-- Because this content demonstrates concrete examples of subword tokenization, this is an EDUCATIONAL slide. It uses a clear, structured list format to show how different types of words are broken down. The use of code formatting for the tokens makes them visually distinct. The explanation of the "##" symbol is crucial for understanding the output. -->
+<section>
+    <table style="margin: 0 auto; border-collapse: collapse; width: 90%; font-size: 1.8em;">
+        <thead>
+            <tr>
+                <th style="border: 2px solid #4CAF50; padding: 20px; color: #4CAF50;">Type</th>
+                <th style="border: 2px solid #4CAF50; padding: 20px; color: #4CAF50;">Word</th>
+                <th style="border: 2px solid #4CAF50; padding: 20px; color: #4CAF50;">Tokens</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; color: #4CAF50; font-weight: bold;">Simple</td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center;"><code>cat</code></td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center;"><code>["cat"]</code></td>
+            </tr>
+            <tr style="font-size: 0.8em;">
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; color: #4CAF50; font-weight: bold;">Adverb</td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center;"><code>quickly</code></td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center;"><code>["quick", "##ly"]</code></td>
+            </tr>
+            <tr style="font-size: 0.8em;">
+                <td style="border: 1px solid #666; padding: 15px; text-align: center; color: #4CAF50; font-weight: bold;">Verb Form</td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center;"><code>jumping</code></td>
+                <td style="border: 1px solid #666; padding: 15px; text-align: center;"><code>["jump", "##ing"]</code></td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="font-size: 1.4em; margin-top: 30px; text-align: center; color: #4CAF50;"><code>##</code> = attached to previous piece</p>
+</section>
+
+<!-- Because this content makes a strong, summarizing claim about the solution's effectiveness, this is a POWER TEXT slide. It serves as a transition from the "how" to the "why it's great," setting up the detailed explanation of the benefits that will follow. -->
+<section data-transition="fade">
+    <h1 class="r-fit-text">This single, elegant solution solves all of our earlier problems.</h1>
+</section>
+
+<!-- Because this content explains the first major benefit of subword tokenization, this is an EDUCATIONAL slide. It clearly states the benefit ("It creates an efficient vocabulary") and provides a concrete example to illustrate the point. Mentioning the GPT-2 vocabulary size provides a real-world anchor for the concept of efficiency. -->
+<section>
+    <h2 style="color: #4CAF50; font-size: 2.5em; margin-bottom: 40px;">1. Efficient Vocabulary</h2>
+    <div style="text-align: center; font-size: 1.3em;">
+        <div style="margin-bottom: 10px;">
+            <div style="padding: 25px; text-align: center; background-color: #333; border-radius: 15px; width: 70%; margin: 0 auto;">
+                <h3 style="color: #ff6b6b; margin: 0 0 15px 0;">Before: Wasteful</h3>
+                <code>jump, jumps, jumping, jumper</code><br>
+                <p style="color: #ff6b6b; font-size: 1.1em; margin: 10px 0 0 0;">4 separate entries</p>
+            </div>
+        </div>
+        <div style="margin: 10px 0;">
+            <p style="font-size: 3em;">⇩</p>
+        </div>
+        <div style="margin-top: 10px;">
+            <div style="padding: 25px; text-align: center; background-color: #333; border-radius: 15px; width: 70%; margin: 0 auto;">
+                <h3 style="color: #4CAF50; margin: 0 0 15px 0;">After: Smart</h3>
+                <code>jump + ##s + ##ing + ##er</code><br>
+                <p style="color: #4CAF50; font-size: 1.1em; margin: 10px 0 0 0;">1 stem + 3 pieces</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Because this content explains the second, most critical benefit, this is an EDUCATIONAL slide. It highlights that the "Out-of-Vocabulary problem is solved" as the main takeaway. Using concrete examples of a complex word ("hyper-threading") and a typo ("awesommmme") makes the robustness of the solution tangible and impressive. -->
+<section>
+    <h2 style="color: #4CAF50; font-size: 2.5em; margin-bottom: 40px;">2. No Unknown Words</h2>
+    <table style="margin: 0 auto; border-collapse: collapse; width: 90%; font-size: 1.1em;">
+        <thead>
+            <tr>
+                <th style="border: 2px solid #4CAF50; padding: 15px; color: #4CAF50;">Challenge</th>
+                <th style="border: 2px solid #4CAF50; padding: 15px; color: #4CAF50;">Input</th>
+                <th style="border: 2px solid #4CAF50; padding: 15px; color: #4CAF50;">Tokenized</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #666; padding: 12px; text-align: center; font-weight: bold; color: #4CAF50;">New Word</td>
+                <td style="border: 1px solid #666; padding: 12px; text-align: center;"><code>hyper-threading</code></td>
+                <td style="border: 1px solid #666; padding: 12px; text-align: center;"><code>["hyper", "-", "thread", "##ing"]</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #666; padding: 12px; text-align: center; font-weight: bold; color: #4CAF50;">Typo</td>
+                <td style="border: 1px solid #666; padding: 12px; text-align: center;"><code>awesommmme</code></td>
+                <td style="border: 1px solid #666; padding: 12px; text-align: center;"><code>["awesome", "##m", "##m", "##e"]</code></td>
+            </tr>
+        </tbody>
+    </table>
+    <h3 style="color: #4CAF50; text-align: center; margin-top: 30px; font-size: 1.8em;">Out-of-Vocabulary Problem = SOLVED</h3>
+</section>
+
+<!-- Because this content explains the final step of the tokenization process, this is a TECHNICAL slide. It introduces the concept of mapping subword strings to integer IDs. A table is the most effective way to visualize this lookup process, making the abstract idea of a vocabulary map concrete and easy to understand. -->
+<section data-transition="slide">
+    <h2>Final Step: Look up Token IDs</h2>
+    <p style="font-size: 1.3em;">After splitting, we look up each token in the vocabulary to get a unique integer ID.</p>
+    <table style="margin: 30px auto; font-size: 1.3em; border-collapse: collapse; width: 60%;">
+        <thead>
+            <tr>
+                <th style="border: 2px solid #4CAF50; padding: 15px;">Token</th>
+                <th style="border: 2px solid #4CAF50; padding: 15px;">Token ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border: 1px solid #666; padding: 15px;">"The"</td><td style="border: 1px solid #666; padding: 15px;">5</td></tr>
+            <tr><td style="border: 1px solid #666; padding: 15px;">"cat"</td><td style="border: 1px solid #666; padding: 15px;">8</td></tr>
+            <tr><td style="border: 1px solid #666; padding: 15px;">"quick"</td><td style="border: 1px solid #666; padding: 15px;">73</td></tr>
+            <tr><td style="border: 1px solid #666; padding: 15px;">"##ly"</td><td style="border: 1px solid #666; padding: 15px;">152</td></tr>
+            <tr><td style="border: 1px solid #666; padding: 15px;">"jump"</td><td style="border: 1px solid #666; padding: 15px;">311</td></tr>
+            <tr><td style="border: 1px solid #666; padding: 15px;">"##ed"</td><td style="border: 1px solid #666; padding: 15px;">94</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Because this slide walks through the entire tokenization pipeline from start to finish, this is a TECHNICAL slide. It synthesizes all the concepts from the chapter into a single, multi-step example. Using fragments to reveal each stage of the process (Input -> Splitting -> Output) allows the audience to follow the transformation step-by-step. -->
+<section>
+    <h2>The Full Process: "The cat quickly jumped"</h2>
+    <div style="font-size: 1.5em; text-align: left; margin: 0 auto; width: 90%;">
+        <p><strong>1. Input Text:</strong> "The cat quickly jumped"</p>
+        <div class="fragment fade-in" style="margin-top: 40px;">
+            <p><strong>2. Subword Splitting:</strong></p>
+            <pre><code class="language-json">["The", "cat", "quick", "##ly", "jump", "##ed"]</code></pre>
+        </div>
+        <div class="fragment fade-in" style="margin-top: 40px;">
+            <p><strong>3. Final Output (Token IDs):</strong></p>
+            <pre><code class="language-json">[5, 8, 73, 152, 311, 94]</code></pre>
+        </div>
+    </div>
+</section>
