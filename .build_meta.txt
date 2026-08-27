@@ -69,3 +69,4 @@
 [2026-07-24 14:40:23 +0530] analysis(tutorial): plot convergence trajectories and validation metrics in 00_Tutorial_Roadmap_and_Index
 [2026-07-24 16:44:42 +0530] feat(tutorial): implement data preprocessing and token inspection cells in 00_Tutorial_Roadmap_and_Index
 [2026-07-24 17:04:53 +0530] analysis(tutorial): plot convergence trajectories and validation metrics in 00_Tutorial_Roadmap_and_Index
+[2026-08-27 11:25:58 +0530] docs(tutorial): add markdown mathematical derivations and takeaways in 00_Tutorial_Roadmap_and_Index
