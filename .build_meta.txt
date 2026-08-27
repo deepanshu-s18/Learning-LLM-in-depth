@@ -71,3 +71,4 @@
 [2026-07-24 17:04:53 +0530] analysis(tutorial): plot convergence trajectories and validation metrics in 00_Tutorial_Roadmap_and_Index
 [2026-08-27 11:25:58 +0530] docs(tutorial): add markdown mathematical derivations and takeaways in 00_Tutorial_Roadmap_and_Index
 [2026-08-27 12:12:27 +0530] analysis(tutorial): plot convergence trajectories and validation metrics in 00_Tutorial_Roadmap_and_Index
+[2026-08-27 14:33:31 +0530] analysis(tutorial): add ablation comparisons across hyperparameter sweeps in 00_Tutorial_Roadmap_and_Index
