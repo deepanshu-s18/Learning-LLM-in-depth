@@ -1,0 +1,23 @@
+# 🛠️ Colab + 5TB Google Drive Inference & Model Hub
+
+A production-style system to download, store, and serve open-source LLMs and your custom from-scratch models using Google Colab and Google Drive.
+
+---
+
+## 📁 Files Created
+
+1. **[1_Drive_Model_Hub_Downloader.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/colab_inference/1_Drive_Model_Hub_Downloader.ipynb)**:
+   - Mounts your 5TB Google Drive at `/content/drive/MyDrive/LLM_Model_Hub`.
+   - Has one-click downloads for top quantized models: Llama-3-8B-AWQ, Qwen-2.5-Coder-7B-AWQ, DeepSeek-R1-Distill-7B-AWQ, Mistral-7B-AWQ, and custom HuggingFace repos.
+   - Includes `ScratchModelManager` class to save and load your custom from-scratch models (weights, configs, checkpoints) directly to/from Drive.
+   - Includes a storage inspector to track model sizes on Drive.
+
+2. **[drive_model_manager.py](file:///Users/shobhitagnihotri/Desktop/internship/colab_inference/drive_model_manager.py)**:
+   - Standalone Python module you can import into your training scripts or notebooks:
+     ```python
+     from drive_model_manager import GoogleDriveModelHub
+     hub = GoogleDriveModelHub()
+     hub.save_scratch_model(my_model, "deepseek_scratch_v1", config=cfg)
+     ```
+
+3. **[2_vLLM_Inference_Server.ipynb](file:///Users/shobhitagnihotri/Desktop/internship/colab_inference/2_vLLM_Inference_Server.ipynb)**:
