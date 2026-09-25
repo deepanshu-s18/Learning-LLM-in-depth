@@ -18,3 +18,24 @@ class GoogleDriveModelHub:
         self.scratch_dir = os.path.join(base_dir, "from_scratch_models")
         
         os.makedirs(self.opensource_dir, exist_ok=True)
+        os.makedirs(self.scratch_dir, exist_ok=True)
+
+    # -------------------------------------------------------------
+    # From-Scratch Models Management
+    # -------------------------------------------------------------
+    def save_scratch_model(
+        self,
+        model: torch.nn.Module,
+        model_name: str,
+        config: Optional[Dict[str, Any]] = None,
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        step: Optional[int] = None,
+        loss: Optional[float] = None
+    ) -> str:
+        """
+        Saves weights, config, and training states of your custom from-scratch model directly to Google Drive.
+        """
+        save_path = os.path.join(self.scratch_dir, model_name)
+        os.makedirs(save_path, exist_ok=True)
+
+        # 1. State dict
