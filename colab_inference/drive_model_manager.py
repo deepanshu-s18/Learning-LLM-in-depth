@@ -60,3 +60,24 @@ class GoogleDriveModelHub:
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "step": step,
+                "loss": loss
+            }, ckpt_file)
+
+        print(f"✅ Model '{model_name}' saved to Google Drive: {save_path}")
+        return save_path
+
+    def load_scratch_model(
+        self,
+        model: torch.nn.Module,
+        model_name: str,
+        device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    ) -> torch.nn.Module:
+        """
+        Loads saved weights for a from-scratch model from Google Drive.
+        """
+        weights_file = os.path.join(self.scratch_dir, model_name, "model.pt")
+        if not os.path.exists(weights_file):
+            raise FileNotFoundError(f"Model file not found at: {weights_file}")
+            
+        state_dict = torch.load(weights_file, map_location=device)
+        model.load_state_dict(state_dict)
