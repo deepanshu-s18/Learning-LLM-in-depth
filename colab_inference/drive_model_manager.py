@@ -81,3 +81,24 @@ class GoogleDriveModelHub:
             
         state_dict = torch.load(weights_file, map_location=device)
         model.load_state_dict(state_dict)
+        model.to(device)
+        print(f"✅ Loaded weights for '{model_name}' on {device}")
+        return model
+
+    # -------------------------------------------------------------
+    # Open-Source Weights Downloader
+    # -------------------------------------------------------------
+    def download_opensource_model(self, repo_id: str, hf_token: Optional[str] = None) -> str:
+        """
+        Downloads a full model repository from Hugging Face directly to Google Drive.
+        """
+        from huggingface_hub import snapshot_download
+
+        folder_name = repo_id.replace("/", "--")
+        dest_dir = os.path.join(self.opensource_dir, folder_name)
+        print(f"⏳ Downloading {repo_id} to Google Drive: {dest_dir} ...")
+        
+        snapshot_download(
+            repo_id=repo_id,
+            local_dir=dest_dir,
+            local_dir_use_symlinks=False,
