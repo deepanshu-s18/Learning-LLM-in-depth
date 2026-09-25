@@ -102,3 +102,24 @@ class GoogleDriveModelHub:
             repo_id=repo_id,
             local_dir=dest_dir,
             local_dir_use_symlinks=False,
+            token=hf_token
+        )
+        print(f"🎉 Model downloaded to: {dest_dir}")
+        return dest_dir
+
+    def list_inventory(self):
+        """Prints all models currently stored in Google Drive."""
+        print("=" * 60)
+        print(f"📊 GOOGLE DRIVE MODEL INVENTORY: {self.base_dir}")
+        print("=" * 60)
+        
+        print("\n🔹 FROM-SCRATCH MODELS:")
+        if os.path.exists(self.scratch_dir):
+            for item in os.listdir(self.scratch_dir):
+                print(f"  • {item} -> {os.path.join(self.scratch_dir, item)}")
+        
+        print("\n🔹 OPEN-SOURCE MODELS:")
+        if os.path.exists(self.opensource_dir):
+            for item in os.listdir(self.opensource_dir):
+                print(f"  • {item} -> {os.path.join(self.opensource_dir, item)}")
+        print("=" * 60)
