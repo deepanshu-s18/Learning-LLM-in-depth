@@ -39,3 +39,24 @@ class GoogleDriveModelHub:
         os.makedirs(save_path, exist_ok=True)
 
         # 1. State dict
+        weights_file = os.path.join(save_path, "model.pt")
+        torch.save(model.state_dict(), weights_file)
+
+        # 2. Config & metadata
+        meta = {
+            "model_name": model_name,
+            "saved_at": datetime.utcnow().isoformat(),
+            "step": step,
+            "loss": loss,
+            "config": config or {}
+        }
+        with open(os.path.join(save_path, "config.json"), "w") as f:
+            json.dump(meta, f, indent=2)
+
+        # 3. Training Checkpoint
+        if optimizer is not None:
+            ckpt_file = os.path.join(save_path, "checkpoint.pt")
+            torch.save({
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "step": step,
