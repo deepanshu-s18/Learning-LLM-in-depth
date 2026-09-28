@@ -48,6 +48,7 @@
 - **`Reasoning for LLM`**: Comprehensive mathematical reasoning benchmark suite (SVAMP, MAWPS) evaluating Chain-of-Thought, Tree-of-Thoughts, Self-Consistency, and RL with Verifiable Rewards.
 - **`mercor-grpo-agent`**: Critic-free Group Relative Policy Optimization (GRPO) training an autonomous coding agent on SWE-bench tasks using unit-test execution rewards.
 - **`zach tutorial`**: In-depth mechanistic interpretability notebook suite probing induction heads, attention patterns, and loss landscape geometry.
+- **`colab_inference`**: Production deployment with FastAPI asynchronous serving, Gradio interactive interfaces, and Google Colab model download pipelines.
 ---
 
 ## 📊 Core Benchmarks & Key Findings
