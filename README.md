@@ -47,6 +47,7 @@
 - **`DeepSeek-From-Scratch`**: Full DeepSeek-V3 / DeepSeek-R1 implementation including Multi-Token Prediction (MTP), DualPipe parallelism simulation, and cold-start reasoning dynamics.
 - **`Reasoning for LLM`**: Comprehensive mathematical reasoning benchmark suite (SVAMP, MAWPS) evaluating Chain-of-Thought, Tree-of-Thoughts, Self-Consistency, and RL with Verifiable Rewards.
 - **`mercor-grpo-agent`**: Critic-free Group Relative Policy Optimization (GRPO) training an autonomous coding agent on SWE-bench tasks using unit-test execution rewards.
+- **`zach tutorial`**: In-depth mechanistic interpretability notebook suite probing induction heads, attention patterns, and loss landscape geometry.
 ---
 
 ## 📊 Core Benchmarks & Key Findings
