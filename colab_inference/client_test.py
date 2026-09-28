@@ -29,3 +29,19 @@ def test_inference(prompt: str = "Explain Grouped-Query Attention (GQA) and why 
     first_token_time = None
     token_count = 0
 
+    response_stream = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": "You are an expert AI and LLM inference engineer."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7,
+        max_tokens=512,
+        stream=True
+    )
+
+    for chunk in response_stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            token = chunk.choices[0].delta.content
+            if first_token_time is None:
+                first_token_time = time.time() - start_time
