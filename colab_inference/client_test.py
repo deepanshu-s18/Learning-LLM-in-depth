@@ -45,3 +45,19 @@ def test_inference(prompt: str = "Explain Grouped-Query Attention (GQA) and why 
             token = chunk.choices[0].delta.content
             if first_token_time is None:
                 first_token_time = time.time() - start_time
+            print(token, end="", flush=True)
+            token_count += 1
+
+    total_time = time.time() - start_time
+    tokens_per_sec = token_count / total_time if total_time > 0 else 0
+
+    print("\n" + "=" * 60)
+    print("📊 INFERENCE BENCHMARK METRICS:")
+    print(f"  • Time to First Token (TTFT): {first_token_time:.2f}s" if first_token_time else "  • TTFT: N/A")
+    print(f"  • Total Time:                 {total_time:.2f}s")
+    print(f"  • Generated Tokens:           {token_count}")
+    print(f"  • Generation Speed:           {tokens_per_sec:.2f} tokens/sec")
+    print("=" * 60)
+
+if __name__ == "__main__":
+    test_inference()
